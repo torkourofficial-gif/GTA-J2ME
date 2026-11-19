@@ -1142,6 +1142,19 @@ final class GameCanvas extends Canvas implements Runnable {
             if (pedAttackCooldown[i] > 0.0f) pedAttackCooldown[i] -= dt;
             float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
             float dist2 = dx * dx + dz * dz;
+            if ((inCar || inBike) && pedState[i] != 3 &&
+                ((inCar && Math.abs(carSpeed) > 2.2f) ||
+                 (inBike && Math.abs(bikeSpeed) > 3.0f)) &&
+                dist2 < (inCar ? 2.9f : 2.1f)) {
+                float hitSpeed = inCar ? carSpeed : bikeSpeed;
+                float heading = inCar ? carHeading : bikeHeading;
+                float ha = heading * 0.0174532925f;
+                beginPedRagdoll(i, -(float)Math.sin(ha) * hitSpeed * 0.42f,
+                                1.8f, -(float)Math.cos(ha) * hitSpeed * 0.42f);
+                addWanted(1);
+                status = "WANTED: PEDESTRIAN COLLISION";
+                continue;
+            }
             if (pedState[i] == 3) {
                 // Lightweight articulated ragdoll: integrate body motion and
                 // angular momentum, then settle against the ground plane.
@@ -1309,6 +1322,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void beginTrafficHijack(int index) {
         trafficHijackIndex = index;
+        addWanted(1);
         trafficHijackTime = 0.0f;
         trafficDriverEjected = false;
         carTransition = 3;
@@ -1728,6 +1742,11 @@ final class GameCanvas extends Canvas implements Runnable {
         g.fillRect(0, 0, getWidth(), 17);
         g.setColor(0xFFFFFF);
         g.drawString(status, 3, 1, Graphics.TOP | Graphics.LEFT);
+        if (wantedLevel > 0) {
+            String stars = "WANTED ";
+            for (int wi = 0; wi < wantedLevel; wi++) stars += "*";
+            g.drawString(stars, getWidth() - 82, 1, Graphics.TOP | Graphics.LEFT);
+        }
         g.drawString("2/8 MOVE  4/6 TURN  * SWITCH  D-PAD CAMERA", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
     }
