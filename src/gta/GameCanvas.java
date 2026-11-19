@@ -363,7 +363,7 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
 
-        if (!park) {
+        if (!park && !cityCollisionRecorded[bx][bz]) {
             buildingX[buildingCount] = x;
             buildingZ[buildingCount] = z;
             buildingW[buildingCount] = width;
