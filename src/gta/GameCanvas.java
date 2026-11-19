@@ -37,6 +37,23 @@ final class GameCanvas extends Canvas implements Runnable {
     private CJModel cj;
     private CarModel car;
     private Camera camera;
+    private static final int PED_COUNT = 10;
+    private PedestrianModel[] pedestrians = new PedestrianModel[PED_COUNT];
+    private boolean[] pedActive = new boolean[PED_COUNT];
+    private int[] pedState = new int[PED_COUNT]; // 0 wander, 1 flee, 2 confront, 3 down
+    private float[] pedX = new float[PED_COUNT], pedZ = new float[PED_COUNT];
+    private float[] pedHeading = new float[PED_COUNT], pedTimer = new float[PED_COUNT];
+    private float[] pedPhase = new float[PED_COUNT], pedAttackCooldown = new float[PED_COUNT];
+    private int nextPedVariant = 0;
+    private CarModel[] trafficCars = new CarModel[3];
+    private float[] trafficX = new float[3], trafficZ = new float[3];
+    private float[] trafficHeading = new float[3], trafficSpeed = new float[3];
+    private float[] trafficStop = new float[3], trafficHitCooldown = new float[3];
+    private int trafficHijackIndex = -1;
+    private float trafficHijackTime = 0.0f;
+    private boolean trafficDriverEjected = false;
+    private int randomSeed = 173;
+    private float playerHitStun = 0.0f;
     private Transform cameraTransform;
 
     private float playerX = 0.0f;
@@ -160,6 +177,9 @@ final class GameCanvas extends Canvas implements Runnable {
         car.setPosition(carX, 0.0f, carZ);
         world.addChild(car.root);
 
+        initializePedestrians();
+        initializeTraffic();
+
         camera = new Camera();
         camera.setPerspective(62.0f, 1.0f, 0.25f, 220.0f);
         cameraTransform = new Transform();
@@ -223,8 +243,10 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void update(float dt) {
         updateCameraInput(dt);
+        if (carTransition == 3) { updateTrafficHijack(dt); updateCamera(); return; }
         if (carTransition != 0) { updateCarTransition(dt); updateCamera(); return; }
         boolean moving = false;
+        if (playerHitStun > 0.0f) playerHitStun -= dt;
 
         if (inCar) {
             if ((keys & FORWARD) != 0) carSpeed += 3.2f * dt;
@@ -360,6 +382,8 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
 
+        updateTraffic(dt);
+        updatePedestrians(dt);
         if (punchTimer > 0.0f) punchTimer -= dt;
         if (punchTimer < 0.0f) punchTimer = 0.0f;
         float punchAngle = punchTimer > 0.0f ? (float)Math.sin((0.35f - punchTimer) * 18.0f) * 75.0f : 0.0f;
@@ -419,13 +443,21 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void punch() {
-        if (!inCar) punchTimer = 0.35f;
+        if (!inCar) {
+            punchTimer = 0.35f;
+            hitPedestrian();
+        }
     }
 
     private void toggleCar() {
         if (carTransition != 0) return;
         if (inCar) {
             beginCarTransition(false);
+            return;
+        }
+        int stoppedCar = findStoppableTrafficCar();
+        if (stoppedCar >= 0) {
+            beginTrafficHijack(stoppedCar);
             return;
         }
         float dx = playerX - carX;
@@ -547,8 +579,273 @@ final class GameCanvas extends Canvas implements Runnable {
         }
     }
 
+
+    private int randomInt(int bound) {
+        randomSeed = (randomSeed * 1103515245 + 12345) & 0x7fffffff;
+        return bound <= 0 ? 0 : randomSeed % bound;
+    }
+
+    private void initializePedestrians() {
+        // Ten lightweight active pedestrians; their palette index cycles through
+        // twenty distinct clothing/skin combinations.
+        float[] px = {-8.0f, 8.0f, -36.0f, -20.0f, 36.0f, 20.0f, -64.0f, 64.0f, 50.0f, -50.0f};
+        float[] pz = {-19.0f, 18.0f, 9.0f, -48.0f, 48.0f, -8.0f, 36.0f, -36.0f, 64.0f, -64.0f};
+        for (int i = 0; i < PED_COUNT; i++) {
+            pedestrians[i] = new PedestrianModel(i);
+            world.addChild(pedestrians[i].root);
+            pedActive[i] = true;
+            pedX[i] = px[i]; pedZ[i] = pz[i];
+            pedHeading[i] = (i * 47) % 360;
+            pedTimer[i] = 1.0f + (i % 4) * 0.7f;
+            pedPhase[i] = i * 0.73f;
+            pedAttackCooldown[i] = 1.0f + (i % 3);
+            pedState[i] = 0;
+            pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
+            pedestrians[i].setHeading(pedHeading[i]);
+        }
+    }
+
+    private void initializeTraffic() {
+        float[] xs = {-29.5f, 1.5f, 26.5f};
+        float[] zs = {-48.0f, 18.0f, 62.0f};
+        for (int i = 0; i < trafficCars.length; i++) {
+            trafficCars[i] = new CarModel();
+            trafficX[i] = xs[i]; trafficZ[i] = zs[i];
+            trafficHeading[i] = (i == 1) ? 180.0f : 0.0f;
+            trafficSpeed[i] = 3.4f + i * 0.55f;
+            trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
+            trafficCars[i].setHeading(trafficHeading[i]);
+            world.addChild(trafficCars[i].root);
+        }
+    }
+
+    private void updateTraffic(float dt) {
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] == null) continue;
+            if (trafficHitCooldown[i] > 0.0f) trafficHitCooldown[i] -= dt;
+            if (trafficStop[i] > 0.0f) {
+                trafficStop[i] -= dt;
+            } else {
+                float a = trafficHeading[i] * 0.0174532925f;
+                float nx = trafficX[i] - (float)Math.sin(a) * trafficSpeed[i] * dt;
+                float nz = trafficZ[i] - (float)Math.cos(a) * trafficSpeed[i] * dt;
+                trafficX[i] = nx; trafficZ[i] = nz;
+                if (trafficZ[i] < -82.0f) trafficHeading[i] = 180.0f;
+                else if (trafficZ[i] > 82.0f) trafficHeading[i] = 0.0f;
+            }
+            trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
+            trafficCars[i].setHeading(trafficHeading[i]);
+
+            if (!inCar && trafficHitCooldown[i] <= 0.0f) {
+                float dx = playerX - trafficX[i], dz = playerZ - trafficZ[i];
+                float dist2 = dx * dx + dz * dz;
+                float frontX = -(float)Math.sin(trafficHeading[i] * 0.0174532925f);
+                float frontZ = -(float)Math.cos(trafficHeading[i] * 0.0174532925f);
+                float frontDot = dx * frontX + dz * frontZ;
+                if (dist2 < 7.0f && frontDot > 0.5f && trafficStop[i] <= 0.0f) {
+                    trafficHitCooldown[i] = 2.2f;
+                    if (randomInt(100) < 38) {
+                        trafficStop[i] = 10.0f;
+                        status = "DRIVER STOPPED - PRESS 3 TO TAKE CAR";
+                    } else {
+                        // Arcade-style knockback; no graphic injury depiction.
+                        float shove = trafficSpeed[i] * 0.32f;
+                        playerX += frontX * shove;
+                        playerZ += frontZ * shove;
+                        playerY = 0.22f;
+                        jumpVelocity = 2.8f;
+                        playerHitStun = 0.65f;
+                        status = "WATCH THE TRAFFIC!";
+                    }
+                }
+            }
+        }
+    }
+
+    private void updatePedestrians(float dt) {
+        for (int i = 0; i < PED_COUNT; i++) {
+            if (!pedActive[i]) continue;
+            if (pedAttackCooldown[i] > 0.0f) pedAttackCooldown[i] -= dt;
+            float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
+            float dist2 = dx * dx + dz * dz;
+            if (pedState[i] == 3) {
+                pedTimer[i] -= dt;
+                pedestrians[i].animate(pedPhase[i], false, false, true);
+                if (pedTimer[i] <= 0.0f) {
+                    pedActive[i] = false;
+                    pedestrians[i].setVisible(false);
+                }
+                continue;
+            }
+            if (pedState[i] == 0 && dist2 < 49.0f) {
+                if ((i % 4) == 0) pedState[i] = 2;
+                else pedState[i] = 1;
+                pedTimer[i] = 2.0f;
+            }
+            float speed = 0.0f;
+            boolean running = false;
+            if (pedState[i] == 1) {
+                // Most pedestrians panic and flee from CJ.
+                pedHeading[i] = (float)(Math.atan2(-dx, dz) * 57.29578f);
+                speed = 3.0f; running = true;
+                pedTimer[i] -= dt;
+                if (dist2 > 225.0f) { pedState[i] = 0; pedTimer[i] = 1.5f; }
+            } else if (pedState[i] == 2) {
+                // A few confront CJ and shove him if he stays close.
+                pedHeading[i] = (float)(Math.atan2(dx, -dz) * 57.29578f);
+                speed = dist2 > 1.7f ? 1.65f : 0.0f;
+                if (dist2 < 2.0f && pedAttackCooldown[i] <= 0.0f && !inCar) {
+                    float inv = 1.0f / (float)Math.sqrt(Math.max(0.01f, dist2));
+                    playerVelocityX += dx * inv * 2.0f;
+                    playerVelocityZ += dz * inv * 2.0f;
+                    playerHitStun = 0.25f;
+                    pedAttackCooldown[i] = 2.0f;
+                    status = "A PEDESTRIAN PUSHED YOU";
+                }
+                pedTimer[i] -= dt;
+                if (dist2 > 100.0f) { pedState[i] = 0; pedTimer[i] = 2.0f; }
+            } else {
+                pedTimer[i] -= dt;
+                if (pedTimer[i] <= 0.0f) {
+                    pedHeading[i] += randomInt(181) - 90;
+                    pedTimer[i] = 1.5f + randomInt(35) * 0.1f;
+                }
+                speed = 0.55f;
+            }
+            float a = pedHeading[i] * 0.0174532925f;
+            float nx = pedX[i] - (float)Math.sin(a) * speed * dt;
+            float nz = pedZ[i] - (float)Math.cos(a) * speed * dt;
+            if (!playerBlocked(nx, nz)) { pedX[i] = nx; pedZ[i] = nz; }
+            else { pedHeading[i] += 115.0f; pedTimer[i] = 0.8f; }
+            pedPhase[i] += dt * (running ? 12.0f : 7.0f);
+            pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
+            pedestrians[i].setHeading(pedHeading[i]);
+            pedestrians[i].animate(pedPhase[i], speed > 0.1f, running, false);
+        }
+    }
+
+    private void hitPedestrian() {
+        float best = 4.0f;
+        int target = -1;
+        float fx = -(float)Math.sin(playerHeading * 0.0174532925f);
+        float fz = -(float)Math.cos(playerHeading * 0.0174532925f);
+        for (int i = 0; i < PED_COUNT; i++) {
+            if (!pedActive[i] || pedState[i] == 3) continue;
+            float dx = pedX[i] - playerX, dz = pedZ[i] - playerZ;
+            float d2 = dx * dx + dz * dz;
+            if (d2 < best && dx * fx + dz * fz > 0.0f) { best = d2; target = i; }
+        }
+        if (target >= 0) {
+            int i = target;
+            if ((i % 4) == 0 && pedState[i] != 2) {
+                pedState[i] = 1;
+                pedTimer[i] = 4.0f;
+            } else {
+                pedState[i] = 3;
+                pedTimer[i] = 1.45f;
+            }
+        }
+    }
+
+    private int spawnPedestrian(float x, float z, float heading) {
+        int slot = -1;
+        for (int i = 0; i < PED_COUNT; i++) if (!pedActive[i]) { slot = i; break; }
+        if (slot < 0) {
+            float farthest = -1.0f;
+            for (int i = 0; i < PED_COUNT; i++) {
+                float dx = pedX[i] - playerX, dz = pedZ[i] - playerZ;
+                float d = dx * dx + dz * dz;
+                if (d > farthest && pedState[i] != 3) { farthest = d; slot = i; }
+            }
+        }
+        if (slot < 0) return -1;
+        pedestrians[slot].setVisible(true);
+        pedActive[slot] = true;
+        pedState[slot] = 1;
+        pedX[slot] = x; pedZ[slot] = z; pedHeading[slot] = heading;
+        pedTimer[slot] = 4.0f; pedPhase[slot] = 0.0f;
+        pedAttackCooldown[slot] = 2.0f;
+        pedestrians[slot].setPosition(x, 0.0f, z);
+        pedestrians[slot].setHeading(heading);
+        return slot;
+    }
+
+    private int findStoppableTrafficCar() {
+        int best = -1;
+        float bestDist = 6.5f;
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] == null || trafficStop[i] <= 0.0f) continue;
+            float dx = playerX - trafficX[i], dz = playerZ - trafficZ[i];
+            float d = (float)Math.sqrt(dx * dx + dz * dz);
+            if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return best;
+    }
+
+    private void beginTrafficHijack(int index) {
+        trafficHijackIndex = index;
+        trafficHijackTime = 0.0f;
+        trafficDriverEjected = false;
+        carTransition = 3;
+        float dx = playerX - trafficX[index], dz = playerZ - trafficZ[index];
+        float a = trafficHeading[index] * 0.0174532925f;
+        float localSide = dx * (float)Math.cos(a) - dz * (float)Math.sin(a);
+        transitionDriverSide = localSide <= 0.0f;
+        status = "TAKING THE DRIVER'S SEAT...";
+        playerVelocityX = 0.0f; playerVelocityZ = 0.0f;
+    }
+
+    private void updateTrafficHijack(float dt) {
+        int i = trafficHijackIndex;
+        if (i < 0 || i >= trafficCars.length || trafficCars[i] == null) {
+            carTransition = 0; trafficHijackIndex = -1; return;
+        }
+        trafficHijackTime += dt;
+        float t = trafficHijackTime;
+        CarModel target = trafficCars[i];
+        target.setDoorOpen(t < 1.15f ? 68.0f : 0.0f, transitionDriverSide);
+        float side = transitionDriverSide ? -1.0f : 1.0f;
+        float a = trafficHeading[i] * 0.0174532925f;
+        float outsideX = trafficX[i] + side * 1.28f * (float)Math.cos(a) - 0.25f * (float)Math.sin(a);
+        float outsideZ = trafficZ[i] - side * 1.28f * (float)Math.sin(a) - 0.25f * (float)Math.cos(a);
+        cj.setVisible(true);
+        cj.setPosition(outsideX, 0.0f, outsideZ);
+        cj.setHeading(normalizeAngle(trafficHeading[i] + 90.0f));
+        if (t > 0.25f && !trafficDriverEjected) {
+            // The driver is converted into an ordinary fleeing pedestrian.
+            float driverX = trafficX[i] + side * 2.0f * (float)Math.cos(a);
+            float driverZ = trafficZ[i] - side * 2.0f * (float)Math.sin(a);
+            spawnPedestrian(driverX, driverZ, trafficHeading[i] + 90.0f);
+            trafficDriverEjected = true;
+        }
+        if (t < 0.65f) {
+            cj.setEntryPose(Math.min(1.0f, t / 0.65f), false);
+        } else {
+            float enter = Math.min(1.0f, (t - 0.65f) / 0.75f);
+            cj.setEntryPose(enter, true);
+        }
+        if (t >= 1.4f) {
+            car = target;
+            carX = trafficX[i]; carZ = trafficZ[i]; carHeading = trafficHeading[i];
+            carSpeed = 0.0f; carSteering = 0.0f;
+            trafficCars[i] = null;
+            inCar = true;
+            cj.setVisible(false);
+            cj.setEntryPose(0.0f, true);
+            playerX = carX; playerZ = carZ; playerHeading = carHeading;
+            carTransition = 0; trafficHijackIndex = -1;
+            status = "STOLEN CAR  |  3 EXIT";
+        }
+    }
+
     private boolean playerBlocked(float x, float z) {
         if (x < -CITY_LIMIT || x > CITY_LIMIT || z < -CITY_LIMIT || z > CITY_LIMIT) return true;
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] != null) {
+                float tx = x - trafficX[i], tz = z - trafficZ[i];
+                if (tx * tx + tz * tz < 2.1f * 2.1f) return true;
+            }
+        }
         for (int i = 0; i < buildingCount; i++) {
             if (circleHitsRect(x, z, 0.34f, buildingX[i], buildingZ[i],
                                buildingW[i], buildingD[i])) return true;
