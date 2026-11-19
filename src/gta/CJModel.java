@@ -146,6 +146,18 @@ final class CJModel {
         rightShin.setOrientation(-68.0f * amount, 1.0f, 0.0f, 0.0f);
     }
 
+    void animateRagdoll(float roll, float pitch, float rollSpeed, float pitchSpeed) {
+        upperBody.setOrientation(68.0f + pitch * 0.22f, 0.0f, 0.0f, 1.0f);
+        leftArm.setOrientation(-55.0f + roll * 0.35f, 1.0f, 0.0f, 0.0f);
+        rightArm.setOrientation(62.0f - roll * 0.31f, 1.0f, 0.0f, 0.0f);
+        leftForearm.setOrientation(-28.0f + pitch * 0.18f, 1.0f, 0.0f, 0.0f);
+        rightForearm.setOrientation(34.0f - pitch * 0.16f, 1.0f, 0.0f, 0.0f);
+        leftLeg.setOrientation(72.0f + pitch * 0.16f, 1.0f, 0.0f, 0.0f);
+        rightLeg.setOrientation(54.0f - pitch * 0.13f, 1.0f, 0.0f, 0.0f);
+        leftShin.setOrientation(-42.0f + roll * 0.12f, 1.0f, 0.0f, 0.0f);
+        rightShin.setOrientation(-25.0f - roll * 0.10f, 1.0f, 0.0f, 0.0f);
+    }
+
     void animate(float walkPhase, boolean moving, float punchAngle,
                  boolean backward, boolean jumping, boolean crouching,
                  float turnAmount) {
