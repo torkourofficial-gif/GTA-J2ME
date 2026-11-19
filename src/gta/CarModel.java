@@ -7,6 +7,7 @@ import javax.microedition.m3g.Mesh;
 final class CarModel {
     final Group root = new Group();
     private final Group driverDoor = new Group();
+    private final Group passengerDoor = new Group();
 
     CarModel() {
         // Lower body, hood and trunk.
@@ -46,15 +47,19 @@ final class CarModel {
         addWheel(-0.82f, 0.32f, 0.88f);
         addWheel(0.82f, 0.32f, 0.88f);
 
-        // Driver-side door pivots at its front edge and swings outward.
-        driverDoor.setTranslation(-0.78f, 0.0f, -0.70f);
-        addBox(driverDoor, 0.075f, 0.48f, 0.78f, -0.015f, 0.78f, 0.39f, 0xA82B30);
-        addBox(driverDoor, 0.045f, 0.34f, 0.68f, -0.015f, 1.17f, 0.39f, 0x79AFC1);
-        addBox(driverDoor, 0.10f, 0.045f, 0.12f, -0.04f, 0.92f, 0.42f, 0xD6C9B4);
+        // Both front doors are separate hinged assemblies. Their panels sit
+        // just outside the body shell to avoid coplanar/z-fighting surfaces.
+        driverDoor.setTranslation(-0.84f, 0.0f, -0.70f);
+        addBox(driverDoor, 0.065f, 0.46f, 0.78f, -0.025f, 0.78f, 0.39f, 0xA82B30);
+        addBox(driverDoor, 0.040f, 0.31f, 0.66f, -0.025f, 1.15f, 0.39f, 0x79AFC1);
+        addBox(driverDoor, 0.08f, 0.035f, 0.12f, -0.055f, 0.92f, 0.42f, 0xD6C9B4);
         root.addChild(driverDoor);
 
-        // Passenger-side door seam and mirror.
-        addBox(root, 0.08f, 0.45f, 0.78f, 0.78f, 0.79f, 0.30f, 0xA82B30);
+        passengerDoor.setTranslation(0.84f, 0.0f, -0.70f);
+        addBox(passengerDoor, 0.065f, 0.46f, 0.78f, 0.025f, 0.78f, 0.39f, 0xA82B30);
+        addBox(passengerDoor, 0.040f, 0.31f, 0.66f, 0.025f, 1.15f, 0.39f, 0x79AFC1);
+        addBox(passengerDoor, 0.08f, 0.035f, 0.12f, 0.055f, 0.92f, 0.42f, 0xD6C9B4);
+        root.addChild(passengerDoor);
         addBox(root, 0.16f, 0.12f, 0.16f, -0.82f, 1.24f, -0.50f, 0xA82B30);
         addBox(root, 0.16f, 0.12f, 0.16f, 0.82f, 1.24f, -0.50f, 0xA82B30);
     }
@@ -76,6 +81,7 @@ final class CarModel {
         if (degrees < 0.0f) degrees = 0.0f;
         if (degrees > 72.0f) degrees = 72.0f;
         driverDoor.setOrientation(-degrees, 0.0f, 1.0f, 0.0f);
+        passengerDoor.setOrientation(degrees, 0.0f, 1.0f, 0.0f);
     }
 
     void setPosition(float x, float y, float z) {
