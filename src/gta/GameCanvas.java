@@ -107,6 +107,9 @@ final class GameCanvas extends Canvas implements Runnable {
     private float reverseTargetHeading = 0.0f;
     private boolean initialized = false;
     private String status = "2/4/6/8 MOVE  3 CAR";
+    private String fatalError;
+    private String debugStage = "starting";
+    private int diagnosticPage = 0;
 
     GameCanvas() {
         setFullScreenMode(true);
@@ -114,7 +117,9 @@ final class GameCanvas extends Canvas implements Runnable {
             initializeScene();
             initialized = true;
         } catch (Throwable error) {
-            status = "M3G INIT ERROR: " + error.toString();
+            fatalError = error.toString();
+            debugStage = "scene initialization";
+            status = "M3G INIT ERROR";
         }
     }
 
@@ -301,19 +306,36 @@ final class GameCanvas extends Canvas implements Runnable {
 
     public void run() {
         while (running) {
-            if (!paused) {
-                update(0.04f);
-                repaint();
+            if (!paused && fatalError == null) {
+                try {
+                    debugStage = "game update";
+                    update(0.04f);
+                    repaint();
+                } catch (Throwable error) {
+                    fatalError = error.toString();
+                    debugStage = "update: " + debugStage;
+                    diagnosticPage = 0;
+                    running = false;
+                    repaint();
+                }
             }
             try { Thread.sleep(40); } catch (InterruptedException ignored) {}
         }
     }
 
     private void update(float dt) {
+        debugStage = "camera input";
         updateCameraInput(dt);
+        debugStage = "city chunk visibility";
         updateCityChunks();
-        if (carTransition == 3) { updateTrafficHijack(dt); updateCamera(); return; }
-        if (carTransition != 0) { updateCarTransition(dt); updateCamera(); return; }
+        if (carTransition == 3) {
+            debugStage = "traffic hijack";
+            updateTrafficHijack(dt); updateCamera(); return;
+        }
+        if (carTransition != 0) {
+            debugStage = "car transition";
+            updateCarTransition(dt); updateCamera(); return;
+        }
         boolean moving = false;
         if (playerHitStun > 0.0f) playerHitStun -= dt;
         if (playerCollisionCooldown > 0.0f) playerCollisionCooldown -= dt;
@@ -455,7 +477,9 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
 
+        debugStage = "traffic update";
         updateTraffic(dt);
+        debugStage = "pedestrian update";
         updatePedestrians(dt);
         if (punchTimer > 0.0f) punchTimer -= dt;
         if (punchTimer < 0.0f) punchTimer = 0.0f;
@@ -474,6 +498,7 @@ final class GameCanvas extends Canvas implements Runnable {
             cj.animate(walkPhase, moving && !inCar, punchAngle,
                        false, jumping, crouching, turnAmount);
         }
+        debugStage = "camera update";
         updateCamera();
     }
 
@@ -1186,6 +1211,14 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     protected void keyPressed(int keyCode) {
+        if (fatalError != null) {
+            if (keyCode == '2' || getGameAction(keyCode) == Canvas.DOWN) diagnosticPage++;
+            else if (keyCode == '8' || getGameAction(keyCode) == Canvas.UP) {
+                if (diagnosticPage > 0) diagnosticPage--;
+            }
+            repaint();
+            return;
+        }
         if (keyCode == '2') {
             if ((keys & FORWARD) == 0) {
                 long now = System.currentTimeMillis();
@@ -1232,9 +1265,62 @@ final class GameCanvas extends Canvas implements Runnable {
         }
     }
 
+    // Paginated exception display for the Java ME SDK emulator.
+    private void drawDiagnostic(Graphics g) {
+        String value = "EXCEPTION: " + fatalError + "\nSTAGE: " + debugStage;
+        int charsPerLine = 28;
+        int rowsPerPage = 8;
+        int rows = 0;
+        int col = 0;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '\n' || col >= charsPerLine) {
+                rows++;
+                col = 0;
+                if (c == '\n') continue;
+            }
+            col++;
+        }
+        if (col > 0) rows++;
+        int pages = (rows + rowsPerPage - 1) / rowsPerPage;
+        if (pages < 1) pages = 1;
+        if (diagnosticPage >= pages) diagnosticPage = pages - 1;
+        int first = diagnosticPage * rowsPerPage;
+        int row = 0;
+        int start = 0;
+        col = 0;
+        g.setColor(0xFFFFFF);
+        g.drawString("JAVA ME ERROR " + (diagnosticPage + 1) + "/" + pages,
+                     3, 2, Graphics.TOP | Graphics.LEFT);
+        for (int i = 0; i <= value.length(); i++) {
+            boolean end = i == value.length();
+            char c = end ? '\n' : value.charAt(i);
+            if (c == '\n' || col >= charsPerLine || end) {
+                if (row >= first && row < first + rowsPerPage) {
+                    g.drawString(value.substring(start, i), 3,
+                                 22 + (row - first) * 17,
+                                 Graphics.TOP | Graphics.LEFT);
+                }
+                row++;
+                if (c == '\n') start = i + 1;
+                else start = i;
+                col = 0;
+                if (c != '\n' && !end) col = 1;
+            } else {
+                col++;
+            }
+        }
+        g.drawString("2/DOWN NEXT  8/UP PREVIOUS",
+                     3, getHeight() - 18, Graphics.TOP | Graphics.LEFT);
+    }
+
     protected void paint(Graphics g) {
         g.setColor(0x87B6D8);
         g.fillRect(0, 0, getWidth(), getHeight());
+        if (fatalError != null) {
+            drawDiagnostic(g);
+            return;
+        }
         if (!initialized) {
             g.setColor(0xFFFFFF);
             g.drawString(status, 3, 3, Graphics.TOP | Graphics.LEFT);
@@ -1245,9 +1331,11 @@ final class GameCanvas extends Canvas implements Runnable {
             g3d.bindTarget(g);
             g3d.render(world);
         } catch (Throwable error) {
-            g.setColor(0xFFFFFF);
-            g.drawString("3D RENDER ERROR", 3, 3, Graphics.TOP | Graphics.LEFT);
-            g.drawString(error.toString(), 3, 20, Graphics.TOP | Graphics.LEFT);
+            fatalError = error.toString();
+            debugStage = "3D rendering";
+            diagnosticPage = 0;
+            drawDiagnostic(g);
+            return;
         } finally {
             try { g3d.releaseTarget(); } catch (Throwable ignored) {}
         }
