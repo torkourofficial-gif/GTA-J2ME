@@ -19,10 +19,16 @@ final class GameCanvas extends Canvas implements Runnable {
     private static final int LEFT = 4;
     private static final int RIGHT = 8;
 
+    private static final int CAM_UP = 1;
+    private static final int CAM_DOWN = 2;
+    private static final int CAM_LEFT = 4;
+    private static final int CAM_RIGHT = 8;
+
     private Thread loop;
     private volatile boolean running;
     private volatile boolean paused;
     private volatile int keys;
+    private volatile int cameraKeys;
 
     private World world;
     private Group scenery;
@@ -152,6 +158,7 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void update(float dt) {
+        updateCameraInput(dt);
         float moveX = 0.0f;
         float moveZ = 0.0f;
         boolean moving = false;
@@ -190,7 +197,8 @@ final class GameCanvas extends Canvas implements Runnable {
                 moving = true;
                 playerX += moveX * dt;
                 playerZ += moveZ * dt;
-                playerHeading = angleDegrees(moveX, -moveZ);
+                float desiredHeading = angleDegrees(moveX, -moveZ);
+                playerHeading = turnTowards(playerHeading, desiredHeading, 480.0f * dt);
                 walkPhase += dt * 10.0f;
             }
 
@@ -230,6 +238,31 @@ final class GameCanvas extends Canvas implements Runnable {
         if (x < 0.0f) angle = 180.0f - angle;
         if (y < 0.0f) angle = -angle;
         return angle;
+    }
+
+    private void updateCameraInput(float dt) {
+        int held = cameraKeys;
+        if ((held & CAM_LEFT) != 0) cameraYaw -= 115.0f * dt;
+        if ((held & CAM_RIGHT) != 0) cameraYaw += 115.0f * dt;
+        if ((held & CAM_UP) != 0) cameraPitch -= 75.0f * dt;
+        if ((held & CAM_DOWN) != 0) cameraPitch += 75.0f * dt;
+
+        if (cameraYaw > 180.0f) cameraYaw -= 360.0f;
+        if (cameraYaw < -180.0f) cameraYaw += 360.0f;
+        if (cameraPitch < -5.0f) cameraPitch = -5.0f;
+        if (cameraPitch > 35.0f) cameraPitch = 35.0f;
+    }
+
+    private float turnTowards(float current, float target, float maxStep) {
+        float difference = target - current;
+        while (difference > 180.0f) difference -= 360.0f;
+        while (difference < -180.0f) difference += 360.0f;
+        if (difference > maxStep) difference = maxStep;
+        else if (difference < -maxStep) difference = -maxStep;
+        current += difference;
+        if (current > 180.0f) current -= 360.0f;
+        if (current < -180.0f) current += 360.0f;
+        return current;
     }
 
     private void updateCamera() {
@@ -295,12 +328,10 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '3') toggleCar();
         else {
             int action = getGameAction(keyCode);
-            if (action == Canvas.UP) cameraPitch -= 2.0f;
-            else if (action == Canvas.DOWN) cameraPitch += 2.0f;
-            else if (action == Canvas.LEFT) cameraYaw -= 5.0f;
-            else if (action == Canvas.RIGHT) cameraYaw += 5.0f;
-            if (cameraPitch < -5.0f) cameraPitch = -5.0f;
-            if (cameraPitch > 35.0f) cameraPitch = 35.0f;
+            if (action == Canvas.UP) cameraKeys |= CAM_UP;
+            else if (action == Canvas.DOWN) cameraKeys |= CAM_DOWN;
+            else if (action == Canvas.LEFT) cameraKeys |= CAM_LEFT;
+            else if (action == Canvas.RIGHT) cameraKeys |= CAM_RIGHT;
         }
     }
 
@@ -309,6 +340,13 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '8') keys &= ~BACK;
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
+        else {
+            int action = getGameAction(keyCode);
+            if (action == Canvas.UP) cameraKeys &= ~CAM_UP;
+            else if (action == Canvas.DOWN) cameraKeys &= ~CAM_DOWN;
+            else if (action == Canvas.LEFT) cameraKeys &= ~CAM_LEFT;
+            else if (action == Canvas.RIGHT) cameraKeys &= ~CAM_RIGHT;
+        }
     }
 
     protected void paint(Graphics g) {
