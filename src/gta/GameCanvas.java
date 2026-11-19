@@ -1440,6 +1440,14 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updateTraffic(float dt) {
         for (int i = 0; i < trafficCars.length; i++) {
             if (trafficCars[i] == null) continue;
+            float playerDx = trafficX[i] - playerX;
+            float playerDz = trafficZ[i] - playerZ;
+            float playerDist2 = playerDx * playerDx + playerDz * playerDz;
+            if (playerDist2 > 6400.0f) {
+                trafficCars[i].root.setRenderingEnable(false);
+                continue;
+            }
+            trafficCars[i].root.setRenderingEnable(true);
             float oldTrafficX = trafficX[i], oldTrafficZ = trafficZ[i];
             if (trafficHitCooldown[i] > 0.0f) trafficHitCooldown[i] -= dt;
             if (trafficStop[i] > 0.0f) {
@@ -1548,8 +1556,11 @@ final class GameCanvas extends Canvas implements Runnable {
             if (!pedActive[i] || pedestrians[i] == null) continue;
             float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
             float dist2 = dx * dx + dz * dz;
-            if (dist2 > 2500.0f) {
+            if (dist2 > 1024.0f) {
                 pedestrians[i].setVisible(false);
+                // Recycle ordinary pedestrians once they are well outside
+                // the streaming radius; ragdolls remain until they settle.
+                if (dist2 > 4096.0f && pedState[i] != 3) pedActive[i] = false;
                 continue;
             }
             pedestrians[i].setVisible(true);
@@ -1924,6 +1935,13 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updateMotorcycles(float dt) {
         for (int i = 0; i < trafficBikes.length; i++) {
             if (!bikeTrafficActive[i]) continue;
+            float dx = bikeTrafficX[i] - playerX;
+            float dz = bikeTrafficZ[i] - playerZ;
+            if (dx * dx + dz * dz > 6400.0f) {
+                trafficBikes[i].setVisible(false);
+                continue;
+            }
+            trafficBikes[i].setVisible(true);
             float a = bikeTrafficHeading[i] * 0.0174532925f;
             float nx = bikeTrafficX[i] - (float)Math.sin(a) * bikeTrafficSpeed[i] * dt;
             float nz = bikeTrafficZ[i] - (float)Math.cos(a) * bikeTrafficSpeed[i] * dt;
