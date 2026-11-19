@@ -8,10 +8,12 @@ The initial scene is intentionally small and procedural:
 
 - A compact urban test block with a road and simple buildings.
 - CJ assembled from separate low-poly body parts in Java.
-- One procedural sedan.
-- Third-person camera.
-- Walking, strafing, jumping, punching and entering/exiting the car.
-- Driving controls reuse the numeric keypad.
+- A larger procedural city with pedestrian sidewalks and street traffic.
+- Ten active low-poly pedestrians using twenty clothing/skin appearance presets.
+- Pedestrians wander, flee from CJ, or confront and shove him; punch interactions are arcade-style and non-graphic.
+- Three traffic vehicles patrol the long streets, can stop for ten seconds, and can be taken over.
+- Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver joins the pedestrian population.
+- Third-person camera, walking, jumping, punching and vehicle driving.
 
 ## Controls
 
@@ -22,8 +24,8 @@ The initial scene is intentionally small and procedural:
 | D-pad left / right | Orbit camera |
 | D-pad up / down | Adjust camera elevation |
 | 5 | Jump |
-| 1 | Punch |
-| 3 | Enter nearby car / exit car |
+| 1 | Punch / interact with nearby pedestrian |
+| 3 | Enter nearby parked/stopped car / exit car |
 
 When driving, 2 / 8 accelerate and reverse, while 4 / 6 steer.
 
@@ -33,7 +35,8 @@ When driving, 2 / 8 accelerate and reverse, while 4 / 6 steer.
 - `src/gta/GameCanvas.java` — input, game loop, scene and camera.
 - `src/gta/ModelFactory.java` — procedural M3G box geometry.
 - `src/gta/CJModel.java` — articulated player model.
-- `src/gta/CarModel.java` — first vehicle model.
+- `src/gta/CarModel.java` — low-poly sedan model.
+- `src/gta/PedestrianModel.java` — lightweight pedestrian model and appearance presets.
 
 ## Build notes
 
