@@ -52,7 +52,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private boolean switchApplied;
     private CarModel car;
     private MotorcycleModel playerBike;
-    private MotorcycleModel[] trafficBikes = new MotorcycleModel[3];
+    private MotorcycleModel[] trafficBikes = new MotorcycleModel[2];
     private float[] bikeTrafficX = new float[3], bikeTrafficZ = new float[3];
     private float[] bikeTrafficHeading = new float[3], bikeTrafficSpeed = new float[3];
     private boolean[] bikeTrafficActive = new boolean[3];
@@ -67,15 +67,15 @@ final class GameCanvas extends Canvas implements Runnable {
     private int cheatProgress;
     private long cheatLastKeyTime;
     private static final int[] JETPACK_CHEAT = {3,3,3,8,8,2,2,5,5};
-    private CarModel[] policeCars = new CarModel[3];
-    private float[] policeX = new float[3], policeZ = new float[3];
-    private boolean[] policeActive = new boolean[3];
+    private CarModel[] policeCars = new CarModel[2];
+    private float[] policeX = new float[2], policeZ = new float[2];
+    private boolean[] policeActive = new boolean[2];
     private int wantedLevel;
     private float wantedDecay, arrestTimer;
     private Image wantedStarOn, wantedStarOff;
     private Camera camera;
-    private static final int PED_COUNT = 28;
-    private static final int TRAFFIC_COUNT = 12;
+    private static final int PED_COUNT = 18;
+    private static final int TRAFFIC_COUNT = 6;
     private PedestrianModel[] pedestrians = new PedestrianModel[PED_COUNT];
     private boolean[] pedActive = new boolean[PED_COUNT];
     private int[] pedState = new int[PED_COUNT]; // 0 wander, 1 flee, 2 confront, 3 down
