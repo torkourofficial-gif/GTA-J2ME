@@ -50,6 +50,10 @@ final class GameCanvas extends Canvas implements Runnable {
     private float[] trafficX = new float[TRAFFIC_COUNT], trafficZ = new float[TRAFFIC_COUNT];
     private float[] trafficHeading = new float[TRAFFIC_COUNT], trafficSpeed = new float[TRAFFIC_COUNT];
     private float[] trafficStop = new float[TRAFFIC_COUNT], trafficHitCooldown = new float[TRAFFIC_COUNT];
+    private float[] trafficLaneX = new float[TRAFFIC_COUNT], trafficLaneCooldown = new float[TRAFFIC_COUNT];
+    private float playerRagdollTime, playerRagdollY, playerRagdollVX, playerRagdollVY, playerRagdollVZ;
+    private float playerRagdollRoll, playerRagdollPitch, playerRagdollRollSpeed, playerRagdollPitchSpeed;
+    private float playerCollisionCooldown;
     private float[] pedRagdollVX = new float[PED_COUNT], pedRagdollVY = new float[PED_COUNT];
     private float[] pedRagdollY = new float[PED_COUNT];
     private float[] pedRagdollVZ = new float[PED_COUNT];
@@ -253,6 +257,7 @@ final class GameCanvas extends Canvas implements Runnable {
         if (carTransition != 0) { updateCarTransition(dt); updateCamera(); return; }
         boolean moving = false;
         if (playerHitStun > 0.0f) playerHitStun -= dt;
+        if (playerCollisionCooldown > 0.0f) playerCollisionCooldown -= dt;
 
         if (inCar) {
             if ((keys & FORWARD) != 0) carSpeed += 3.2f * dt;
@@ -302,6 +307,9 @@ final class GameCanvas extends Canvas implements Runnable {
             playerHeading = carHeading;
             playerVelocityX = 0.0f;
             playerVelocityZ = 0.0f;
+        } else if (playerRagdollTime > 0.0f) {
+            updatePlayerRagdoll(dt);
+            moving = false;
         } else {
             float forward = 0.0f;
             float side = 0.0f;
@@ -400,8 +408,13 @@ final class GameCanvas extends Canvas implements Runnable {
         boolean jumping = !inCar && (playerY > 0.001f || jumpVelocity > 0.0f);
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
                                     ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
-        cj.animate(walkPhase, moving && !inCar, punchAngle,
-                   false, jumping, crouching, turnAmount);
+        if (playerRagdollTime > 0.0f) {
+            cj.animateRagdoll(playerRagdollRoll, playerRagdollPitch,
+                              playerRagdollRollSpeed, playerRagdollPitchSpeed);
+        } else {
+            cj.animate(walkPhase, moving && !inCar, punchAngle,
+                       false, jumping, crouching, turnAmount);
+        }
         updateCamera();
     }
 
@@ -647,19 +660,104 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void initializeTraffic() {
         // Nine low-poly traffic vehicles spread across the three main avenues.
-        float[] xs = {-28.0f, -28.0f, -28.0f, 0.0f, 0.0f, 0.0f, 28.0f, 28.0f, 28.0f};
-        float[] zs = {-66.0f, -4.0f, 58.0f, -48.0f, 16.0f, 70.0f, -62.0f, 2.0f, 54.0f};
-        float[] headings = {0.0f, 180.0f, 0.0f, 180.0f, 0.0f, 180.0f, 0.0f, 180.0f, 0.0f};
+        float[] xs = {-30.0f, -26.0f, -30.0f, -2.0f, 2.0f, -2.0f, 26.0f, 30.0f, 26.0f};
+        float[] zs = {-68.0f, -20.0f, 38.0f, -58.0f, -8.0f, 52.0f, -42.0f, 14.0f, 68.0f};
+        float[] headings = {0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f};
         int[] colors = {0xB72E32,0x315B91,0xD0B43B,0x39764B,0x777777,
                         0xD16A32,0x3D8587,0xB7B7B7,0x6B477E};
         for (int i = 0; i < trafficCars.length; i++) {
             trafficCars[i] = new CarModel(colors[i]);
             trafficX[i] = xs[i]; trafficZ[i] = zs[i];
+            trafficLaneX[i] = xs[i];
+            trafficLaneCooldown[i] = 1.0f + (i % 3) * 0.7f;
             trafficHeading[i] = headings[i];
             trafficSpeed[i] = 3.0f + (i % 4) * 0.42f;
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
+        }
+    }
+
+    private void updateTrafficLane(int index, float dt) {
+        if (trafficLaneCooldown[index] > 0.0f) trafficLaneCooldown[index] -= dt;
+        float dirZ = -(float)Math.cos(trafficHeading[index] * 0.0174532925f);
+        float roadCenter = (float)Math.round(trafficLaneX[index] / 28.0f) * 28.0f;
+        boolean blockedAhead = false;
+        for (int j = 0; j < trafficCars.length; j++) {
+            if (j == index || trafficCars[j] == null) continue;
+            if (Math.abs(normalizeAngle(trafficHeading[j] - trafficHeading[index])) > 35.0f) continue;
+            if (Math.abs(trafficX[j] - trafficX[index]) > 2.8f) continue;
+            float gap = (trafficZ[j] - trafficZ[index]) * dirZ;
+            if (gap > 0.0f && gap < 10.0f) { blockedAhead = true; break; }
+        }
+        if (blockedAhead && trafficLaneCooldown[index] <= 0.0f) {
+            float candidate = trafficLaneX[index] + (trafficLaneX[index] < roadCenter ? 4.0f : -4.0f);
+            boolean free = Math.abs(candidate - roadCenter) <= 3.0f;
+            for (int j = 0; j < trafficCars.length && free; j++) {
+                if (j == index || trafficCars[j] == null) continue;
+                if (Math.abs(trafficX[j] - candidate) < 2.7f &&
+                    Math.abs(trafficZ[j] - trafficZ[index]) < 9.0f) free = false;
+            }
+            if (free) {
+                trafficLaneX[index] = candidate;
+                trafficLaneCooldown[index] = 3.0f;
+            }
+        } else if (!blockedAhead && trafficLaneCooldown[index] <= 0.0f) {
+            trafficLaneX[index] += (roadCenter - trafficLaneX[index]) * 0.04f;
+        }
+        float dx = trafficLaneX[index] - trafficX[index];
+        float step = 1.7f * dt;
+        if (dx > step) dx = step;
+        else if (dx < -step) dx = -step;
+        trafficX[index] += dx;
+    }
+
+    private void beginPlayerRagdoll(float dirX, float sideX, float dirZ, float speed) {
+        float strength = speed * 0.72f;
+        if (strength < 2.0f) strength = 2.0f;
+        if (strength > 8.5f) strength = 8.5f;
+        playerRagdollTime = 2.1f;
+        playerRagdollY = 0.12f;
+        playerRagdollVX = dirX * strength + sideX * strength * 0.45f;
+        playerRagdollVY = 2.2f + strength * 0.30f;
+        playerRagdollVZ = dirZ * strength;
+        playerRagdollRoll = playerRagdollPitch = 0.0f;
+        playerRagdollRollSpeed = (randomInt(2) == 0 ? -1.0f : 1.0f) * (100.0f + strength * 15.0f);
+        playerRagdollPitchSpeed = (randomInt(2) == 0 ? -1.0f : 1.0f) * (90.0f + strength * 12.0f);
+        playerVelocityX = playerRagdollVX;
+        playerVelocityZ = playerRagdollVZ;
+        jumpVelocity = 0.0f;
+        reverseFacing = false;
+        keys = 0;
+    }
+
+    private void updatePlayerRagdoll(float dt) {
+        playerRagdollTime -= dt;
+        playerRagdollVY -= 9.8f * dt;
+        playerX += playerRagdollVX * dt;
+        playerZ += playerRagdollVZ * dt;
+        playerRagdollVX *= 0.965f;
+        playerRagdollVZ *= 0.965f;
+        playerRagdollRoll += playerRagdollRollSpeed * dt;
+        playerRagdollPitch += playerRagdollPitchSpeed * dt;
+        playerRagdollRollSpeed *= 0.965f;
+        playerRagdollPitchSpeed *= 0.965f;
+        playerRagdollY += playerRagdollVY * dt;
+        if (playerRagdollY <= 0.0f) {
+            playerRagdollY = 0.0f;
+            if (playerRagdollVY < -1.0f) playerRagdollVY = -playerRagdollVY * 0.14f;
+            else playerRagdollVY = 0.0f;
+            playerRagdollRollSpeed *= 0.72f;
+            playerRagdollPitchSpeed *= 0.72f;
+        }
+        playerY = playerRagdollY;
+        if (playerRagdollTime <= 0.0f && playerRagdollY <= 0.02f) {
+            playerRagdollTime = 0.0f;
+            playerY = 0.0f;
+            playerRagdollVX = playerRagdollVZ = 0.0f;
+            playerRagdollRollSpeed = playerRagdollPitchSpeed = 0.0f;
+            playerVelocityX = playerVelocityZ = 0.0f;
+            status = "GETTING BACK UP...";
         }
     }
 
@@ -670,6 +768,7 @@ final class GameCanvas extends Canvas implements Runnable {
             if (trafficStop[i] > 0.0f) {
                 trafficStop[i] -= dt;
             } else {
+                updateTrafficLane(i, dt);
                 float a = trafficHeading[i] * 0.0174532925f;
                 float nx = trafficX[i] - (float)Math.sin(a) * trafficSpeed[i] * dt;
                 float nz = trafficZ[i] - (float)Math.cos(a) * trafficSpeed[i] * dt;
@@ -680,27 +779,19 @@ final class GameCanvas extends Canvas implements Runnable {
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
 
-            if (!inCar && trafficHitCooldown[i] <= 0.0f) {
+            if (!inCar && playerRagdollTime <= 0.0f && playerCollisionCooldown <= 0.0f) {
                 float dx = playerX - trafficX[i], dz = playerZ - trafficZ[i];
                 float dist2 = dx * dx + dz * dz;
-                float frontX = -(float)Math.sin(trafficHeading[i] * 0.0174532925f);
-                float frontZ = -(float)Math.cos(trafficHeading[i] * 0.0174532925f);
-                float frontDot = dx * frontX + dz * frontZ;
-                if (dist2 < 7.0f && frontDot > 0.5f && trafficStop[i] <= 0.0f) {
-                    trafficHitCooldown[i] = 2.2f;
-                    if (randomInt(100) < 38) {
-                        trafficStop[i] = 10.0f;
-                        status = "DRIVER STOPPED - PRESS 3 TO TAKE CAR";
-                    } else {
-                        // Arcade-style knockback; no graphic injury depiction.
-                        float shove = trafficSpeed[i] * 0.32f;
-                        playerX += frontX * shove;
-                        playerZ += frontZ * shove;
-                        playerY = 0.22f;
-                        jumpVelocity = 2.8f;
-                        playerHitStun = 0.65f;
-                        status = "WATCH THE TRAFFIC!";
-                    }
+                if (dist2 < 3.8f && trafficSpeed[i] > 0.8f) {
+                    float a = trafficHeading[i] * 0.0174532925f;
+                    float fx = -(float)Math.sin(a), fz = -(float)Math.cos(a);
+                    float sx = (float)Math.cos(a), sz = -(float)Math.sin(a);
+                    float side = dx * sx + dz * sz;
+                    float direction = (dx * fx + dz * fz) >= 0.0f ? 1.0f : -1.0f;
+                    beginPlayerRagdoll(fx * direction, sx * (side >= 0.0f ? 0.45f : -0.45f),
+                                       fz * direction, trafficSpeed[i]);
+                    playerCollisionCooldown = 1.8f;
+                    status = "HIT BY TRAFFIC!";
                 }
             }
         }
@@ -791,7 +882,8 @@ final class GameCanvas extends Canvas implements Runnable {
             pedPhase[i] += dt * (running ? 12.0f : 7.0f);
             pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
             pedestrians[i].setHeading(pedHeading[i]);
-            pedestrians[i].animate(pedPhase[i], speed > 0.1f, running, false);
+            if (pedState[i] == 1) pedestrians[i].animateRunAway(pedPhase[i]);
+            else pedestrians[i].animate(pedPhase[i], speed > 0.1f, running, false);
         }
     }
 
@@ -911,10 +1003,10 @@ final class GameCanvas extends Canvas implements Runnable {
             float driverZ = trafficZ[i] - side * 2.0f * (float)Math.sin(a);
             int driver = spawnPedestrian(driverX, driverZ, trafficHeading[i] + 90.0f);
             if (driver >= 0) {
-                // The ejected driver tumbles onto the pavement and settles.
-                float kickX = side * (float)Math.cos(a) * 2.0f;
-                float kickZ = -side * (float)Math.sin(a) * 2.0f;
-                beginPedRagdoll(driver, kickX, 3.1f, kickZ);
+                // The former driver gets up immediately and runs away.
+                pedState[driver] = 1;
+                pedTimer[driver] = 8.0f;
+                pedAttackCooldown[driver] = 4.0f;
             }
             trafficDriverEjected = true;
         }
