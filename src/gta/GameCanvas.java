@@ -41,6 +41,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private Group regionalRoads;
     private Group[] regionChunks = new Group[6];
     private Group[][] cityChunks = new Group[CITY_BLOCKS][CITY_BLOCKS];
+    private boolean[][] cityCollisionRecorded = new boolean[CITY_BLOCKS][CITY_BLOCKS];
     private int activeChunkX = -99, activeChunkZ = -99;
     private CJModel cj;
     private CJModel secondProtagonist;
@@ -237,100 +238,7 @@ final class GameCanvas extends Canvas implements Runnable {
         // downtown strip, and lower residential/commercial blocks inland.
         // Buildings remain simple boxes so the scene stays suitable for J2ME.
         debugStage = "create city buildings";
-        buildingCount = 0;
-        for (int bz = 0; bz < CITY_BLOCKS; bz++) {
-            for (int bx = 0; bx < CITY_BLOCKS; bx++) {
-                Group chunk = new Group();
-                cityChunks[bx][bz] = chunk;
-                scenery.addChild(chunk);
-                float x = (bx - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
-                float z = (bz - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
-                int seed = bx * 17 + bz * 31 + bx * bz * 3;
-                int district = bz < 3 ? 0 : (bz < 7 ? 1 : 2);
-                int type = Math.abs(seed) % 8;
-                float width = 10.5f + (Math.abs(seed / 3) % 5) * 1.15f;
-                float depth = 10.5f + (Math.abs(seed / 7) % 5) * 1.05f;
-                float height;
-                if (district == 0) height = 12.0f + (type % 4) * 4.0f;
-                else if (district == 1) height = 9.0f + (type % 6) * 3.0f;
-                else height = 4.5f + (type % 4) * 2.0f;
-                x += ((seed % 3) - 1) * 1.0f;
-                z += (((seed / 2) % 3) - 1) * 1.0f;
-
-                int color;
-                switch (type) {
-                    case 0: color = 0xF0B6A1; break; // coral
-                    case 1: color = 0xF0D6A0; break; // warm cream
-                    case 2: color = 0x91C9C2; break; // seafoam
-                    case 3: color = 0xE8A9B8; break; // pink
-                    case 4: color = 0xA8B8D8; break; // faded blue
-                    case 5: color = 0xE8D9C4; break; // art-deco ivory
-                    case 6: color = 0xD49B78; break; // peach
-                    default: color = 0xB8C99A; break; // pale green
-                }
-
-                // Street palms: repeat a light tropical rhythm without
-                // filling every block with expensive geometry.
-                if (((bx * 3 + bz * 5) % 3) == 0) {
-                    addPalmTree(chunk, x - 7.2f, z - 7.0f);
-                    addPalmTree(chunk, x + 7.2f, z + 7.0f);
-                }
-
-                boolean park = (Math.abs(seed) % 13) == 0;
-                if (park) {
-                    addBox(chunk, 16.0f, 0.12f, 16.0f, x, 0.02f, z, 0x54865B);
-                    addBox(chunk, 1.4f, 0.08f, 14.0f, x, 0.09f, z, 0xD4C5A5);
-                    addBox(chunk, 14.0f, 0.08f, 1.4f, x, 0.10f, z, 0xD4C5A5);
-                    addPalmTree(chunk, x - 5.0f, z - 5.0f);
-                    addPalmTree(chunk, x + 5.0f, z - 5.0f);
-                    addTree(chunk, x + 5.0f, z + 5.0f);
-                } else {
-                    // Main facade and a flat roof/parapet, classic Miami skyline.
-                    addTexturedBox(chunk, width, height, depth, x, height * 0.5f, z,
-                                  color, 4);
-                    int trim = district == 0 ? 0xF7E7D0 : 0x786B67;
-                    addBox(chunk, width + 0.28f, 0.28f, depth + 0.28f,
-                           x, height + 0.14f, z, trim);
-
-                    // Art-deco vertical fins and rooftop crown on selected towers.
-                    if (district == 0 || type == 2 || type == 5) {
-                        addBox(chunk, 0.28f, height + 0.45f, 0.32f,
-                               x - width * 0.34f, height * 0.5f, z + depth * 0.5f + 0.17f,
-                               0xF8E9D5);
-                        addBox(chunk, 0.28f, height + 0.45f, 0.32f,
-                               x + width * 0.34f, height * 0.5f, z + depth * 0.5f + 0.17f,
-                               0xF8E9D5);
-                        if (district == 0) {
-                            addBox(chunk, width * 0.42f, 0.65f, depth * 0.72f,
-                                   x, height + 0.58f, z, color);
-                        }
-                    }
-
-                    // Ground-floor shopfronts, balconies/windows on only some
-                    // blocks to create a varied street rhythm without excess meshes.
-                    addBox(chunk, 1.25f, 1.55f, 0.09f, x, 0.78f,
-                           z + depth * 0.5f + 0.06f, 0x493D3B);
-                    if ((type & 1) == 0) {
-                        addBox(chunk, 1.05f, 1.05f, 0.08f, x - 2.7f, 2.0f,
-                               z + depth * 0.5f + 0.07f, 0x78AFC0);
-                        addBox(chunk, 1.05f, 1.05f, 0.08f, x + 2.7f, 2.0f,
-                               z + depth * 0.5f + 0.07f, 0x78AFC0);
-                    }
-                    if (district == 1 && type == 3) {
-                        addBox(chunk, width * 0.72f, 0.22f, 0.45f,
-                               x, 3.2f, z + depth * 0.5f + 0.22f, 0xF4D58A);
-                    }
-                }
-
-                if (!park) {
-                    buildingX[buildingCount] = x;
-                    buildingZ[buildingCount] = z;
-                    buildingW[buildingCount] = width;
-                    buildingD[buildingCount] = depth;
-                    buildingCount++;
-                }
-            }
-        }
+        // City blocks are generated on demand around the player.
 
         debugStage = "create Leonida regions";
         createLeonidaRegions();
@@ -372,6 +280,99 @@ final class GameCanvas extends Canvas implements Runnable {
         debugStage = "scene ready";
     }
 
+    private void buildCityChunk(int bx, int bz) {
+        Group chunk = new Group();
+        cityChunks[bx][bz] = chunk;
+        scenery.addChild(chunk);
+        float x = (bx - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
+        float z = (bz - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
+        int seed = bx * 17 + bz * 31 + bx * bz * 3;
+        int district = bz < 3 ? 0 : (bz < 7 ? 1 : 2);
+        int type = Math.abs(seed) % 8;
+        float width = 10.5f + (Math.abs(seed / 3) % 5) * 1.15f;
+        float depth = 10.5f + (Math.abs(seed / 7) % 5) * 1.05f;
+        float height;
+        if (district == 0) height = 12.0f + (type % 4) * 4.0f;
+        else if (district == 1) height = 9.0f + (type % 6) * 3.0f;
+        else height = 4.5f + (type % 4) * 2.0f;
+        x += ((seed % 3) - 1) * 1.0f;
+        z += (((seed / 2) % 3) - 1) * 1.0f;
+
+        int color;
+        switch (type) {
+            case 0: color = 0xF0B6A1; break; // coral
+            case 1: color = 0xF0D6A0; break; // warm cream
+            case 2: color = 0x91C9C2; break; // seafoam
+            case 3: color = 0xE8A9B8; break; // pink
+            case 4: color = 0xA8B8D8; break; // faded blue
+            case 5: color = 0xE8D9C4; break; // art-deco ivory
+            case 6: color = 0xD49B78; break; // peach
+            default: color = 0xB8C99A; break; // pale green
+        }
+
+        // Street palms: repeat a light tropical rhythm without
+        // filling every block with expensive geometry.
+        if (((bx * 3 + bz * 5) % 3) == 0) {
+            addPalmTree(chunk, x - 7.2f, z - 7.0f);
+            addPalmTree(chunk, x + 7.2f, z + 7.0f);
+        }
+
+        boolean park = (Math.abs(seed) % 13) == 0;
+        if (park) {
+            addBox(chunk, 16.0f, 0.12f, 16.0f, x, 0.02f, z, 0x54865B);
+            addBox(chunk, 1.4f, 0.08f, 14.0f, x, 0.09f, z, 0xD4C5A5);
+            addBox(chunk, 14.0f, 0.08f, 1.4f, x, 0.10f, z, 0xD4C5A5);
+            addPalmTree(chunk, x - 5.0f, z - 5.0f);
+            addPalmTree(chunk, x + 5.0f, z - 5.0f);
+            addTree(chunk, x + 5.0f, z + 5.0f);
+        } else {
+            // Main facade and a flat roof/parapet, classic Miami skyline.
+            addTexturedBox(chunk, width, height, depth, x, height * 0.5f, z,
+                          color, 4);
+            int trim = district == 0 ? 0xF7E7D0 : 0x786B67;
+            addBox(chunk, width + 0.28f, 0.28f, depth + 0.28f,
+                   x, height + 0.14f, z, trim);
+
+            // Art-deco vertical fins and rooftop crown on selected towers.
+            if (district == 0 || type == 2 || type == 5) {
+                addBox(chunk, 0.28f, height + 0.45f, 0.32f,
+                       x - width * 0.34f, height * 0.5f, z + depth * 0.5f + 0.17f,
+                       0xF8E9D5);
+                addBox(chunk, 0.28f, height + 0.45f, 0.32f,
+                       x + width * 0.34f, height * 0.5f, z + depth * 0.5f + 0.17f,
+                       0xF8E9D5);
+                if (district == 0) {
+                    addBox(chunk, width * 0.42f, 0.65f, depth * 0.72f,
+                           x, height + 0.58f, z, color);
+                }
+            }
+
+            // Ground-floor shopfronts, balconies/windows on only some
+            // blocks to create a varied street rhythm without excess meshes.
+            addBox(chunk, 1.25f, 1.55f, 0.09f, x, 0.78f,
+                   z + depth * 0.5f + 0.06f, 0x493D3B);
+            if ((type & 1) == 0) {
+                addBox(chunk, 1.05f, 1.05f, 0.08f, x - 2.7f, 2.0f,
+                       z + depth * 0.5f + 0.07f, 0x78AFC0);
+                addBox(chunk, 1.05f, 1.05f, 0.08f, x + 2.7f, 2.0f,
+                       z + depth * 0.5f + 0.07f, 0x78AFC0);
+            }
+            if (district == 1 && type == 3) {
+                addBox(chunk, width * 0.72f, 0.22f, 0.45f,
+                       x, 3.2f, z + depth * 0.5f + 0.22f, 0xF4D58A);
+            }
+        }
+
+        if (!park) {
+            buildingX[buildingCount] = x;
+            buildingZ[buildingCount] = z;
+            buildingW[buildingCount] = width;
+            buildingD[buildingCount] = depth;
+            buildingCount++;
+        }
+        cityCollisionRecorded[bx][bz] = true;
+    }
+
     private void updateCityChunks() {
         float cityDistance2 = playerX * playerX + playerZ * playerZ;
         boolean inCity = cityDistance2 < 205.0f * 205.0f;
@@ -384,7 +385,14 @@ final class GameCanvas extends Canvas implements Runnable {
             for (int z = 0; z < CITY_BLOCKS; z++) {
                 int dx = x - cx; if (dx < 0) dx = -dx;
                 int dz = z - cz; if (dz < 0) dz = -dz;
-                cityChunks[x][z].setRenderingEnable(inCity && dx <= 2 && dz <= 2);
+                boolean nearby = inCity && dx <= 2 && dz <= 2;
+                Group chunk = cityChunks[x][z];
+                if (nearby) {
+                    if (chunk == null) buildCityChunk(x, z);
+                } else if (chunk != null) {
+                    scenery.removeChild(chunk);
+                    cityChunks[x][z] = null;
+                }
             }
         }
         if (regionChunks[0] != null) {
