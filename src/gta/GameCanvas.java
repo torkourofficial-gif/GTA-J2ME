@@ -2,6 +2,7 @@ package gta;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Group;
@@ -60,6 +61,10 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void initializeScene() {
         world = new World();
+        Background sky = new Background();
+        sky.setColor(0x87B6D8);
+        sky.setColorClearEnable(true);
+        world.setBackground(sky);
         scenery = new Group();
         world.addChild(scenery);
 
