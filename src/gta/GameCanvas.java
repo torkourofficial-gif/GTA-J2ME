@@ -1640,6 +1640,8 @@ final class GameCanvas extends Canvas implements Runnable {
                 }
                 playerX = policeX[0] + 2.0f; playerZ = policeZ[0] + 2.0f;
                 playerY = 0.0f; playerRagdollTime = 0.0f;
+                activeCharacter().setVisible(true);
+                activeCharacter().setPosition(playerX, playerY, playerZ);
                 status = "BUSTED - ARRESTED";
                 for (int j = 0; j < policeCars.length; j++) {
                     policeActive[j] = false;
