@@ -75,7 +75,7 @@ final class CarModel {
     void setDoorOpen(float degrees) {
         if (degrees < 0.0f) degrees = 0.0f;
         if (degrees > 72.0f) degrees = 72.0f;
-        driverDoor.setOrientation(degrees, 0.0f, 1.0f, 0.0f);
+        driverDoor.setOrientation(-degrees, 0.0f, 1.0f, 0.0f);
     }
 
     void setPosition(float x, float y, float z) {
