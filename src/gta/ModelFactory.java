@@ -70,9 +70,11 @@ final class ModelFactory {
                         r -= 7; g -= 7; b -= 6;
                     }
                 } else if (kind == 5) {
-                    // Warm skin grain with subtle tonal variation.
-                    r = 166 + noise * 3; g = 103 + noise * 3; b = 72 + noise * 3;
-                    if ((x * 3 + y * 5) % 19 == 0) { r += 8; g += 5; b += 4; }
+                    // Nearly neutral warm skin grain. The mesh vertex color
+                    // supplies each protagonist's actual skin tone; this
+                    // texture must not force every character toward CJ's tone.
+                    r = 250 + noise; g = 246 + noise; b = 240 + noise;
+                    if ((x * 3 + y * 5) % 19 == 0) { r -= 5; g -= 4; b -= 3; }
                 } else if (kind == 6) {
                     // Blue denim: diagonal twill-like variation and seams.
                     r = 48 + noise * 2; g = 70 + noise * 2; b = 111 + noise * 3;
