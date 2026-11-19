@@ -412,16 +412,35 @@ final class GameCanvas extends Canvas implements Runnable {
         if (cameraPitch > 35.0f) cameraPitch = 35.0f;
     }
 
-    // Java ME compatibility: calculate atan2 without relying on Math.atan2.
+    // Java ME compatibility: atan2 approximation using only basic arithmetic.
+    // Returns radians in the range [-PI, PI], without Math.atan/atan2.
     private double atan2Compat(double y, double x) {
-        if (x > 0.0) return Math.atan(y / x);
-        if (x < 0.0) {
-            if (y >= 0.0) return Math.atan(y / x) + Math.PI;
-            return Math.atan(y / x) - Math.PI;
+        if (x == 0.0) {
+            if (y > 0.0) return 1.5707963267948966;
+            if (y < 0.0) return -1.5707963267948966;
+            return 0.0;
         }
-        if (y > 0.0) return Math.PI * 0.5;
-        if (y < 0.0) return -Math.PI * 0.5;
-        return 0.0;
+
+        double ay = y < 0.0 ? -y : y;
+        double ax = x < 0.0 ? -x : x;
+        double angle;
+        if (ax >= ay) {
+            double r = ay / ax;
+            double r2 = r * r;
+            // Minimax-style polynomial approximation for atan(r), 0..1.
+            angle = r * (0.9998660 + r2 * (-0.3302995 +
+                    r2 * (0.1801410 + r2 * (-0.0851330 + r2 * 0.0208351))));
+        } else {
+            double r = ax / ay;
+            double r2 = r * r;
+            double small = r * (0.9998660 + r2 * (-0.3302995 +
+                    r2 * (0.1801410 + r2 * (-0.0851330 + r2 * 0.0208351))));
+            angle = 1.5707963267948966 - small;
+        }
+
+        if (x < 0.0) angle = 3.141592653589793 - angle;
+        if (y < 0.0) angle = -angle;
+        return angle;
     }
 
     private float normalizeAngle(float angle) {
