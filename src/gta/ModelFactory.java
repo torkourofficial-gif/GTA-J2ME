@@ -1,7 +1,6 @@
 package gta;
 
 import javax.microedition.m3g.Appearance;
-import javax.microedition.m3g.Material;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
@@ -51,14 +50,10 @@ final class ModelFactory {
         int[] strips = new int[] {4,4,4,4,4,4};
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
 
-        Material material = new Material();
-        int opaqueColor = color | 0xFF000000;
-        material.setColor(Material.DIFFUSE, opaqueColor);
-        material.setColor(Material.AMBIENT, opaqueColor);
-        material.setShininess(0.0f);
-
+        // No material/lighting is needed for these flat-color prototype meshes.
+        // A default vertex-buffer color keeps the geometry opaque and cheap.
+        vertices.setDefaultColor(color | 0xFF000000);
         Appearance appearance = new Appearance();
-        appearance.setMaterial(material);
 
         return new Mesh(vertices, triangles, appearance);
     }
