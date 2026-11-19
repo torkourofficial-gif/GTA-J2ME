@@ -559,17 +559,17 @@ final class GameCanvas extends Canvas implements Runnable {
         if (punchTimer < 0.0f) punchTimer = 0.0f;
         float punchAngle = punchTimer > 0.0f ? (float)Math.sin((0.35f - punchTimer) * 18.0f) * 75.0f : 0.0f;
 
-        cj.setPosition(playerX, playerY, playerZ);
-        cj.setHeading(playerHeading);
+        activeCharacter().setPosition(playerX, playerY, playerZ);
+        activeCharacter().setHeading(playerHeading);
         boolean crouching = !inCar && (keys & CROUCH) != 0;
         boolean jumping = !inCar && (playerY > 0.001f || jumpVelocity > 0.0f);
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
                                     ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
         if (playerRagdollTime > 0.0f) {
-            cj.animateRagdoll(dt, playerRagdollRoll, playerRagdollPitch,
+            activeCharacter().animateRagdoll(dt, playerRagdollRoll, playerRagdollPitch,
                               playerRagdollRollSpeed, playerRagdollPitchSpeed);
         } else {
-            cj.animate(walkPhase, moving && !inCar, punchAngle,
+            activeCharacter().animate(walkPhase, moving && !inCar, punchAngle,
                        false, jumping, crouching, turnAmount);
         }
         debugStage = "camera update";
@@ -626,6 +626,10 @@ final class GameCanvas extends Canvas implements Runnable {
         return angle;
     }
 
+
+    private CJModel activeCharacter() {
+        return luciaActive ? secondProtagonist : cj;
+    }
 
     private void beginCharacterSwitch() {
         if (characterSwitching || inCar || carTransition != 0 || playerRagdollTime > 0.0f) return;
@@ -778,10 +782,10 @@ final class GameCanvas extends Canvas implements Runnable {
             status = "EXITING VEHICLE...";
         }
         playerY = 0.0f;
-        cj.setPosition(playerX, playerY, playerZ);
-        cj.setHeading(playerHeading);
-        cj.setVisible(true);
-        cj.setEntryPose(entering ? 0.0f : 1.0f, entering);
+        activeCharacter().setPosition(playerX, playerY, playerZ);
+        activeCharacter().setHeading(playerHeading);
+        activeCharacter().setVisible(true);
+        activeCharacter().setEntryPose(entering ? 0.0f : 1.0f, entering);
         car.setDoorOpen(0.0f, transitionDriverSide);
     }
 
@@ -817,26 +821,26 @@ final class GameCanvas extends Canvas implements Runnable {
         float moveSmooth = moveT * moveT * (3.0f - 2.0f * moveT);
         playerX = transitionStartX + (transitionEndX - transitionStartX) * moveSmooth;
         playerZ = transitionStartZ + (transitionEndZ - transitionStartZ) * moveSmooth;
-        cj.setPosition(playerX, playerY, playerZ);
-        cj.setHeading(normalizeAngle(carHeading + 90.0f));
+        activeCharacter().setPosition(playerX, playerY, playerZ);
+        activeCharacter().setHeading(normalizeAngle(carHeading + 90.0f));
         float pose = carTransition == 1 ? moveSmooth : 1.0f - moveSmooth;
-        cj.setEntryPose(pose, carTransition == 1);
+        activeCharacter().setEntryPose(pose, carTransition == 1);
 
         if (t >= 1.0f) {
             car.setDoorOpen(0.0f, transitionDriverSide);
-            cj.setEntryPose(0.0f, carTransition == 1);
+            activeCharacter().setEntryPose(0.0f, carTransition == 1);
             if (carTransition == 1) {
                 inCar = true;
-                cj.setVisible(false);
+                activeCharacter().setVisible(false);
                 playerX = carX;
                 playerZ = carZ;
                 status = "DRIVING  |  3 EXIT";
             } else {
                 inCar = false;
-                cj.setVisible(true);
+                activeCharacter().setVisible(true);
                 playerX = transitionEndX;
                 playerZ = transitionEndZ;
-                cj.setPosition(playerX, playerY, playerZ);
+                activeCharacter().setPosition(playerX, playerY, playerZ);
                 status = "ON FOOT  |  3 ENTER CAR";
             }
             carTransition = 0;
@@ -1250,9 +1254,9 @@ final class GameCanvas extends Canvas implements Runnable {
         float a = trafficHeading[i] * 0.0174532925f;
         float outsideX = trafficX[i] + side * 1.28f * (float)Math.cos(a) - 0.25f * (float)Math.sin(a);
         float outsideZ = trafficZ[i] - side * 1.28f * (float)Math.sin(a) - 0.25f * (float)Math.cos(a);
-        cj.setVisible(true);
-        cj.setPosition(outsideX, 0.0f, outsideZ);
-        cj.setHeading(normalizeAngle(trafficHeading[i] + 90.0f));
+        activeCharacter().setVisible(true);
+        activeCharacter().setPosition(outsideX, 0.0f, outsideZ);
+        activeCharacter().setHeading(normalizeAngle(trafficHeading[i] + 90.0f));
         if (t > 0.25f && !trafficDriverEjected) {
             // The driver is converted into an ordinary fleeing pedestrian.
             float driverX = trafficX[i] + side * 2.0f * (float)Math.cos(a);
@@ -1267,10 +1271,10 @@ final class GameCanvas extends Canvas implements Runnable {
             trafficDriverEjected = true;
         }
         if (t < 0.65f) {
-            cj.setEntryPose(Math.min(1.0f, t / 0.65f), false);
+            activeCharacter().setEntryPose(Math.min(1.0f, t / 0.65f), false);
         } else {
             float enter = Math.min(1.0f, (t - 0.65f) / 0.75f);
-            cj.setEntryPose(enter, true);
+            activeCharacter().setEntryPose(enter, true);
         }
         if (t >= 1.4f) {
             car = target;
@@ -1278,8 +1282,8 @@ final class GameCanvas extends Canvas implements Runnable {
             carSpeed = 0.0f; carSteering = 0.0f;
             trafficCars[i] = null;
             inCar = true;
-            cj.setVisible(false);
-            cj.setEntryPose(0.0f, true);
+            activeCharacter().setVisible(false);
+            activeCharacter().setEntryPose(0.0f, true);
             playerX = carX; playerZ = carZ; playerHeading = carHeading;
             carTransition = 0; trafficHijackIndex = -1;
             status = "STOLEN CAR  |  3 EXIT";
