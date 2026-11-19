@@ -788,6 +788,7 @@ final class GameCanvas extends Canvas implements Runnable {
         int nearbyBike = findNearbyMotorcycle();
         if (!inCar && nearbyBike != -2) {
             if (nearbyBike >= 0) {
+                addWanted(1);
                 bikeSourceIndex = nearbyBike;
                 bikeX = bikeTrafficX[nearbyBike];
                 bikeZ = bikeTrafficZ[nearbyBike];
