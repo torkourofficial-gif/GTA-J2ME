@@ -229,20 +229,22 @@ final class GameCanvas extends Canvas implements Runnable {
         if (inCar) {
             if ((keys & FORWARD) != 0) carSpeed += 3.2f * dt;
             if ((keys & BACK) != 0) carSpeed -= 3.0f * dt;
-            float steeringInput = ((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
-                                  ((keys & LEFT) != 0 ? 1.0f : 0.0f);
+            float steeringInput = ((keys & LEFT) != 0 ? 1.0f : 0.0f) -
+                                  ((keys & RIGHT) != 0 ? 1.0f : 0.0f);
             float steeringTarget = steeringInput * 28.0f;
             carSteering += (steeringTarget - carSteering) * Math.min(1.0f, 7.0f * dt);
             carSpeed *= 0.985f;
             if (carSpeed > 8.0f) carSpeed = 8.0f;
             if (carSpeed < -3.0f) carSpeed = -3.0f;
-            // Front-wheel steering: with RIGHT-LEFT input, positive yaw
-            // makes a left input curve toward world-space left.
+            // The car model's front points along local -Z. Under M3G's
+            // positive Y rotation that forward vector turns toward world -X,
+            // so left steering must produce positive yaw.
             float steeringRad = carSteering * 0.0174532925f;
             float yawRate = (float)Math.tan(steeringRad) * carSpeed / 2.45f;
             carHeading = normalizeAngle(carHeading + yawRate * 57.29578f * dt);
             float radians = carHeading * 0.0174532925f;
-            float moveX = (float)Math.sin(radians) * carSpeed * dt;
+            // Keep translation aligned with the model's rotated local -Z.
+            float moveX = -(float)Math.sin(radians) * carSpeed * dt;
             float moveZ = -(float)Math.cos(radians) * carSpeed * dt;
             float nextX = carX + moveX;
             float nextZ = carZ + moveZ;
