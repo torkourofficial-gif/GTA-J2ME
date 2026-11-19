@@ -186,7 +186,7 @@ final class ModelFactory {
         VertexBuffer vertices = new VertexBuffer();
         vertices.setPositions(positions, 0.001f, null);
         if (includeTexCoords) {
-        short[] uv = new short[] {
+            short[] uv = new short[] {
                 0,0, 1000,0, 0,1000, 1000,1000,
                 0,0, 1000,0, 0,1000, 1000,1000,
                 0,0, 1000,0, 0,1000, 1000,1000,
@@ -197,8 +197,7 @@ final class ModelFactory {
             VertexArray texCoords = new VertexArray(24, 2, 2);
             texCoords.set(0, 24, uv);
             vertices.setTexCoords(0, texCoords, 0.001f, null);
-    
-            }
+        }
         int[] strips = new int[] {4,4,4,4,4,4};
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
 
