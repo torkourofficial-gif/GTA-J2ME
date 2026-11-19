@@ -124,21 +124,26 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void initializeScene() {
+        debugStage = "create M3G world";
         world = new World();
+        debugStage = "create background";
         Background sky = new Background();
         sky.setColor(0x87B6D8);
         sky.setColorClearEnable(true);
         world.setBackground(sky);
+        debugStage = "create fog";
         Fog fog = new Fog();
         fog.setColor(0x87B6D8);
         fog.setLinear(48.0f, 112.0f);
         ModelFactory.setFog(fog);
+        debugStage = "create scenery group";
         scenery = new Group();
         world.addChild(scenery);
 
         // Tile ground and roads: vertex coordinates are signed 16-bit
         // millimetres, so a single 190 m mesh overflows and gets clamped.
         // Keep each piece at 28 m so the entire city floor remains visible.
+        debugStage = "create ground tiles";
         for (int tx = -2; tx <= 2; tx++) {
             for (int tz = -2; tz <= 2; tz++) {
                 float tileX = tx * CITY_SPACING;
@@ -147,6 +152,7 @@ final class GameCanvas extends Canvas implements Runnable {
                        tileX, -0.12f, tileZ, 0x777777);
             }
         }
+        debugStage = "create road meshes";
         for (int i = -5; i <= 5; i++) {
             float road = i * CITY_SPACING;
             for (int segment = -5; segment <= 5; segment++) {
@@ -160,6 +166,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
         // One simple building per block for now. Varying footprints and heights
         // make the skyline less repetitive while keeping the scene inexpensive.
+        debugStage = "create city buildings";
         buildingCount = 0;
         for (int bz = 0; bz < CITY_BLOCKS; bz++) {
             for (int bx = 0; bx < CITY_BLOCKS; bx++) {
@@ -219,24 +226,31 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
 
+        debugStage = "create CJ model";
         cj = new CJModel();
         cj.setPosition(playerX, playerY, playerZ);
         world.addChild(cj.root);
 
+        debugStage = "create player car";
         car = new CarModel();
         car.setPosition(carX, 0.0f, carZ);
         world.addChild(car.root);
 
+        debugStage = "initialize pedestrians";
         initializePedestrians();
+        debugStage = "initialize traffic";
         initializeTraffic();
 
+        debugStage = "create camera";
         camera = new Camera();
         camera.setPerspective(62.0f, 1.0f, 0.25f, 120.0f);
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
 
+        debugStage = "initial camera setup";
         updateCamera();
+        debugStage = "scene ready";
     }
 
     private void updateCityChunks() {
@@ -275,6 +289,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void addBox(Group parent, float w, float h, float d,
                         float x, float y, float z, int color) {
+        debugStage = "create box mesh";
         javax.microedition.m3g.Mesh mesh = ModelFactory.box(w, h, d, color);
         mesh.setTranslation(x, y, z);
         parent.addChild(mesh);
@@ -726,7 +741,8 @@ final class GameCanvas extends Canvas implements Runnable {
                       -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f};
         float[] pz = {-70.0f, -70.0f, -56.0f, -56.0f, -42.0f, -42.0f, -28.0f, -28.0f, -14.0f, -14.0f,
                        0.0f, 0.0f, 14.0f, 14.0f, 28.0f, 28.0f, 42.0f, 42.0f, 56.0f, 56.0f};
-        for (int i = 0; i < PED_COUNT; i++) {
+        for (int i = 0; i < px.length && i < PED_COUNT; i++) {
+            debugStage = "create pedestrian " + i;
             pedestrians[i] = new PedestrianModel(i);
             world.addChild(pedestrians[i].root);
             pedActive[i] = true;
@@ -749,7 +765,8 @@ final class GameCanvas extends Canvas implements Runnable {
         float[] headings = {0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f};
         int[] colors = {0xB72E32,0x315B91,0xD0B43B,0x39764B,0x777777,
                         0xD16A32,0x3D8587,0xB7B7B7,0x6B477E};
-        for (int i = 0; i < trafficCars.length; i++) {
+        for (int i = 0; i < xs.length && i < trafficCars.length; i++) {
+            debugStage = "create traffic car " + i;
             trafficCars[i] = new CarModel(colors[i]);
             trafficX[i] = xs[i]; trafficZ[i] = zs[i];
             trafficLaneX[i] = xs[i];
