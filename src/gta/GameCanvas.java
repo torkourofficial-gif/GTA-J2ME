@@ -415,7 +415,7 @@ final class GameCanvas extends Canvas implements Runnable {
         g.fillRect(0, 0, getWidth(), 17);
         g.setColor(0xFFFFFF);
         g.drawString(status, 3, 1, Graphics.TOP | Graphics.LEFT);
-        g.drawString("2/8 MOVE  4/6 STRAFE  D-PAD CAMERA", 3,
+        g.drawString("2/8 MOVE  4/6 TURN  9 CROUCH  D-PAD CAMERA", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
     }
 }
