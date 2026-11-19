@@ -58,6 +58,48 @@ final class ModelFactory {
         return new Mesh(vertices, triangles, appearance);
     }
 
+
+    /** Low-poly ellipsoid for organic body parts; uses compact triangle strips. */
+    static Mesh ellipsoid(float width, float height, float depth, int color) {
+        final int rings = 7;
+        final int segments = 8;
+        int vertexCount = (rings + 1) * (segments + 1);
+        short[] p = new short[vertexCount * 3];
+        int out = 0;
+        for (int r = 0; r <= rings; r++) {
+            double lat = -Math.PI * 0.5 + Math.PI * r / rings;
+            float ringRadius = (float)Math.cos(lat);
+            float y = (float)Math.sin(lat) * height * 0.5f;
+            for (int s = 0; s <= segments; s++) {
+                double lon = Math.PI * 2.0 * s / segments;
+                float x = (float)Math.cos(lon) * ringRadius * width * 0.5f;
+                float z = (float)Math.sin(lon) * ringRadius * depth * 0.5f;
+                p[out++] = mm(x);
+                p[out++] = mm(y);
+                p[out++] = mm(z);
+            }
+        }
+        VertexArray positions = new VertexArray(vertexCount, 3, 2);
+        positions.set(0, vertexCount, p);
+        VertexBuffer vertices = new VertexBuffer();
+        vertices.setPositions(positions, 0.001f, null);
+        int[] strips = new int[rings];
+        for (int r = 0; r < rings; r++) strips[r] = (segments + 1) * 2;
+        int[] indices = new int[rings * (segments + 1) * 2];
+        int n = 0;
+        for (int r = 0; r < rings; r++) {
+            for (int s = 0; s <= segments; s++) {
+                indices[n++] = r * (segments + 1) + s;
+                indices[n++] = (r + 1) * (segments + 1) + s;
+            }
+        }
+        // TriangleStripArray's implicit constructor uses contiguous vertices;
+        // each strip starts after the preceding strip's vertex range.
+        TriangleStripArray triangles = new TriangleStripArray(0, strips);
+        vertices.setDefaultColor(color | 0xFF000000);
+        return new Mesh(vertices, triangles, new Appearance());
+    }
+
     private static short mm(float value) {
         int v = (int)(value * 1000.0f);
         if (v > 32767) v = 32767;
