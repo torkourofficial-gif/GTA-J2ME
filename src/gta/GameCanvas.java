@@ -43,6 +43,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private boolean characterSwitching;
     private float characterSwitchTime;
     private float switchFromX, switchFromZ, switchToX, switchToZ;
+    private boolean switchApplied;
     private CarModel car;
     private Camera camera;
     private static final int PED_COUNT = 28;
@@ -623,6 +624,51 @@ final class GameCanvas extends Canvas implements Runnable {
         while (angle > 180.0f) angle -= 360.0f;
         while (angle < -180.0f) angle += 360.0f;
         return angle;
+    }
+
+
+    private void beginCharacterSwitch() {
+        if (characterSwitching || inCar || carTransition != 0 || playerRagdollTime > 0.0f) return;
+        characterSwitching = true;
+        characterSwitchTime = 0.0f;
+        switchApplied = false;
+        switchFromX = playerX;
+        switchFromZ = playerZ;
+        switchToX = playerX > 0.0f ? -84.0f : 84.0f;
+        switchToZ = playerZ > 0.0f ? -84.0f : 84.0f;
+        status = "SWITCHING PROTAGONIST...";
+        keys = 0;
+        cameraKeys = 0;
+    }
+
+    private void updateCharacterSwitch(float dt) {
+        characterSwitchTime += dt;
+        if (characterSwitchTime >= 1.4f && !switchApplied) {
+            switchApplied = true;
+            luciaActive = !luciaActive;
+            cj.setVisible(!luciaActive);
+            secondProtagonist.setVisible(luciaActive);
+            playerX = switchToX;
+            playerZ = switchToZ;
+            playerY = 0.0f;
+            playerHeading = 0.0f;
+            playerVelocityX = 0.0f;
+            playerVelocityZ = 0.0f;
+            jumpVelocity = 0.0f;
+            if (luciaActive) {
+                secondProtagonist.setPosition(playerX, playerY, playerZ);
+                secondProtagonist.setHeading(playerHeading);
+            } else {
+                cj.setPosition(playerX, playerY, playerZ);
+                cj.setHeading(playerHeading);
+            }
+            updateCityChunks();
+        }
+        if (characterSwitchTime >= 2.8f) {
+            characterSwitchTime = 2.8f;
+            characterSwitching = false;
+            status = luciaActive ? "LUCIA" : "JASON";
+        }
     }
 
     private void updateCamera() {
