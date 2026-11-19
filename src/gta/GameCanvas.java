@@ -136,7 +136,7 @@ final class GameCanvas extends Canvas implements Runnable {
     synchronized void stop() {
         running = false;
         if (loop != null) {
-            try { loop.join(250); } catch (InterruptedException ignored) {}
+            try { loop.join(); } catch (InterruptedException ignored) {}
             loop = null;
         }
     }
@@ -190,7 +190,7 @@ final class GameCanvas extends Canvas implements Runnable {
                 moving = true;
                 playerX += moveX * dt;
                 playerZ += moveZ * dt;
-                playerHeading = (float)(Math.atan2(moveX, -moveZ) * 57.29578);
+                playerHeading = angleDegrees(moveX, -moveZ);
                 walkPhase += dt * 10.0f;
             }
 
@@ -212,6 +212,24 @@ final class GameCanvas extends Canvas implements Runnable {
         cj.setHeading(playerHeading);
         cj.animate(walkPhase, moving && !inCar, punchAngle);
         updateCamera();
+    }
+
+    // CLDC-friendly atan2 approximation; avoids Math.atan2 on limited runtimes.
+    private float angleDegrees(float y, float x) {
+        float ax = x < 0.0f ? -x : x;
+        float ay = y < 0.0f ? -y : y;
+        float angle;
+        if (ax + ay < 0.0001f) return playerHeading;
+        if (ax >= ay) {
+            float r = ay / ax;
+            angle = r * (45.0f - 14.0f * r);
+        } else {
+            float r = ax / ay;
+            angle = 90.0f - r * (45.0f - 14.0f * r);
+        }
+        if (x < 0.0f) angle = 180.0f - angle;
+        if (y < 0.0f) angle = -angle;
+        return angle;
     }
 
     private void updateCamera() {
