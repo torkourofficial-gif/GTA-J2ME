@@ -225,7 +225,7 @@ final class ModelFactory {
         }
         VertexArray colors = new VertexArray(24, 3, 1);
         colors.set(0, 24, faceColors);
-        vertices.setColors(colors, 1.0f / 255.0f, null);
+        vertices.setColors(colors);
         Appearance appearance = createAppearance();
 
         return new Mesh(vertices, triangles, appearance);
