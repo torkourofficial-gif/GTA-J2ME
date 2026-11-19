@@ -59,6 +59,14 @@ final class GameCanvas extends Canvas implements Runnable {
     private float transitionStartX, transitionStartZ, transitionEndX, transitionEndZ;
     private boolean transitionDriverSide = true;
     private static final float CAR_TRANSITION_LENGTH = 0.9f;
+    private static final int CITY_BLOCKS = 6;
+    private static final float CITY_SPACING = 28.0f;
+    private static final float CITY_LIMIT = 88.0f;
+    private float[] buildingX = new float[CITY_BLOCKS * CITY_BLOCKS];
+    private float[] buildingZ = new float[CITY_BLOCKS * CITY_BLOCKS];
+    private float[] buildingW = new float[CITY_BLOCKS * CITY_BLOCKS];
+    private float[] buildingD = new float[CITY_BLOCKS * CITY_BLOCKS];
+    private int buildingCount = 0;
     private boolean reverseFacing = false;
     private float reverseTargetHeading = 0.0f;
     private boolean initialized = false;
@@ -83,20 +91,52 @@ final class GameCanvas extends Canvas implements Runnable {
         scenery = new Group();
         world.addChild(scenery);
 
-        addBox(scenery, 42.0f, 0.18f, 42.0f, 0.0f, -0.12f, 0.0f, 0x547B48);
-        addBox(scenery, 5.2f, 0.025f, 42.0f, 0.0f, -0.015f, 0.0f, 0x454545);
-        addBox(scenery, 0.12f, 0.03f, 42.0f, 0.0f, 0.005f, 0.0f, 0xE5D9A0);
+        // Large, intentionally empty city grid. The whole map is built from
+        // simple low-poly blocks: no pedestrians, traffic, interiors or props.
+        addBox(scenery, 190.0f, 0.18f, 190.0f, 0.0f, -0.12f, 0.0f, 0x777777);
 
-        // A compact starter block: buildings frame the test road.
-        addBuilding(-6.0f, -5.0f, 3.8f, 5.0f, 0xC49A68);
-        addBuilding(6.0f, -7.0f, 4.2f, 6.0f, 0xB7A07A);
-        addBuilding(-6.0f, 5.0f, 4.0f, 4.0f, 0x9D806A);
-        addBuilding(6.0f, 6.0f, 3.5f, 5.0f, 0xC4B28B);
+        // Seven north/south and seven east/west roads form a 6 x 6 block city.
+        for (int i = -3; i <= 3; i++) {
+            float road = i * CITY_SPACING;
+            addBox(scenery, 7.5f, 0.025f, 190.0f,
+                    road, -0.015f, 0.0f, 0x454545);
+            addBox(scenery, 190.0f, 0.025f, 7.5f,
+                    0.0f, -0.014f, road, 0x454545);
+        }
 
-        // Simple sidewalk props and street lamps.
-        addBox(scenery, 1.8f, 0.7f, 1.8f, -3.7f, 0.35f, -4.0f, 0x426E3C);
-        addBox(scenery, 0.10f, 2.8f, 0.10f, -3.7f, 1.4f, -4.0f, 0x555555);
-        addBox(scenery, 0.9f, 0.12f, 0.45f, -3.7f, 2.8f, -4.0f, 0xD8D2A0);
+        // One simple building per block for now. Varying footprints and heights
+        // make the skyline less repetitive while keeping the scene inexpensive.
+        buildingCount = 0;
+        for (int bz = 0; bz < CITY_BLOCKS; bz++) {
+            for (int bx = 0; bx < CITY_BLOCKS; bx++) {
+                float x = (bx - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
+                float z = (bz - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
+                int seed = bx * 17 + bz * 31;
+                float width = 12.0f + (seed % 5) * 1.1f;
+                float depth = 12.0f + ((seed / 3) % 5) * 1.0f;
+                float height = 5.0f + ((seed / 7) % 6) * 2.0f;
+                float offsetX = ((seed % 3) - 1) * 1.0f;
+                float offsetZ = (((seed / 2) % 3) - 1) * 1.0f;
+                x += offsetX;
+                z += offsetZ;
+                int color;
+                switch (seed % 6) {
+                    case 0: color = 0xB99B7B; break;
+                    case 1: color = 0xAFAFA5; break;
+                    case 2: color = 0xB8A18B; break;
+                    case 3: color = 0x9C9C91; break;
+                    case 4: color = 0xC0AE91; break;
+                    default: color = 0xA88F7A; break;
+                }
+                addBox(scenery, width, height, depth,
+                       x, height * 0.5f, z, color);
+                buildingX[buildingCount] = x;
+                buildingZ[buildingCount] = z;
+                buildingW[buildingCount] = width;
+                buildingD[buildingCount] = depth;
+                buildingCount++;
+            }
+        }
 
         cj = new CJModel();
         cj.setPosition(playerX, playerY, playerZ);
@@ -107,7 +147,7 @@ final class GameCanvas extends Canvas implements Runnable {
         world.addChild(car.root);
 
         camera = new Camera();
-        camera.setPerspective(62.0f, 1.0f, 0.25f, 90.0f);
+        camera.setPerspective(62.0f, 1.0f, 0.25f, 220.0f);
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
@@ -315,7 +355,7 @@ final class GameCanvas extends Canvas implements Runnable {
         camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
-        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 90.0f);
+        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 220.0f);
     }
 
     private void jump() {
@@ -454,13 +494,13 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private boolean playerBlocked(float x, float z) {
-        if (x < -20.5f || x > 20.5f || z < -20.5f || z > 20.5f) return true;
-        if (circleHitsRect(x,z,0.34f,-6.0f,-5.0f,3.8f,5.0f)) return true;
-        if (circleHitsRect(x,z,0.34f,6.0f,-7.0f,4.2f,6.0f)) return true;
-        if (circleHitsRect(x,z,0.34f,-6.0f,5.0f,4.0f,4.0f)) return true;
-        if (circleHitsRect(x,z,0.34f,6.0f,6.0f,3.5f,5.0f)) return true;
-        if (circleHitsRect(x,z,0.34f,-3.7f,-4.0f,1.8f,1.8f)) return true;
+        if (x < -CITY_LIMIT || x > CITY_LIMIT || z < -CITY_LIMIT || z > CITY_LIMIT) return true;
+        for (int i = 0; i < buildingCount; i++) {
+            if (circleHitsRect(x, z, 0.34f, buildingX[i], buildingZ[i],
+                               buildingW[i], buildingD[i])) return true;
+        }
 
+        // The sedan remains a solid obstacle when CJ is on foot.
         float a = carHeading * 0.0174532925f;
         float dx = x - carX, dz = z - carZ;
         float lx = dx * (float)Math.cos(a) - dz * (float)Math.sin(a);
@@ -471,12 +511,12 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private boolean carBlocked(float x, float z) {
-        if (x < -18.0f || x > 18.0f || z < -18.0f || z > 18.0f) return true;
-        if (circleHitsRect(x,z,1.45f,-6.0f,-5.0f,3.8f,5.0f)) return true;
-        if (circleHitsRect(x,z,0.85f,6.0f,-7.0f,4.2f,6.0f)) return true;
-        if (circleHitsRect(x,z,0.85f,-6.0f,5.0f,4.0f,4.0f)) return true;
-        if (circleHitsRect(x,z,0.85f,6.0f,6.0f,3.5f,5.0f)) return true;
-        if (circleHitsRect(x,z,0.85f,-3.7f,-4.0f,1.8f,1.8f)) return true;
+        if (x < -CITY_LIMIT + 2.0f || x > CITY_LIMIT - 2.0f ||
+            z < -CITY_LIMIT + 2.0f || z > CITY_LIMIT - 2.0f) return true;
+        for (int i = 0; i < buildingCount; i++) {
+            if (circleHitsRect(x, z, 1.45f, buildingX[i], buildingZ[i],
+                               buildingW[i], buildingD[i])) return true;
+        }
         return false;
     }
 
