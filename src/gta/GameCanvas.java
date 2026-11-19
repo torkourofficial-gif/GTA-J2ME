@@ -57,6 +57,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private int carTransition = 0;
     private float carTransitionTime = 0.0f;
     private float transitionStartX, transitionStartZ, transitionEndX, transitionEndZ;
+    private boolean transitionDriverSide = true;
     private static final float CAR_TRANSITION_LENGTH = 0.9f;
     private boolean reverseFacing = false;
     private float reverseTargetHeading = 0.0f;
@@ -236,8 +237,12 @@ final class GameCanvas extends Canvas implements Runnable {
             playerVelocityX += (targetVX - playerVelocityX) * blend;
             playerVelocityZ += (targetVZ - playerVelocityZ) * blend;
 
-            playerX += playerVelocityX * dt;
-            playerZ += playerVelocityZ * dt;
+            float nextPlayerX = playerX + playerVelocityX * dt;
+            float nextPlayerZ = playerZ + playerVelocityZ * dt;
+            if (!playerBlocked(nextPlayerX, playerZ)) playerX = nextPlayerX;
+            else playerVelocityX = 0.0f;
+            if (!playerBlocked(playerX, nextPlayerZ)) playerZ = nextPlayerZ;
+            else playerVelocityZ = 0.0f;
 
             float speed = (float)Math.sqrt(playerVelocityX * playerVelocityX +
                                            playerVelocityZ * playerVelocityZ);
@@ -344,9 +349,16 @@ final class GameCanvas extends Canvas implements Runnable {
 
         // The driver seat and the standing point are expressed in car-local
         // coordinates, then transformed by the sedan's current heading.
-        float seatX = -0.32f;
+        float headingRad = carHeading * 0.0174532925f;
+        float relX = playerX - carX;
+        float relZ = playerZ - carZ;
+        float localSideX = relX * (float)Math.cos(headingRad) -
+                           relZ * (float)Math.sin(headingRad);
+        transitionDriverSide = localSideX <= 0.0f;
+        float sideSign = transitionDriverSide ? -1.0f : 1.0f;
+        float seatX = sideSign * 0.32f;
         float seatZ = -0.28f;
-        float outsideX = -1.28f;
+        float outsideX = sideSign * 1.28f;
         float outsideZ = -0.25f;
         if (entering) {
             transitionStartX = playerX;
@@ -378,7 +390,7 @@ final class GameCanvas extends Canvas implements Runnable {
         cj.setHeading(playerHeading);
         cj.setVisible(true);
         cj.setEntryPose(entering ? 0.0f : 1.0f, entering);
-        car.setDoorOpen(0.0f);
+        car.setDoorOpen(0.0f, transitionDriverSide);
     }
 
     /** Convert a car-local X/Z point to world space and store it in playerX/Z. */
@@ -405,7 +417,7 @@ final class GameCanvas extends Canvas implements Runnable {
         }
         if (door < 0.0f) door = 0.0f;
         if (door > 1.0f) door = 1.0f;
-        car.setDoorOpen(72.0f * door);
+        car.setDoorOpen(72.0f * door, transitionDriverSide);
 
         float moveT = (t - 0.18f) / 0.64f;
         if (moveT < 0.0f) moveT = 0.0f;
@@ -437,6 +449,23 @@ final class GameCanvas extends Canvas implements Runnable {
             }
             carTransition = 0;
         }
+    }
+
+    private boolean playerBlocked(float x, float z) {
+        if (x < -20.5f || x > 20.5f || z < -20.5f || z > 20.5f) return true;
+        if (circleHitsRect(x,z,0.34f,-6.0f,-5.0f,3.8f,5.0f)) return true;
+        if (circleHitsRect(x,z,0.34f,6.0f,-7.0f,4.2f,6.0f)) return true;
+        if (circleHitsRect(x,z,0.34f,-6.0f,5.0f,4.0f,4.0f)) return true;
+        if (circleHitsRect(x,z,0.34f,6.0f,6.0f,3.5f,5.0f)) return true;
+        if (circleHitsRect(x,z,0.34f,-3.7f,-4.0f,1.8f,1.8f)) return true;
+
+        float a = carHeading * 0.0174532925f;
+        float dx = x - carX, dz = z - carZ;
+        float lx = dx * (float)Math.cos(a) - dz * (float)Math.sin(a);
+        float lz = dx * (float)Math.sin(a) + dz * (float)Math.cos(a);
+        float ox = Math.max(Math.abs(lx) - 0.92f, 0.0f);
+        float oz = Math.max(Math.abs(lz) - 1.48f, 0.0f);
+        return ox * ox + oz * oz < 0.34f * 0.34f;
     }
 
     private boolean carBlocked(float x, float z) {
