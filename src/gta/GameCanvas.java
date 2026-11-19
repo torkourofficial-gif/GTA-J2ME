@@ -37,7 +37,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private CJModel cj;
     private CarModel car;
     private Camera camera;
-    private static final int PED_COUNT = 10;
+    private static final int PED_COUNT = 20;
     private PedestrianModel[] pedestrians = new PedestrianModel[PED_COUNT];
     private boolean[] pedActive = new boolean[PED_COUNT];
     private int[] pedState = new int[PED_COUNT]; // 0 wander, 1 flee, 2 confront, 3 down
@@ -588,8 +588,10 @@ final class GameCanvas extends Canvas implements Runnable {
     private void initializePedestrians() {
         // Ten lightweight active pedestrians; their palette index cycles through
         // twenty distinct clothing/skin combinations.
-        float[] px = {-5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f};
-        float[] pz = {-56.0f, -56.0f, -28.0f, -28.0f, 0.0f, 0.0f, 28.0f, 28.0f, 56.0f, 56.0f};
+        float[] px = {-5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f,
+                      -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f};
+        float[] pz = {-70.0f, -70.0f, -56.0f, -56.0f, -42.0f, -42.0f, -28.0f, -28.0f, -14.0f, -14.0f,
+                       0.0f, 0.0f, 14.0f, 14.0f, 28.0f, 28.0f, 42.0f, 42.0f, 56.0f, 56.0f};
         for (int i = 0; i < PED_COUNT; i++) {
             pedestrians[i] = new PedestrianModel(i);
             world.addChild(pedestrians[i].root);
