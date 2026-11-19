@@ -778,7 +778,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
         activeCharacter().setPosition(playerX, playerY, playerZ);
         activeCharacter().setHeading(playerHeading);
-        boolean crouching = !inCar && (keys & CROUCH) != 0;
+        boolean crouching = inBike || (!inCar && (keys & CROUCH) != 0);
         boolean jumping = !inCar && (playerY > 0.001f || jumpVelocity > 0.0f);
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
                                     ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
