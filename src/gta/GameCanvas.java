@@ -762,6 +762,41 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void toggleCar() {
         if (carTransition != 0) return;
+        if (inBike) {
+            inBike = false;
+            bikeSpeed = 0.0f;
+            playerBike.setVisible(bikeSourceIndex < 0);
+            if (bikeSourceIndex >= 0) {
+                bikeTrafficActive[bikeSourceIndex] = true;
+                trafficBikes[bikeSourceIndex].setVisible(true);
+            }
+            bikeSourceIndex = -1;
+            playerX = bikeX + 1.0f;
+            playerZ = bikeZ;
+            playerHeading = bikeHeading;
+            status = "EXITED MOTORCYCLE";
+            return;
+        }
+        int nearbyBike = findNearbyMotorcycle();
+        if (!inCar && nearbyBike != -2) {
+            if (nearbyBike >= 0) {
+                bikeSourceIndex = nearbyBike;
+                bikeX = bikeTrafficX[nearbyBike];
+                bikeZ = bikeTrafficZ[nearbyBike];
+                bikeHeading = bikeTrafficHeading[nearbyBike];
+                bikeTrafficActive[nearbyBike] = false;
+                trafficBikes[nearbyBike].setVisible(false);
+            } else {
+                bikeSourceIndex = -1;
+            }
+            inBike = true;
+            playerBike.setVisible(true);
+            playerBike.setPosition(bikeX, 0.0f, bikeZ);
+            playerBike.setHeading(bikeHeading);
+            playerX = bikeX; playerZ = bikeZ; playerHeading = bikeHeading;
+            status = "MOTORCYCLE  |  3 EXIT";
+            return;
+        }
         if (inCar) {
             beginCarTransition(false);
             return;
