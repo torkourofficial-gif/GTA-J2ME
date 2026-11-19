@@ -8,7 +8,6 @@ import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Group;
-import javax.microedition.m3g.Light;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
@@ -199,21 +198,6 @@ final class GameCanvas extends Canvas implements Runnable {
         sky.setColor(0x87B6D8);
         sky.setColorClearEnable(true);
         world.setBackground(sky);
-
-        // Warm tropical daylight: broad ambient fill plus one directional sun.
-        // Both lights are shared by the scene; no per-object light allocation.
-        Light ambientLight = new Light();
-        ambientLight.setMode(Light.AMBIENT);
-        ambientLight.setColor(0xD5E5FF);
-        ambientLight.setIntensity(0.48f);
-        world.addChild(ambientLight);
-
-        Light sunLight = new Light();
-        sunLight.setMode(Light.DIRECTIONAL);
-        sunLight.setColor(0xFFF0D4);
-        sunLight.setIntensity(0.92f);
-        sunLight.setOrientation(38.0f, -0.55f, -1.0f, -0.35f);
-        world.addChild(sunLight);
 
         debugStage = "create fog";
         Fog fog = new Fog();
