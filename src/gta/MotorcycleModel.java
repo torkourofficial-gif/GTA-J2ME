@@ -25,10 +25,10 @@ final class MotorcycleModel {
     }
 
     private void addWheel(float x, float y, float z) {
-        Mesh tire = ModelFactory.ellipsoid(0.58f, 0.58f, 0.22f, 0x171717);
+        Mesh tire = ModelFactory.ellipsoid(0.22f, 0.58f, 0.58f, 0x171717);
         tire.setTranslation(x, y, z);
         root.addChild(tire);
-        Mesh hub = ModelFactory.ellipsoid(0.25f, 0.25f, 0.24f, 0xA7A7A7);
+        Mesh hub = ModelFactory.ellipsoid(0.24f, 0.25f, 0.25f, 0xA7A7A7);
         hub.setTranslation(x, y, z);
         root.addChild(hub);
     }
