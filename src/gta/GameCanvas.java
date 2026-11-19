@@ -56,6 +56,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private boolean inBike;
     private int bikeSourceIndex = -1;
     private float bikeX = -3.0f, bikeZ = 0.0f, bikeHeading, bikeSpeed, bikeSteering;
+    private float bikeMountTimer, bikeMountStartX, bikeMountStartZ;
     private CarModel[] policeCars = new CarModel[3];
     private float[] policeX = new float[3], policeZ = new float[3];
     private boolean[] policeActive = new boolean[3];
@@ -644,8 +645,8 @@ final class GameCanvas extends Canvas implements Runnable {
                           ((keys & RIGHT) != 0 ? 1.0f : 0.0f);
             bikeSteering += (steer * 32.0f - bikeSteering) * Math.min(1.0f, 6.0f * dt);
             bikeSpeed *= 0.989f;
-            if (bikeSpeed > 10.0f) bikeSpeed = 10.0f;
-            if (bikeSpeed < -2.5f) bikeSpeed = -2.5f;
+            if (bikeSpeed > 14.0f) bikeSpeed = 14.0f;
+            if (bikeSpeed < -3.0f) bikeSpeed = -3.0f;
             bikeHeading = normalizeAngle(bikeHeading +
                 (float)Math.tan(bikeSteering * 0.0174532925f) *
                 bikeSpeed / 1.65f * 57.29578f * dt);
@@ -659,7 +660,22 @@ final class GameCanvas extends Canvas implements Runnable {
             if (bx || bz) bikeSpeed *= -0.18f;
             playerBike.setPosition(bikeX, 0.0f, bikeZ);
             playerBike.setHeading(bikeHeading);
-            playerX = bikeX; playerZ = bikeZ; playerHeading = bikeHeading;
+            float leanTarget = -bikeSteering * Math.min(1.0f, Math.abs(bikeSpeed) / 5.0f) * 0.48f;
+            playerBike.setLean(leanTarget);
+            float seatAngle = bikeHeading * 0.0174532925f;
+            float seatX = bikeX + (float)Math.sin(seatAngle) * 0.18f;
+            float seatZ = bikeZ - (float)Math.cos(seatAngle) * 0.18f;
+            if (bikeMountTimer > 0.0f) {
+                bikeMountTimer -= dt;
+                if (bikeMountTimer < 0.0f) bikeMountTimer = 0.0f;
+                float t = 1.0f - bikeMountTimer / 0.62f;
+                playerX = bikeMountStartX + (seatX - bikeMountStartX) * t;
+                playerZ = bikeMountStartZ + (seatZ - bikeMountStartZ) * t;
+            } else {
+                playerX = seatX; playerZ = seatZ;
+            }
+            playerY = 0.12f;
+            playerHeading = bikeHeading;
             playerVelocityX = playerVelocityZ = 0.0f;
         } else if (playerRagdollTime > 0.0f) {
             updatePlayerRagdoll(dt);
@@ -934,9 +950,12 @@ final class GameCanvas extends Canvas implements Runnable {
                 trafficBikes[bikeSourceIndex].setVisible(true);
             }
             bikeSourceIndex = -1;
-            playerX = bikeX + 1.0f;
-            playerZ = bikeZ;
+            float exitAngle = bikeHeading * 0.0174532925f;
+            playerX = bikeX + (float)Math.cos(exitAngle);
+            playerZ = bikeZ - (float)Math.sin(exitAngle);
+            playerY = 0.0f;
             playerHeading = bikeHeading;
+            bikeMountTimer = 0.0f;
             activeCharacter().setVisible(true);
             activeCharacter().setPosition(playerX, playerY, playerZ);
             status = "EXITED MOTORCYCLE";
@@ -956,12 +975,18 @@ final class GameCanvas extends Canvas implements Runnable {
                 bikeSourceIndex = -1;
             }
             inBike = true;
+            bikeSpeed = 0.0f;
+            bikeMountTimer = 0.62f;
+            bikeMountStartX = playerX;
+            bikeMountStartZ = playerZ;
             playerBike.setVisible(true);
             playerBike.setPosition(bikeX, 0.0f, bikeZ);
             playerBike.setHeading(bikeHeading);
-            playerX = bikeX; playerZ = bikeZ; playerHeading = bikeHeading;
-            activeCharacter().setVisible(false);
-            status = "MOTORCYCLE  |  3 EXIT";
+            playerBike.setLean(0.0f);
+            playerX = bikeMountStartX; playerZ = bikeMountStartZ;
+            playerHeading = bikeHeading;
+            activeCharacter().setVisible(true);
+            status = "GETTING ON MOTORCYCLE...";
             return;
         }
         if (inCar) {
