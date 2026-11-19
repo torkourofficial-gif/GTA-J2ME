@@ -410,7 +410,7 @@ final class GameCanvas extends Canvas implements Runnable {
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
                                     ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
         if (playerRagdollTime > 0.0f) {
-            cj.animateRagdoll(playerRagdollRoll, playerRagdollPitch,
+            cj.animateRagdoll(dt, playerRagdollRoll, playerRagdollPitch,
                               playerRagdollRollSpeed, playerRagdollPitchSpeed);
         } else {
             cj.animate(walkPhase, moving && !inCar, punchAngle,
