@@ -54,6 +54,8 @@ final class GameCanvas extends Canvas implements Runnable {
     private float carX = 2.5f;
     private float carZ = 0.0f;
     private boolean inCar = false;
+    private boolean reverseFacing = false;
+    private float reverseTargetHeading = 0.0f;
     private boolean initialized = false;
     private String status = "2/4/6/8 MOVE  3 CAR";
 
@@ -190,18 +192,30 @@ final class GameCanvas extends Canvas implements Runnable {
             if ((keys & RIGHT) != 0) side += 1.0f;
             if ((keys & LEFT) != 0) side -= 1.0f;
 
-            // 4/6 turn CJ; 2/8 move along his facing direction (SA-like).
-            // Turning is independent of forward/back input, so reverse movement
-            // never snaps the character around or makes the body appear tilted.
+            // 4/6 turn CJ. Holding 8 makes him turn around and run in the
+            // direction he is now facing, rather than moonwalking backwards.
             if (side != 0.0f) {
                 playerHeading = normalizeAngle(playerHeading - side * 150.0f * dt);
+            }
+            if ((keys & BACK) != 0 && !reverseFacing) {
+                reverseFacing = true;
+                reverseTargetHeading = normalizeAngle(playerHeading + 180.0f);
+            } else if ((keys & BACK) == 0) {
+                reverseFacing = false;
+            }
+            if (reverseFacing) {
+                float difference = normalizeAngle(reverseTargetHeading - playerHeading);
+                float maxTurn = 300.0f * dt;
+                if (difference > maxTurn) difference = maxTurn;
+                else if (difference < -maxTurn) difference = -maxTurn;
+                playerHeading = normalizeAngle(playerHeading + difference);
             }
 
             float inputLength = (float)Math.sqrt(forward * forward + side * side);
             if (inputLength > 1.0f) inputLength = 1.0f;
 
             float angle = playerHeading * 0.0174532925f;
-            float targetSpeed = forward * 3.0f;
+            float targetSpeed = ((keys & BACK) != 0 || (keys & FORWARD) != 0) ? 3.0f : 0.0f;
             // M3G's positive Y rotation turns the model's local -Z forward
             // axis toward -X. Keep movement in that exact same local-forward
             // direction, otherwise CJ appears to face one way and walk another.
@@ -251,7 +265,7 @@ final class GameCanvas extends Canvas implements Runnable {
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
                                     ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
         cj.animate(walkPhase, moving && !inCar, punchAngle,
-                   (keys & BACK) != 0, jumping, crouching, turnAmount);
+                   false, jumping, crouching, turnAmount);
         updateCamera();
     }
 
@@ -351,7 +365,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     protected void keyReleased(int keyCode) {
         if (keyCode == '2') keys &= ~FORWARD;
-        else if (keyCode == '8') keys &= ~BACK;
+        else if (keyCode == '8') { keys &= ~BACK; reverseFacing = false; }
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
         else if (keyCode == '9') keys &= ~CROUCH;
