@@ -767,9 +767,12 @@ final class GameCanvas extends Canvas implements Runnable {
             inBike = false;
             bikeSpeed = 0.0f;
             playerBike.setVisible(bikeSourceIndex < 0);
-            activeCharacter().setVisible(true);
-            activeCharacter().setPosition(playerX, playerY, playerZ);
             if (bikeSourceIndex >= 0) {
+                bikeTrafficX[bikeSourceIndex] = bikeX;
+                bikeTrafficZ[bikeSourceIndex] = bikeZ;
+                bikeTrafficHeading[bikeSourceIndex] = bikeHeading;
+                trafficBikes[bikeSourceIndex].setPosition(bikeX, 0.0f, bikeZ);
+                trafficBikes[bikeSourceIndex].setHeading(bikeHeading);
                 bikeTrafficActive[bikeSourceIndex] = true;
                 trafficBikes[bikeSourceIndex].setVisible(true);
             }
@@ -777,6 +780,8 @@ final class GameCanvas extends Canvas implements Runnable {
             playerX = bikeX + 1.0f;
             playerZ = bikeZ;
             playerHeading = bikeHeading;
+            activeCharacter().setVisible(true);
+            activeCharacter().setPosition(playerX, playerY, playerZ);
             status = "EXITED MOTORCYCLE";
             return;
         }
@@ -1619,7 +1624,18 @@ final class GameCanvas extends Canvas implements Runnable {
                 wantedLevel = 0; arrestTimer = 0.0f;
                 if (inCar) { inCar = false; carSpeed = 0.0f; }
                 if (inBike) {
-                    inBike = false; bikeSpeed = 0.0f; playerBike.setVisible(bikeSourceIndex < 0);
+                    inBike = false; bikeSpeed = 0.0f;
+                    playerBike.setVisible(bikeSourceIndex < 0);
+                    if (bikeSourceIndex >= 0) {
+                        bikeTrafficX[bikeSourceIndex] = bikeX;
+                        bikeTrafficZ[bikeSourceIndex] = bikeZ;
+                        bikeTrafficHeading[bikeSourceIndex] = bikeHeading;
+                        trafficBikes[bikeSourceIndex].setPosition(bikeX, 0.0f, bikeZ);
+                        trafficBikes[bikeSourceIndex].setHeading(bikeHeading);
+                        bikeTrafficActive[bikeSourceIndex] = true;
+                        trafficBikes[bikeSourceIndex].setVisible(true);
+                    }
+                    bikeSourceIndex = -1;
                     activeCharacter().setVisible(true);
                 }
                 playerX = policeX[0] + 2.0f; playerZ = policeZ[0] + 2.0f;
