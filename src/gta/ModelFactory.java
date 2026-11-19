@@ -1,6 +1,7 @@
 package gta;
 
 import javax.microedition.m3g.Appearance;
+import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
@@ -11,7 +12,19 @@ import javax.microedition.m3g.VertexBuffer;
  * Positions are stored as signed 16-bit millimetres for compact M3G buffers.
  */
 final class ModelFactory {
+    private static Fog sceneFog;
+
     private ModelFactory() {}
+
+    static void setFog(Fog fog) {
+        sceneFog = fog;
+    }
+
+    private static Appearance createAppearance() {
+        Appearance appearance = new Appearance();
+        if (sceneFog != null) appearance.setFog(sceneFog);
+        return appearance;
+    }
 
     static Mesh box(float width, float height, float depth, int color) {
         float x = width * 0.5f;
@@ -53,7 +66,7 @@ final class ModelFactory {
         // No material/lighting is needed for these flat-color prototype meshes.
         // A default vertex-buffer color keeps the geometry opaque and cheap.
         vertices.setDefaultColor(color | 0xFF000000);
-        Appearance appearance = new Appearance();
+        Appearance appearance = createAppearance();
 
         return new Mesh(vertices, triangles, appearance);
     }
@@ -88,7 +101,7 @@ final class ModelFactory {
         for (int r = 0; r < rings; r++) strips[r] = stripVertices;
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
         vertices.setDefaultColor(color | 0xFF000000);
-        return new Mesh(vertices, triangles, new Appearance());
+        return new Mesh(vertices, triangles, createAppearance());
     }
 
     private static short mm(float value) {
