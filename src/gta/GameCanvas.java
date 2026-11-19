@@ -2246,7 +2246,10 @@ final class GameCanvas extends Canvas implements Runnable {
             for (int wi = 0; wi < wantedLevel; wi++) stars += "*";
             g.drawString(stars, getWidth() - 42, 1, Graphics.TOP | Graphics.LEFT);
         }
-        g.drawString("2/8 MOVE  4/6 TURN  * SWITCH  D-PAD CAMERA", 3,
+        String[] weaponNames = {"FISTS", "PISTOL", "SHOTGUN", "SMG"};
+        String weaponLabel = weaponNames[selectedWeapon];
+        if (selectedWeapon > 0) weaponLabel += " " + weaponAmmo[selectedWeapon];
+        g.drawString("7:" + weaponLabel + "  1:USE  2/8 MOVE  4/6 TURN", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
     }
 }
