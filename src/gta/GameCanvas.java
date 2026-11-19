@@ -189,15 +189,15 @@ final class GameCanvas extends Canvas implements Runnable {
             if ((keys & RIGHT) != 0) side += 1.0f;
             if ((keys & LEFT) != 0) side -= 1.0f;
 
-            // Camera-relative movement, like GTA San Andreas.
-            // CJ turns toward the direction of travel instead of snapping.
+            // Character-relative movement: the control axes rotate with CJ.
+            // Forward always follows his facing direction; left/right are strafes.
             float inputLength = (float)Math.sqrt(forward * forward + side * side);
             if (inputLength > 1.0f) {
                 forward /= inputLength;
                 side /= inputLength;
             }
 
-            float angle = cameraYaw * 0.0174532925f;
+            float angle = playerHeading * 0.0174532925f;
             float targetVX = ((float)Math.sin(angle) * forward +
                               (float)Math.cos(angle) * side) * 3.0f;
             float targetVZ = (-(float)Math.cos(angle) * forward +
@@ -217,8 +217,12 @@ final class GameCanvas extends Canvas implements Runnable {
                                            playerVelocityZ * playerVelocityZ);
             moving = speed > 0.12f;
             if (moving) {
-                float desiredHeading = angleDegrees(playerVelocityX, -playerVelocityZ);
-                playerHeading = turnTowards(playerHeading, desiredHeading, 360.0f * dt);
+                // Forward/back movement can turn CJ toward its travel direction.
+                // Pure lateral input remains a strafe, instead of causing a spin.
+                if (forward != 0.0f) {
+                    float desiredHeading = angleDegrees(playerVelocityX, -playerVelocityZ);
+                    playerHeading = turnTowards(playerHeading, desiredHeading, 300.0f * dt);
+                }
                 walkPhase += dt * (7.0f + speed * 2.0f);
             }
 
