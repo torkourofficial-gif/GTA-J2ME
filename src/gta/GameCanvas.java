@@ -41,6 +41,8 @@ final class GameCanvas extends Canvas implements Runnable {
     private float playerZ = 3.0f;
     private float playerY = 0.0f;
     private float playerHeading = 0.0f;
+    private float playerVelocityX = 0.0f;
+    private float playerVelocityZ = 0.0f;
     private float cameraYaw = 0.0f;
     private float cameraPitch = 13.0f;
     private float walkPhase = 0.0f;
@@ -179,6 +181,8 @@ final class GameCanvas extends Canvas implements Runnable {
             playerX = carX;
             playerZ = carZ;
             playerHeading = carHeading;
+            playerVelocityX = 0.0f;
+            playerVelocityZ = 0.0f;
         } else {
             float forward = 0.0f;
             float side = 0.0f;
@@ -187,19 +191,42 @@ final class GameCanvas extends Canvas implements Runnable {
             if ((keys & RIGHT) != 0) side += 1.0f;
             if ((keys & LEFT) != 0) side -= 1.0f;
 
+            // Camera-relative movement, like GTA San Andreas.
+            // CJ turns toward the direction of travel instead of snapping.
+            float inputLength = (float)Math.sqrt(forward * forward + side * side);
+            if (inputLength > 1.0f) {
+                forward /= inputLength;
+                side /= inputLength;
+            }
+
             float angle = cameraYaw * 0.0174532925f;
-            moveX = ((float)Math.sin(angle) * forward +
-                     (float)Math.cos(angle) * side) * 2.8f;
-            moveZ = (-(float)Math.cos(angle) * forward +
-                     (float)Math.sin(angle) * side) * 2.8f;
-            float length = (float)Math.sqrt(moveX * moveX + moveZ * moveZ);
-            if (length > 0.01f) {
-                moving = true;
-                playerX += moveX * dt;
-                playerZ += moveZ * dt;
-                float desiredHeading = angleDegrees(moveX, -moveZ);
-                playerHeading = turnTowards(playerHeading, desiredHeading, 480.0f * dt);
-                walkPhase += dt * 10.0f;
+            float targetVX = ((float)Math.sin(angle) * forward +
+                              (float)Math.cos(angle) * side) * 3.0f;
+            float targetVZ = (-(float)Math.cos(angle) * forward +
+                              (float)Math.sin(angle) * side) * 3.0f;
+
+            // Gradual acceleration and deceleration.
+            float response = inputLength > 0.01f ? 12.0f : 15.0f;
+            float blend = response * dt;
+            if (blend > 1.0f) blend = 1.0f;
+            playerVelocityX += (targetVX - playerVelocityX) * blend;
+            playerVelocityZ += (targetVZ - playerVelocityZ) * blend;
+
+            playerX += playerVelocityX * dt;
+            playerZ += playerVelocityZ * dt;
+
+            float speed = (float)Math.sqrt(playerVelocityX * playerVelocityX +
+                                           playerVelocityZ * playerVelocityZ);
+            moving = speed > 0.12f;
+            if (moving) {
+                float desiredHeading = angleDegrees(playerVelocityX, -playerVelocityZ);
+                playerHeading = turnTowards(playerHeading, desiredHeading, 360.0f * dt);
+                walkPhase += dt * (7.0f + speed * 2.0f);
+            }
+
+            if (inputLength < 0.01f && speed < 0.035f) {
+                playerVelocityX = 0.0f;
+                playerVelocityZ = 0.0f;
             }
 
             if (jumpVelocity != 0.0f || playerY > 0.0f) {
@@ -300,6 +327,8 @@ final class GameCanvas extends Canvas implements Runnable {
             playerX = carX + 1.6f;
             playerZ = carZ;
             playerY = 0.0f;
+            playerVelocityX = 0.0f;
+            playerVelocityZ = 0.0f;
             carSpeed = 0.0f;
             status = "ON FOOT  |  3 ENTER CAR";
             return;
@@ -312,6 +341,8 @@ final class GameCanvas extends Canvas implements Runnable {
             playerX = carX;
             playerZ = carZ;
             playerY = 0.0f;
+            playerVelocityX = 0.0f;
+            playerVelocityZ = 0.0f;
             status = "DRIVING  |  3 EXIT";
         } else {
             status = "GET CLOSER TO THE CAR";
