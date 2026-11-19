@@ -674,19 +674,30 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updateCamera() {
         float radians = cameraYaw * 0.0174532925f;
         float distance = inCar ? 6.5f : 5.2f;
-        float targetY = inCar ? 1.1f : 1.15f;
-        float eyeX = playerX + (float)Math.sin(radians) * distance;
-        float eyeZ = playerZ + (float)Math.cos(radians) * distance;
-        float eyeY = playerY + 2.3f + cameraPitch * 0.035f;
-        // M3G Transform has no lookAt helper: compose yaw and pitch directly.
-        cameraTransform.setIdentity();
-        cameraTransform.postRotate(cameraYaw, 0.0f, 1.0f, 0.0f);
-        cameraTransform.postRotate(-cameraPitch, 1.0f, 0.0f, 0.0f);
+        float eyeX, eyeY, eyeZ;
+        if (characterSwitching) {
+            float t = characterSwitchTime / 2.8f;
+            float focusX = switchFromX + (switchToX - switchFromX) * t;
+            float focusZ = switchFromZ + (switchToZ - switchFromZ) * t;
+            float altitude = 3.0f + 82.0f * (float)Math.sin(t * 3.1415926f);
+            eyeX = focusX;
+            eyeZ = focusZ;
+            eyeY = altitude;
+            cameraTransform.setIdentity();
+            cameraTransform.postRotate(-89.0f, 1.0f, 0.0f, 0.0f);
+        } else {
+            eyeX = playerX + (float)Math.sin(radians) * distance;
+            eyeZ = playerZ + (float)Math.cos(radians) * distance;
+            eyeY = playerY + 2.3f + cameraPitch * 0.035f;
+            cameraTransform.setIdentity();
+            cameraTransform.postRotate(cameraYaw, 0.0f, 1.0f, 0.0f);
+            cameraTransform.postRotate(-cameraPitch, 1.0f, 0.0f, 0.0f);
+        }
         camera.setTransform(cameraTransform);
         camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
-        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 120.0f);
+        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 160.0f);
     }
 
     private void jump() {
