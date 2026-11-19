@@ -8,6 +8,7 @@ import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Group;
+import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
 
