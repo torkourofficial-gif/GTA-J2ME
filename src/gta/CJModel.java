@@ -200,7 +200,7 @@ final class CJModel {
         float gravity = 7.8f;
         float damping = 1.65f;
         for (int i = 0; i < ragAngle.length; i++) {
-            float torque = gravity * (float)Math.sin(ragAngle[i]);
+            float torque = -gravity * (float)Math.sin(ragAngle[i]);
             // The torso and limbs inherit acceleration from the tumbling body.
             if (i == 0) torque += pitchSpeed * 0.0009f;
             else if (i == 1 || i == 2) torque += rollSpeed * 0.00035f;
