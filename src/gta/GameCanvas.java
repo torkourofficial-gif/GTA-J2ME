@@ -381,6 +381,9 @@ final class GameCanvas extends Canvas implements Runnable {
         if (cx < 0) cx = 0; else if (cx >= CITY_BLOCKS) cx = CITY_BLOCKS - 1;
         if (cz < 0) cz = 0; else if (cz >= CITY_BLOCKS) cz = CITY_BLOCKS - 1;
         activeChunkX = cx; activeChunkZ = cz;
+        // Spread M3G allocation over several frames instead of allocating
+        // an entire 5x5 neighborhood in one burst on constrained Java ME heaps.
+        int buildBudget = 2;
         for (int x = 0; x < CITY_BLOCKS; x++) {
             for (int z = 0; z < CITY_BLOCKS; z++) {
                 int dx = x - cx; if (dx < 0) dx = -dx;
@@ -388,7 +391,10 @@ final class GameCanvas extends Canvas implements Runnable {
                 boolean nearby = inCity && dx <= 2 && dz <= 2;
                 Group chunk = cityChunks[x][z];
                 if (nearby) {
-                    if (chunk == null) buildCityChunk(x, z);
+                    if (chunk == null && buildBudget > 0) {
+                        buildCityChunk(x, z);
+                        buildBudget--;
+                    }
                 } else if (chunk != null) {
                     scenery.removeChild(chunk);
                     cityChunks[x][z] = null;
