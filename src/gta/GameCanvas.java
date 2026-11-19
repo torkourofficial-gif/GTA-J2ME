@@ -148,8 +148,8 @@ final class GameCanvas extends Canvas implements Runnable {
             for (int tz = -5; tz <= 5; tz++) {
                 float tileX = tx * CITY_SPACING;
                 float tileZ = tz * CITY_SPACING;
-                addBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
-                       tileX, -0.12f, tileZ, 0xB5A99A);
+                addTexturedBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
+                              tileX, -0.12f, tileZ, 0xFFFFFF, 2);
             }
         }
         debugStage = "create road meshes";
@@ -157,10 +157,10 @@ final class GameCanvas extends Canvas implements Runnable {
             float road = i * CITY_SPACING;
             for (int segment = -5; segment <= 5; segment++) {
                 float along = segment * CITY_SPACING;
-                addBox(scenery, 7.5f, 0.025f, CITY_SPACING,
-                       road, -0.015f, along, 0x41464A);
-                addBox(scenery, CITY_SPACING, 0.025f, 7.5f,
-                       along, -0.014f, road, 0x41464A);
+                addTexturedBox(scenery, 7.5f, 0.025f, CITY_SPACING,
+                              road, -0.015f, along, 0xFFFFFF, 1);
+                addTexturedBox(scenery, CITY_SPACING, 0.025f, 7.5f,
+                              along, -0.014f, road, 0xFFFFFF, 1);
             }
         }
 
@@ -210,7 +210,8 @@ final class GameCanvas extends Canvas implements Runnable {
                     addTree(chunk, x + 5.0f, z + 5.0f);
                 } else {
                     // Main facade and a flat roof/parapet, classic Miami skyline.
-                    addBox(chunk, width, height, depth, x, height * 0.5f, z, color);
+                    addTexturedBox(chunk, width, height, depth, x, height * 0.5f, z,
+                                  color, 0);
                     int trim = district == 0 ? 0xF7E7D0 : 0x786B67;
                     addBox(chunk, width + 0.28f, 0.28f, depth + 0.28f,
                            x, height + 0.14f, z, trim);
@@ -323,6 +324,15 @@ final class GameCanvas extends Canvas implements Runnable {
                z + depth * 0.5f + 0.05f, 0x6C9BAA);
         addBox(scenery, 0.75f, 0.75f, 0.07f, x + 1.0f, 1.65f,
                z + depth * 0.5f + 0.05f, 0x6C9BAA);
+    }
+
+    private void addTexturedBox(Group parent, float w, float h, float d,
+                                  float x, float y, float z, int color, int textureKind) {
+        debugStage = "create procedural texture mesh";
+        javax.microedition.m3g.Mesh mesh =
+            ModelFactory.texturedBox(w, h, d, color, textureKind);
+        mesh.setTranslation(x, y, z);
+        parent.addChild(mesh);
     }
 
     private void addBox(Group parent, float w, float h, float d,
