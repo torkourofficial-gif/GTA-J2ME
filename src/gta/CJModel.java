@@ -18,6 +18,7 @@ final class CJModel {
     private final Group upperBody = new Group();
     private final Group leftForearm = new Group();
     private final Group rightForearm = new Group();
+    private final Group handWeapon = new Group();
     private final Group leftShin = new Group();
     private final Group rightShin = new Group();
 
@@ -107,6 +108,13 @@ final class CJModel {
         addBox(rightForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, skinColor);
         leftArm.addChild(leftForearm);
         rightArm.addChild(rightForearm);
+        // One compact shared weapon silhouette; scaling changes its profile
+        // for pistol, shotgun and SMG without allocating extra meshes.
+        addBox(handWeapon, 0.105f, 0.085f, 0.30f, 0.0f, -0.39f, -0.15f, 0x30343A);
+        addBox(handWeapon, 0.038f, 0.038f, 0.18f, 0.0f, -0.37f, -0.37f, 0x171A1E);
+        addBox(handWeapon, 0.065f, 0.15f, 0.075f, 0.0f, -0.49f, -0.08f, 0x25282C);
+        handWeapon.setRenderingEnable(false);
+        rightForearm.addChild(handWeapon);
         upperBody.addChild(leftArm);
         upperBody.addChild(rightArm);
 
@@ -156,6 +164,17 @@ final class CJModel {
         Mesh mesh = ModelFactory.box(w, h, d, color);
         mesh.setTranslation(x, y, z);
         parent.addChild(mesh);
+    }
+
+    void setWeaponType(int type) {
+        if (type <= 0) {
+            handWeapon.setRenderingEnable(false);
+            return;
+        }
+        handWeapon.setRenderingEnable(true);
+        if (type == 2) handWeapon.setScale(1.0f, 0.88f, 1.65f);
+        else if (type == 3) handWeapon.setScale(1.18f, 0.92f, 1.22f);
+        else handWeapon.setScale(1.0f, 1.0f, 1.0f);
     }
 
     void setPosition(float x, float y, float z) {
