@@ -433,7 +433,7 @@ final class GameCanvas extends Canvas implements Runnable {
         cj.setEntryPose(pose, carTransition == 1);
 
         if (t >= 1.0f) {
-            car.setDoorOpen(0.0f);
+            car.setDoorOpen(0.0f, transitionDriverSide);
             cj.setEntryPose(0.0f, carTransition == 1);
             if (carTransition == 1) {
                 inCar = true;
