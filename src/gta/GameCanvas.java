@@ -120,7 +120,11 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     synchronized void start() {
-        if (!initialized || running) return;
+        if (!initialized) return;
+        if (running) {
+            paused = false;
+            return;
+        }
         paused = false;
         running = true;
         loop = new Thread(this);
@@ -273,10 +277,10 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '3') toggleCar();
         else {
             int action = getGameAction(keyCode);
-            if (action == UP) cameraPitch -= 2.0f;
-            else if (action == DOWN) cameraPitch += 2.0f;
-            else if (action == LEFT) cameraYaw -= 5.0f;
-            else if (action == RIGHT) cameraYaw += 5.0f;
+            if (action == Canvas.UP) cameraPitch -= 2.0f;
+            else if (action == Canvas.DOWN) cameraPitch += 2.0f;
+            else if (action == Canvas.LEFT) cameraYaw -= 5.0f;
+            else if (action == Canvas.RIGHT) cameraYaw += 5.0f;
             if (cameraPitch < -5.0f) cameraPitch = -5.0f;
             if (cameraPitch > 35.0f) cameraPitch = 35.0f;
         }
