@@ -45,6 +45,18 @@ final class GameCanvas extends Canvas implements Runnable {
     private float switchFromX, switchFromZ, switchToX, switchToZ;
     private boolean switchApplied;
     private CarModel car;
+    private MotorcycleModel playerBike;
+    private MotorcycleModel[] trafficBikes = new MotorcycleModel[3];
+    private float[] bikeTrafficX = new float[3], bikeTrafficZ = new float[3];
+    private float[] bikeTrafficHeading = new float[3], bikeTrafficSpeed = new float[3];
+    private boolean[] bikeTrafficActive = new boolean[3];
+    private boolean inBike;
+    private int bikeSourceIndex = -1;
+    private float bikeX = -3.0f, bikeZ = 0.0f, bikeHeading, bikeSpeed, bikeSteering;
+    private CarModel[] policeCars = new CarModel[3];
+    private float[] policeX = new float[3], policeZ = new float[3];
+    private int wantedLevel;
+    private float wantedDecay, arrestTimer;
     private Camera camera;
     private static final int PED_COUNT = 28;
     private static final int TRAFFIC_COUNT = 12;
@@ -275,6 +287,11 @@ final class GameCanvas extends Canvas implements Runnable {
         car = new CarModel();
         car.setPosition(carX, 0.0f, carZ);
         world.addChild(car.root);
+        playerBike = new MotorcycleModel(0xD16A32);
+        playerBike.setPosition(bikeX, 0.0f, bikeZ);
+        world.addChild(playerBike.root);
+        initializeMotorcycles();
+        initializePolice();
 
         debugStage = "initialize pedestrians";
         initializePedestrians();
@@ -553,6 +570,8 @@ final class GameCanvas extends Canvas implements Runnable {
 
         debugStage = "traffic update";
         updateTraffic(dt);
+        updateMotorcycles(dt);
+        updatePolice(dt);
         debugStage = "pedestrian update";
         updatePedestrians(dt);
         if (punchTimer > 0.0f) punchTimer -= dt;
