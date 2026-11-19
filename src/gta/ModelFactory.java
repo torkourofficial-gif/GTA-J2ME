@@ -28,7 +28,7 @@ final class ModelFactory {
         return appearance;
     }
 
-    private static Texture2D[] proceduralTextures = new Texture2D[4];
+    private static Texture2D[] proceduralTextures = new Texture2D[8];
 
     // Tiny 16x16 RGB textures are generated in memory: no PNG decoding,
     // resource files or external assets are needed on the MIDP device.
@@ -55,10 +55,32 @@ final class ModelFactory {
                     // Warm concrete sidewalk / sandy paving.
                     r = 181 + noise * 2; g = 166 + noise * 2; b = 143 + noise * 2;
                     if ((x + y * 2) % 9 == 0) { r -= 13; g -= 12; b -= 10; }
-                } else {
+                } else if (kind == 3) {
                     // Subtle roof / weathered concrete grain.
                     r = 132 + noise * 2; g = 124 + noise * 2; b = 111 + noise * 2;
                     if ((x * 3 + y * 5) % 13 == 0) { r += 15; g += 13; b += 10; }
+                } else if (kind == 4) {
+                    // Pale Miami concrete: fine pores, faint formwork seams,
+                    // small aggregate and restrained weather stains.
+                    r = 184 + noise * 2; g = 177 + noise * 2; b = 163 + noise * 2;
+                    if (y == 0 || y == 8) { r -= 12; g -= 12; b -= 11; }
+                    if (((x * 11 + y * 7) % 23) == 0) { r -= 25; g -= 24; b -= 22; }
+                    if ((x == 4 || x == 12) && y > 2 && y < 7) {
+                        r -= 7; g -= 7; b -= 6;
+                    }
+                } else if (kind == 5) {
+                    // Warm skin grain with subtle tonal variation.
+                    r = 166 + noise * 3; g = 103 + noise * 3; b = 72 + noise * 3;
+                    if ((x * 3 + y * 5) % 19 == 0) { r += 8; g += 5; b += 4; }
+                } else if (kind == 6) {
+                    // Blue denim: diagonal twill-like variation and seams.
+                    r = 48 + noise * 2; g = 70 + noise * 2; b = 111 + noise * 3;
+                    if (((x + y * 2) % 7) == 0) { r += 8; g += 10; b += 15; }
+                    if (x == 0 || x == 15) { r -= 5; g -= 6; b -= 8; }
+                } else {
+                    // Cotton weave for the white tank top.
+                    r = 224 + noise * 2; g = 225 + noise * 2; b = 218 + noise * 2;
+                    if ((x + y) % 9 == 0) { r -= 7; g -= 7; b -= 7; }
                 }
                 int p = (y * 16 + x) * 3;
                 pixels[p] = (byte)r; pixels[p + 1] = (byte)g; pixels[p + 2] = (byte)b;
@@ -78,6 +100,15 @@ final class ModelFactory {
         Appearance appearance = createAppearance();
         appearance.setTexture(0, getTexture(textureKind));
         // Texture color is modulated with the material tint.
+        mesh.setAppearance(0, appearance);
+        return mesh;
+    }
+
+    static Mesh texturedEllipsoid(float width, float height, float depth,
+                                  int color, int textureKind) {
+        Mesh mesh = ellipsoid(width, height, depth, color);
+        Appearance appearance = createAppearance();
+        appearance.setTexture(0, getTexture(textureKind));
         mesh.setAppearance(0, appearance);
         return mesh;
     }
@@ -164,6 +195,19 @@ final class ModelFactory {
         positions.set(0, vertexCount, p);
         VertexBuffer vertices = new VertexBuffer();
         vertices.setPositions(positions, 0.001f, null);
+        short[] uv = new short[vertexCount * 2];
+        int uvOut = 0;
+        for (int r = 0; r < rings; r++) {
+            for (int s = 0; s <= segments; s++) {
+                uv[uvOut++] = (short)(s * 1000 / segments);
+                uv[uvOut++] = (short)(r * 1000 / rings);
+                uv[uvOut++] = (short)(s * 1000 / segments);
+                uv[uvOut++] = (short)((r + 1) * 1000 / rings);
+            }
+        }
+        VertexArray texCoords = new VertexArray(vertexCount, 2, 2);
+        texCoords.set(0, vertexCount, uv);
+        vertices.setTexCoords(0, texCoords, 0.001f, null);
         int[] strips = new int[rings];
         for (int r = 0; r < rings; r++) strips[r] = stripVertices;
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
