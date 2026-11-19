@@ -22,7 +22,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private Thread loop;
     private volatile boolean running;
     private volatile boolean paused;
-    private int keys;
+    private volatile int keys;
 
     private World world;
     private Group scenery;
