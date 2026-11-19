@@ -37,8 +37,8 @@ final class GameCanvas extends Canvas implements Runnable {
     private CJModel cj;
     private CarModel car;
     private Camera camera;
-    private static final int PED_COUNT = 20;
-    private static final int TRAFFIC_COUNT = 9;
+    private static final int PED_COUNT = 28;
+    private static final int TRAFFIC_COUNT = 12;
     private PedestrianModel[] pedestrians = new PedestrianModel[PED_COUNT];
     private boolean[] pedActive = new boolean[PED_COUNT];
     private int[] pedState = new int[PED_COUNT]; // 0 wander, 1 flee, 2 confront, 3 down
@@ -91,9 +91,9 @@ final class GameCanvas extends Canvas implements Runnable {
     private float transitionStartX, transitionStartZ, transitionEndX, transitionEndZ;
     private boolean transitionDriverSide = true;
     private static final float CAR_TRANSITION_LENGTH = 0.9f;
-    private static final int CITY_BLOCKS = 6;
+    private static final int CITY_BLOCKS = 10;
     private static final float CITY_SPACING = 28.0f;
-    private static final float CITY_LIMIT = 88.0f;
+    private static final float CITY_LIMIT = 144.0f;
     private float[] buildingX = new float[CITY_BLOCKS * CITY_BLOCKS];
     private float[] buildingZ = new float[CITY_BLOCKS * CITY_BLOCKS];
     private float[] buildingW = new float[CITY_BLOCKS * CITY_BLOCKS];
@@ -127,17 +127,17 @@ final class GameCanvas extends Canvas implements Runnable {
         // Tile ground and roads: vertex coordinates are signed 16-bit
         // millimetres, so a single 190 m mesh overflows and gets clamped.
         // Keep each piece at 28 m so the entire city floor remains visible.
-        for (int tx = -3; tx <= 3; tx++) {
-            for (int tz = -3; tz <= 3; tz++) {
+        for (int tx = -5; tx <= 5; tx++) {
+            for (int tz = -5; tz <= 5; tz++) {
                 float tileX = tx * CITY_SPACING;
                 float tileZ = tz * CITY_SPACING;
                 addBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
                        tileX, -0.12f, tileZ, 0x777777);
             }
         }
-        for (int i = -3; i <= 3; i++) {
+        for (int i = -5; i <= 5; i++) {
             float road = i * CITY_SPACING;
-            for (int segment = -3; segment <= 3; segment++) {
+            for (int segment = -5; segment <= 5; segment++) {
                 float along = segment * CITY_SPACING;
                 addBox(scenery, 7.5f, 0.025f, CITY_SPACING,
                        road, -0.015f, along, 0x454545);
@@ -170,8 +170,29 @@ final class GameCanvas extends Canvas implements Runnable {
                     case 4: color = 0xC0AE91; break;
                     default: color = 0xA88F7A; break;
                 }
-                addBox(scenery, width, height, depth,
-                       x, height * 0.5f, z, color);
+                if ((seed % 9) == 0) {
+                    // Small pocket park: green square, paths and three low-poly trees.
+                    addBox(scenery, 15.0f, 0.12f, 15.0f, x, 0.02f, z, 0x47784B);
+                    addBox(scenery, 1.2f, 0.08f, 13.0f, x, 0.09f, z, 0xB7A98A);
+                    addBox(scenery, 13.0f, 0.08f, 1.2f, x, 0.10f, z, 0xB7A98A);
+                    addTree(x - 4.8f, z - 4.8f);
+                    addTree(x + 4.8f, z - 4.8f);
+                    addTree(x + 4.8f, z + 4.8f);
+                } else {
+                    addBox(scenery, width, height, depth,
+                           x, height * 0.5f, z, color);
+                    // Roof trim and a few simple storefront/window details.
+                    addBox(scenery, width + 0.18f, 0.22f, depth + 0.18f,
+                           x, height + 0.11f, z, 0x665044);
+                    addBox(scenery, 1.05f, 1.35f, 0.08f, x, 0.68f,
+                           z + depth * 0.5f + 0.045f, 0x49372D);
+                    if ((seed & 1) == 0) {
+                        addBox(scenery, 0.85f, 0.85f, 0.07f, x - 2.0f, 1.75f,
+                               z + depth * 0.5f + 0.05f, 0x6C9BAA);
+                        addBox(scenery, 0.85f, 0.85f, 0.07f, x + 2.0f, 1.75f,
+                               z + depth * 0.5f + 0.05f, 0x6C9BAA);
+                    }
+                }
                 buildingX[buildingCount] = x;
                 buildingZ[buildingCount] = z;
                 buildingW[buildingCount] = width;
@@ -192,12 +213,18 @@ final class GameCanvas extends Canvas implements Runnable {
         initializeTraffic();
 
         camera = new Camera();
-        camera.setPerspective(62.0f, 1.0f, 0.25f, 220.0f);
+        camera.setPerspective(62.0f, 1.0f, 0.25f, 320.0f);
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
 
         updateCamera();
+    }
+
+    private void addTree(float x, float z) {
+        addBox(scenery, 0.42f, 2.1f, 0.42f, x, 1.05f, z, 0x68462E);
+        addBox(scenery, 2.0f, 1.7f, 2.0f, x, 2.35f, z, 0x397044);
+        addBox(scenery, 1.35f, 1.25f, 1.35f, x, 3.05f, z, 0x4D8650);
     }
 
     private void addBuilding(float x, float z, float width, float depth, int color) {
@@ -484,7 +511,7 @@ final class GameCanvas extends Canvas implements Runnable {
         camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
-        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 220.0f);
+        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 320.0f);
     }
 
     private void jump() {
@@ -750,7 +777,7 @@ final class GameCanvas extends Canvas implements Runnable {
         // motion parallel to a wall instead of freezing CJ or letting him pass
         // through the obstacle.
         float nextX = playerX + playerRagdollVX * dt;
-        boolean hitX = playerBlocked(nextX, playerZ);
+        boolean hitX = playerRagdollBlocked(nextX, playerZ);
         if (!hitX) {
             playerX = nextX;
         } else {
@@ -761,7 +788,7 @@ final class GameCanvas extends Canvas implements Runnable {
         }
 
         float nextZ = playerZ + playerRagdollVZ * dt;
-        boolean hitZ = playerBlocked(playerX, nextZ);
+        boolean hitZ = playerRagdollBlocked(playerX, nextZ);
         if (!hitZ) {
             playerZ = nextZ;
         } else {
@@ -814,8 +841,8 @@ final class GameCanvas extends Canvas implements Runnable {
                 float nx = trafficX[i] - (float)Math.sin(a) * trafficSpeed[i] * dt;
                 float nz = trafficZ[i] - (float)Math.cos(a) * trafficSpeed[i] * dt;
                 trafficX[i] = nx; trafficZ[i] = nz;
-                if (trafficZ[i] < -82.0f) trafficHeading[i] = 180.0f;
-                else if (trafficZ[i] > 82.0f) trafficHeading[i] = 0.0f;
+                if (trafficZ[i] < -CITY_LIMIT + 6.0f) trafficHeading[i] = 180.0f;
+                else if (trafficZ[i] > CITY_LIMIT - 6.0f) trafficHeading[i] = 0.0f;
             }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
@@ -1072,26 +1099,38 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private boolean playerBlocked(float x, float z) {
-        if (x < -CITY_LIMIT || x > CITY_LIMIT || z < -CITY_LIMIT || z > CITY_LIMIT) return true;
+        return playerBlockedRadius(x, z, 0.34f);
+    }
+
+    // The ragdoll uses a wider collision capsule than the upright character.
+    // This keeps the torso from clipping into walls while it is lying sideways.
+    private boolean playerRagdollBlocked(float x, float z) {
+        return playerBlockedRadius(x, z, 0.58f);
+    }
+
+    private boolean playerBlockedRadius(float x, float z, float radius) {
+        if (x < -CITY_LIMIT + radius || x > CITY_LIMIT - radius ||
+            z < -CITY_LIMIT + radius || z > CITY_LIMIT - radius) return true;
         for (int i = 0; i < trafficCars.length; i++) {
             if (trafficCars[i] != null) {
                 float tx = x - trafficX[i], tz = z - trafficZ[i];
-                if (tx * tx + tz * tz < 2.1f * 2.1f) return true;
+                float carRadius = 1.35f + radius;
+                if (tx * tx + tz * tz < carRadius * carRadius) return true;
             }
         }
         for (int i = 0; i < buildingCount; i++) {
-            if (circleHitsRect(x, z, 0.34f, buildingX[i], buildingZ[i],
+            if (circleHitsRect(x, z, radius, buildingX[i], buildingZ[i],
                                buildingW[i], buildingD[i])) return true;
         }
 
-        // The sedan remains a solid obstacle when CJ is on foot.
+        // The parked/player sedan is also solid during the ragdoll.
         float a = carHeading * 0.0174532925f;
         float dx = x - carX, dz = z - carZ;
         float lx = dx * (float)Math.cos(a) - dz * (float)Math.sin(a);
         float lz = dx * (float)Math.sin(a) + dz * (float)Math.cos(a);
-        float ox = Math.max(Math.abs(lx) - 0.92f, 0.0f);
-        float oz = Math.max(Math.abs(lz) - 1.48f, 0.0f);
-        return ox * ox + oz * oz < 0.34f * 0.34f;
+        float ox = Math.max(Math.abs(lx) - (0.92f + radius), 0.0f);
+        float oz = Math.max(Math.abs(lz) - (1.48f + radius), 0.0f);
+        return ox * ox + oz * oz < radius * radius;
     }
 
     private boolean carBlocked(float x, float z) {
