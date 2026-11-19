@@ -19,6 +19,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private static final int LEFT = 4;
     private static final int RIGHT = 8;
     private static final int CROUCH = 16;
+    private static final int SPRINT = 32;
 
     private static final int CAM_UP = 1;
     private static final int CAM_DOWN = 2;
@@ -50,6 +51,9 @@ final class GameCanvas extends Canvas implements Runnable {
     private float jumpVelocity = 0.0f;
     private float punchTimer = 0.0f;
     private float carSpeed = 0.0f;
+    private float carSteering = 0.0f;
+    private long lastForwardTap = 0L;
+    private long lastBackTap = 0L;
     private float carHeading = 0.0f;
     private float carX = 2.5f;
     private float carZ = 0.0f;
@@ -91,17 +95,26 @@ final class GameCanvas extends Canvas implements Runnable {
         scenery = new Group();
         world.addChild(scenery);
 
-        // Large, intentionally empty city grid. The whole map is built from
-        // simple low-poly blocks: no pedestrians, traffic, interiors or props.
-        addBox(scenery, 190.0f, 0.18f, 190.0f, 0.0f, -0.12f, 0.0f, 0x777777);
-
-        // Seven north/south and seven east/west roads form a 6 x 6 block city.
+        // Tile ground and roads: vertex coordinates are signed 16-bit
+        // millimetres, so a single 190 m mesh overflows and gets clamped.
+        // Keep each piece at 28 m so the entire city floor remains visible.
+        for (int tx = -3; tx <= 3; tx++) {
+            for (int tz = -3; tz <= 3; tz++) {
+                float tileX = tx * CITY_SPACING;
+                float tileZ = tz * CITY_SPACING;
+                addBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
+                       tileX, -0.12f, tileZ, 0x777777);
+            }
+        }
         for (int i = -3; i <= 3; i++) {
             float road = i * CITY_SPACING;
-            addBox(scenery, 7.5f, 0.025f, 190.0f,
-                    road, -0.015f, 0.0f, 0x454545);
-            addBox(scenery, 190.0f, 0.025f, 7.5f,
-                    0.0f, -0.014f, road, 0x454545);
+            for (int segment = -3; segment <= 3; segment++) {
+                float along = segment * CITY_SPACING;
+                addBox(scenery, 7.5f, 0.025f, CITY_SPACING,
+                       road, -0.015f, along, 0x454545);
+                addBox(scenery, CITY_SPACING, 0.025f, 7.5f,
+                       along, -0.014f, road, 0x454545);
+            }
         }
 
         // One simple building per block for now. Varying footprints and heights
@@ -215,11 +228,18 @@ final class GameCanvas extends Canvas implements Runnable {
         if (inCar) {
             if ((keys & FORWARD) != 0) carSpeed += 3.2f * dt;
             if ((keys & BACK) != 0) carSpeed -= 3.0f * dt;
-            if ((keys & LEFT) != 0) carHeading -= 75.0f * dt;
-            if ((keys & RIGHT) != 0) carHeading += 75.0f * dt;
+            float steeringInput = ((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
+                                  ((keys & LEFT) != 0 ? 1.0f : 0.0f);
+            float steeringTarget = steeringInput * 28.0f;
+            carSteering += (steeringTarget - carSteering) * Math.min(1.0f, 7.0f * dt);
             carSpeed *= 0.985f;
             if (carSpeed > 8.0f) carSpeed = 8.0f;
             if (carSpeed < -3.0f) carSpeed = -3.0f;
+            // Front-wheel steering: the car only yaws while moving, and
+            // reversing naturally changes the direction of the turn.
+            float steeringRad = carSteering * 0.0174532925f;
+            float yawRate = (float)Math.tan(steeringRad) * carSpeed / 2.45f;
+            carHeading = normalizeAngle(carHeading + yawRate * 57.29578f * dt);
             float radians = carHeading * 0.0174532925f;
             float nextX = carX + (float)Math.sin(radians) * carSpeed * dt;
             float nextZ = carZ - (float)Math.cos(radians) * carSpeed * dt;
@@ -263,7 +283,8 @@ final class GameCanvas extends Canvas implements Runnable {
             if (inputLength > 1.0f) inputLength = 1.0f;
 
             float angle = playerHeading * 0.0174532925f;
-            float targetSpeed = ((keys & BACK) != 0 || (keys & FORWARD) != 0) ? 3.0f : 0.0f;
+            float targetSpeed = ((keys & BACK) != 0 || (keys & FORWARD) != 0) ?
+                                (((keys & SPRINT) != 0) ? 5.2f : 3.0f) : 0.0f;
             // M3G's positive Y rotation turns the model's local -Z forward
             // axis toward -X. Keep movement in that exact same local-forward
             // direction, otherwise CJ appears to face one way and walk another.
@@ -514,7 +535,7 @@ final class GameCanvas extends Canvas implements Runnable {
         if (x < -CITY_LIMIT + 2.0f || x > CITY_LIMIT - 2.0f ||
             z < -CITY_LIMIT + 2.0f || z > CITY_LIMIT - 2.0f) return true;
         for (int i = 0; i < buildingCount; i++) {
-            if (circleHitsRect(x, z, 1.45f, buildingX[i], buildingZ[i],
+            if (circleHitsRect(x, z, 1.75f, buildingX[i], buildingZ[i],
                                buildingW[i], buildingD[i])) return true;
         }
         return false;
@@ -532,8 +553,22 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     protected void keyPressed(int keyCode) {
-        if (keyCode == '2') keys |= FORWARD;
-        else if (keyCode == '8') keys |= BACK;
+        if (keyCode == '2') {
+            if ((keys & FORWARD) == 0) {
+                long now = System.currentTimeMillis();
+                if (now - lastForwardTap <= 360L) keys |= SPRINT;
+                lastForwardTap = now;
+            }
+            keys |= FORWARD;
+        }
+        else if (keyCode == '8') {
+            if ((keys & BACK) == 0) {
+                long now = System.currentTimeMillis();
+                if (now - lastBackTap <= 360L) keys |= SPRINT;
+                lastBackTap = now;
+            }
+            keys |= BACK;
+        }
         else if (keyCode == '4') keys |= LEFT;
         else if (keyCode == '6') keys |= RIGHT;
         else if (keyCode == '9') keys |= CROUCH;
@@ -550,8 +585,8 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     protected void keyReleased(int keyCode) {
-        if (keyCode == '2') keys &= ~FORWARD;
-        else if (keyCode == '8') { keys &= ~BACK; reverseFacing = false; }
+        if (keyCode == '2') { keys &= ~FORWARD; keys &= ~SPRINT; }
+        else if (keyCode == '8') { keys &= ~BACK; keys &= ~SPRINT; reverseFacing = false; }
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
         else if (keyCode == '9') keys &= ~CROUCH;
@@ -588,7 +623,7 @@ final class GameCanvas extends Canvas implements Runnable {
         g.fillRect(0, 0, getWidth(), 17);
         g.setColor(0xFFFFFF);
         g.drawString(status, 3, 1, Graphics.TOP | Graphics.LEFT);
-        g.drawString("2/8 MOVE  4/6 TURN  9 CROUCH  D-PAD CAMERA", 3,
+        g.drawString("2/8 MOVE (DOUBLE TAP RUN)  4/6 TURN  D-PAD CAMERA", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
     }
 }
