@@ -132,13 +132,18 @@ final class CJModel {
         if (amount < 0.0f) amount = 0.0f;
         if (amount > 1.0f) amount = 1.0f;
         float sign = entering ? 1.0f : -1.0f;
+        // Lower the torso below the roofline and fold the legs into the cabin.
+        // This makes CJ visibly occupy the seat instead of disappearing outside.
+        upperBody.setTranslation(0.0f, -0.48f * amount, 0.0f);
         upperBody.setOrientation(-12.0f * amount, 0.0f, 0.0f, 1.0f);
         leftArm.setOrientation(-62.0f * amount * sign, 1.0f, 0.0f, 0.0f);
         rightArm.setOrientation(-28.0f * amount * sign, 1.0f, 0.0f, 0.0f);
         leftForearm.setOrientation(-35.0f * amount, 1.0f, 0.0f, 0.0f);
         rightForearm.setOrientation(-18.0f * amount, 1.0f, 0.0f, 0.0f);
-        leftLeg.setOrientation(18.0f * amount, 1.0f, 0.0f, 0.0f);
-        rightLeg.setOrientation(-12.0f * amount, 1.0f, 0.0f, 0.0f);
+        leftLeg.setOrientation(78.0f * amount, 1.0f, 0.0f, 0.0f);
+        rightLeg.setOrientation(72.0f * amount, 1.0f, 0.0f, 0.0f);
+        leftShin.setOrientation(-72.0f * amount, 1.0f, 0.0f, 0.0f);
+        rightShin.setOrientation(-68.0f * amount, 1.0f, 0.0f, 0.0f);
     }
 
     void animate(float walkPhase, boolean moving, float punchAngle,
