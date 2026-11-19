@@ -11,8 +11,9 @@ The initial scene is intentionally small and procedural:
 - A larger procedural city with pedestrian sidewalks and street traffic.
 - Twenty active low-poly pedestrians with distinct clothing/skin combinations.
 - Pedestrians wander, flee from CJ, or confront and shove him; punch interactions are arcade-style and non-graphic.
-- Three traffic vehicles patrol the long streets, can stop for ten seconds, and can be taken over.
-- Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver joins the pedestrian population.
+- Nine traffic vehicles in several body colors patrol the three main avenues, can stop for ten seconds, and can be taken over.
+- Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver tumbles to the pavement with a lightweight articulated ragdoll, then settles and despawns.
+- Pedestrians use a low-cost ragdoll simulation with gravity, horizontal momentum, angular motion, ground bounce and damping.
 - Third-person camera, walking, jumping, punching and vehicle driving.
 
 ## Controls
@@ -36,7 +37,7 @@ When driving, 2 / 8 accelerate and reverse, while 4 / 6 steer.
 - `src/gta/ModelFactory.java` — procedural M3G box geometry.
 - `src/gta/CJModel.java` — articulated player model.
 - `src/gta/CarModel.java` — low-poly sedan model.
-- `src/gta/PedestrianModel.java` — lightweight pedestrian model and appearance presets.
+- `src/gta/PedestrianModel.java` — lightweight pedestrian model, appearance presets and ragdoll poses.
 
 ## Build notes
 
