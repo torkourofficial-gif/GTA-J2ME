@@ -161,8 +161,6 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void update(float dt) {
         updateCameraInput(dt);
-        float moveX = 0.0f;
-        float moveZ = 0.0f;
         boolean moving = false;
 
         if (inCar) {
