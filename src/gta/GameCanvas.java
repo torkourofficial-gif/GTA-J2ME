@@ -1267,7 +1267,7 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void initializePedestrians() {
-        // Twenty-eight lightweight active pedestrians; their palette index cycles through
+        // Nearby pedestrians are initialized first; the remaining slots are lazy-loaded. Their palette index cycles through
         // twenty distinct clothing/skin combinations.
         float[] px = {-5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f,
                       -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f,
@@ -1296,7 +1296,7 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void initializeTraffic() {
-        // Twelve low-poly traffic vehicles spread across the main avenues.
+        // Six low-poly traffic vehicles spread across the main avenues.
         float[] xs = {-30.0f, -26.0f, -30.0f, -2.0f, 2.0f, -2.0f, 26.0f, 30.0f, 26.0f,
                       54.0f, -54.0f, 54.0f};
         float[] zs = {-68.0f, -20.0f, 38.0f, -58.0f, -8.0f, 52.0f, -42.0f, 14.0f, 68.0f,
