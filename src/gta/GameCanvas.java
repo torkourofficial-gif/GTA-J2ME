@@ -106,7 +106,7 @@ final class GameCanvas extends Canvas implements Runnable {
         world.addChild(car.root);
 
         camera = new Camera();
-        camera.setPerspective(62.0f, 1.0f, 0.1f, 90.0f);
+        camera.setPerspective(62.0f, 1.0f, 0.25f, 90.0f);
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
@@ -310,7 +310,7 @@ final class GameCanvas extends Canvas implements Runnable {
         camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
-        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.1f, 90.0f);
+        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 90.0f);
     }
 
     private void jump() {
