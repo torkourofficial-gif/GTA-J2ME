@@ -25,6 +25,7 @@ final class CJModel {
     private final int shirtColor;
     private final int pantsColor;
     private final int skinColor;
+    private final int skinLightColor;
     private float crouchBlend;
     private float jumpBlend;
     private float gaitBlend;
@@ -37,8 +38,8 @@ final class CJModel {
     private boolean ragdollActive;
 
     // CJ's palette: white tank, blue loose jeans, dark sneakers, warm skin.
-    private static final int SKIN = 0xA96543;
-    private static final int SKIN_LIGHT = 0xC17B55;
+    private static final int SKIN = 0xBD896F;
+    private static final int SKIN_LIGHT = 0xD6A58A;
     private static final int SKIN_DARK = 0x75432F;
     private static final int SHIRT = 0xE9E9E2;
     private static final int SHIRT_SHADE = 0xBFC2C0;
@@ -53,7 +54,8 @@ final class CJModel {
         this.lucia = lucia;
         shirtColor = lucia ? 0xD96F91 : 0xD8D6D0;
         pantsColor = lucia ? 0x456C9A : 0x555B50;
-        skinColor = lucia ? 0xB87959 : SKIN;
+        skinColor = lucia ? 0xA96F53 : SKIN;
+        skinLightColor = lucia ? 0xC58B6C : skinLightColor;
         // Waist, belt and denim waistband.
         addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, pantsColor);
         addBox(body, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
@@ -73,9 +75,9 @@ final class CJModel {
         addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, skinColor);
         addTexturedOval(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, skinColor, 5);
         // Ears, nose, brows and eyes face local -Z.
-        addBox(upperBody, 0.045f, 0.09f, 0.055f, -0.125f, 1.73f, -0.005f, SKIN_LIGHT);
-        addBox(upperBody, 0.045f, 0.09f, 0.055f, 0.125f, 1.73f, -0.005f, SKIN_LIGHT);
-        addBox(upperBody, 0.045f, 0.075f, 0.045f, 0.0f, 1.69f, -0.125f, SKIN_LIGHT);
+        addBox(upperBody, 0.045f, 0.09f, 0.055f, -0.125f, 1.73f, -0.005f, skinLightColor);
+        addBox(upperBody, 0.045f, 0.09f, 0.055f, 0.125f, 1.73f, -0.005f, skinLightColor);
+        addBox(upperBody, 0.045f, 0.075f, 0.045f, 0.0f, 1.69f, -0.125f, skinLightColor);
         addBox(upperBody, 0.055f, 0.018f, 0.018f, -0.055f, 1.77f, -0.116f, 0x29201C);
         addBox(upperBody, 0.055f, 0.018f, 0.018f, 0.055f, 1.77f, -0.116f, 0x29201C);
         addBox(upperBody, 0.027f, 0.025f, 0.012f, -0.052f, 1.735f, -0.122f, 0x171717);
@@ -95,8 +97,8 @@ final class CJModel {
         }
         leftForearm.setTranslation(0.0f, -0.34f, 0.0f);
         rightForearm.setTranslation(0.0f, -0.34f, 0.0f);
-        addTexturedOval(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
-        addTexturedOval(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
+        addTexturedOval(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, skinLightColor, 5);
+        addTexturedOval(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, skinLightColor, 5);
         if (lucia) {
             addOval(leftForearm, 0.15f, 0.20f, 0.155f, 0.0f, -0.12f, 0.0f, shirtColor);
             addOval(rightForearm, 0.15f, 0.20f, 0.155f, 0.0f, -0.12f, 0.0f, shirtColor);
