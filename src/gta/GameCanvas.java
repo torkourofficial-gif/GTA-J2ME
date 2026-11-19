@@ -8,6 +8,7 @@ import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Group;
+import javax.microedition.m3g.Light;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
@@ -198,6 +199,22 @@ final class GameCanvas extends Canvas implements Runnable {
         sky.setColor(0x87B6D8);
         sky.setColorClearEnable(true);
         world.setBackground(sky);
+
+        // Warm tropical daylight: broad ambient fill plus one directional sun.
+        // Both lights are shared by the scene; no per-object light allocation.
+        Light ambientLight = new Light();
+        ambientLight.setMode(Light.AMBIENT);
+        ambientLight.setColor(0xD5E5FF);
+        ambientLight.setIntensity(0.48f);
+        world.addChild(ambientLight);
+
+        Light sunLight = new Light();
+        sunLight.setMode(Light.DIRECTIONAL);
+        sunLight.setColor(0xFFF0D4);
+        sunLight.setIntensity(0.92f);
+        sunLight.setOrientation(38.0f, -0.55f, -1.0f, -0.35f);
+        world.addChild(sunLight);
+
         debugStage = "create fog";
         Fog fog = new Fog();
         fog.setColor(0x87B6D8);
@@ -1214,9 +1231,11 @@ final class GameCanvas extends Canvas implements Runnable {
         // Ten lightweight active pedestrians; their palette index cycles through
         // twenty distinct clothing/skin combinations.
         float[] px = {-5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f,
-                      -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f};
+                      -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f,
+                      22.8f, 33.2f, 22.8f, 33.2f, -33.2f, -22.8f, -33.2f, -22.8f};
         float[] pz = {-70.0f, -70.0f, -56.0f, -56.0f, -42.0f, -42.0f, -28.0f, -28.0f, -14.0f, -14.0f,
-                       0.0f, 0.0f, 14.0f, 14.0f, 28.0f, 28.0f, 42.0f, 42.0f, 56.0f, 56.0f};
+                       0.0f, 0.0f, 14.0f, 14.0f, 28.0f, 28.0f, 42.0f, 42.0f, 56.0f, 56.0f,
+                      -63.0f, -63.0f, -35.0f, -35.0f, -7.0f, -7.0f, 21.0f, 21.0f};
         for (int i = 0; i < px.length && i < PED_COUNT; i++) {
             debugStage = "create pedestrian " + i;
             pedestrians[i] = new PedestrianModel(i);
@@ -1236,11 +1255,14 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void initializeTraffic() {
         // Nine low-poly traffic vehicles spread across the three main avenues.
-        float[] xs = {-30.0f, -26.0f, -30.0f, -2.0f, 2.0f, -2.0f, 26.0f, 30.0f, 26.0f};
-        float[] zs = {-68.0f, -20.0f, 38.0f, -58.0f, -8.0f, 52.0f, -42.0f, 14.0f, 68.0f};
-        float[] headings = {0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f};
+        float[] xs = {-30.0f, -26.0f, -30.0f, -2.0f, 2.0f, -2.0f, 26.0f, 30.0f, 26.0f,
+                      54.0f, -54.0f, 54.0f};
+        float[] zs = {-68.0f, -20.0f, 38.0f, -58.0f, -8.0f, 52.0f, -42.0f, 14.0f, 68.0f,
+                      -48.0f, 12.0f, 65.0f};
+        float[] headings = {0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f, 0.0f, 180.0f, 0.0f,
+                            180.0f, 0.0f, 180.0f};
         int[] colors = {0xB72E32,0x315B91,0xD0B43B,0x39764B,0x777777,
-                        0xD16A32,0x3D8587,0xB7B7B7,0x6B477E};
+                        0xD16A32,0x3D8587,0xB7B7B7,0x6B477E,0xE4E0D4,0x8D453D,0x386B78};
         for (int i = 0; i < xs.length && i < trafficCars.length; i++) {
             debugStage = "create traffic car " + i;
             trafficCars[i] = new CarModel(colors[i]);
