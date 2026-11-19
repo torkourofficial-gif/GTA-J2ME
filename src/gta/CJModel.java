@@ -170,18 +170,18 @@ final class CJModel {
 
         float crouch = crouchBlend;
         float jump = jumpBlend;
-        leftLeg.setOrientation(stride + crouch * 25.0f + jump * 20.0f, 1, 0, 0);
-        rightLeg.setOrientation(opposite + crouch * 25.0f + jump * 20.0f, 1, 0, 0);
-        leftShin.setOrientation(-kneeLeft - crouch * 48.0f - jump * 15.0f, 1, 0, 0);
-        rightShin.setOrientation(-kneeRight - crouch * 48.0f - jump * 15.0f, 1, 0, 0);
+        leftLeg.setOrientation(stride + crouch * 25.0f - jump * 12.0f, 1, 0, 0);
+        rightLeg.setOrientation(opposite + crouch * 25.0f - jump * 12.0f, 1, 0, 0);
+        leftShin.setOrientation(-kneeLeft - crouch * 48.0f - jump * 28.0f, 1, 0, 0);
+        rightShin.setOrientation(-kneeRight - crouch * 48.0f - jump * 28.0f, 1, 0, 0);
 
         float armSwing = -stride * 0.68f;
         float otherArm = -opposite * 0.68f;
-        leftArm.setOrientation(armSwing - turnBlend * 8.0f - jump * 78.0f, 1, 0, 0);
-        rightArm.setOrientation(otherArm - turnBlend * 8.0f - punchAngle -
+        leftArm.setOrientation(armSwing - turnBlend * 8.0f + jump * 78.0f, 1, 0, 0);
+        rightArm.setOrientation(otherArm - turnBlend * 8.0f - punchAngle +
                                 jump * 78.0f, 1, 0, 0);
-        leftForearm.setOrientation(-crouch * 35.0f - jump * 20.0f, 1, 0, 0);
-        rightForearm.setOrientation(-crouch * 35.0f - jump * 20.0f, 1, 0, 0);
+        leftForearm.setOrientation(-crouch * 35.0f + jump * 24.0f, 1, 0, 0);
+        rightForearm.setOrientation(-crouch * 35.0f + jump * 24.0f, 1, 0, 0);
 
         // Small hip sway and torso counterbalance make gait feel less robotic.
         leftLeg.setTranslation(-0.13f - (float)Math.sin(phase) * 0.018f * gaitBlend,
