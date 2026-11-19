@@ -349,12 +349,14 @@ final class GameCanvas extends Canvas implements Runnable {
 
         // The driver seat and the standing point are expressed in car-local
         // coordinates, then transformed by the sedan's current heading.
-        float headingRad = carHeading * 0.0174532925f;
-        float relX = playerX - carX;
-        float relZ = playerZ - carZ;
-        float localSideX = relX * (float)Math.cos(headingRad) -
-                           relZ * (float)Math.sin(headingRad);
-        transitionDriverSide = localSideX <= 0.0f;
+        if (entering) {
+            float headingRad = carHeading * 0.0174532925f;
+            float relX = playerX - carX;
+            float relZ = playerZ - carZ;
+            float localSideX = relX * (float)Math.cos(headingRad) -
+                               relZ * (float)Math.sin(headingRad);
+            transitionDriverSide = localSideX <= 0.0f;
+        }
         float sideSign = transitionDriverSide ? -1.0f : 1.0f;
         float seatX = sideSign * 0.32f;
         float seatZ = -0.28f;
