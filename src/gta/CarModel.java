@@ -10,15 +10,19 @@ final class CarModel {
     private final Group passengerDoor = new Group();
 
     CarModel() {
+        this(0xB72E32);
+    }
+
+    CarModel(int bodyColor) {
         // Lower body, hood and trunk.
-        addBox(root, 1.62f, 0.42f, 2.75f, 0.0f, 0.48f, 0.0f, 0xB72E32);
-        addBox(root, 1.58f, 0.18f, 0.72f, 0.0f, 0.80f, -1.02f, 0xA82B30);
-        addBox(root, 1.58f, 0.18f, 0.58f, 0.0f, 0.80f, 1.06f, 0xA82B30);
+        addBox(root, 1.62f, 0.42f, 2.75f, 0.0f, 0.48f, 0.0f, bodyColor);
+        addBox(root, 1.58f, 0.18f, 0.72f, 0.0f, 0.80f, -1.02f, bodyColor);
+        addBox(root, 1.58f, 0.18f, 0.58f, 0.0f, 0.80f, 1.06f, bodyColor);
 
         // Cabin frame and windows. The open middle leaves the interior visible.
-        addBox(root, 1.35f, 0.10f, 1.40f, 0.0f, 1.39f, -0.12f, 0x8D2027);
-        addBox(root, 0.10f, 0.58f, 1.35f, -0.66f, 1.08f, -0.12f, 0x8D2027);
-        addBox(root, 0.10f, 0.58f, 1.35f, 0.66f, 1.08f, -0.12f, 0x8D2027);
+        addBox(root, 1.35f, 0.10f, 1.40f, 0.0f, 1.39f, -0.12f, bodyColor);
+        addBox(root, 0.10f, 0.58f, 1.35f, -0.66f, 1.08f, -0.12f, bodyColor);
+        addBox(root, 0.10f, 0.58f, 1.35f, 0.66f, 1.08f, -0.12f, bodyColor);
         addBox(root, 1.18f, 0.42f, 0.045f, 0.0f, 1.08f, -0.79f, 0x79AFC1);
         addBox(root, 1.18f, 0.42f, 0.045f, 0.0f, 1.08f, 0.55f, 0x79AFC1);
 
@@ -50,18 +54,18 @@ final class CarModel {
         // Both front doors are separate hinged assemblies. Their panels sit
         // just outside the body shell to avoid coplanar/z-fighting surfaces.
         driverDoor.setTranslation(-0.84f, 0.0f, -0.70f);
-        addBox(driverDoor, 0.065f, 0.46f, 0.78f, -0.025f, 0.78f, 0.39f, 0xA82B30);
+        addBox(driverDoor, 0.065f, 0.46f, 0.78f, -0.025f, 0.78f, 0.39f, bodyColor);
         addBox(driverDoor, 0.035f, 0.31f, 0.66f, -0.070f, 1.15f, 0.39f, 0x79AFC1);
         addBox(driverDoor, 0.08f, 0.035f, 0.12f, -0.055f, 0.92f, 0.42f, 0xD6C9B4);
         root.addChild(driverDoor);
 
         passengerDoor.setTranslation(0.84f, 0.0f, -0.70f);
-        addBox(passengerDoor, 0.065f, 0.46f, 0.78f, 0.025f, 0.78f, 0.39f, 0xA82B30);
+        addBox(passengerDoor, 0.065f, 0.46f, 0.78f, 0.025f, 0.78f, 0.39f, bodyColor);
         addBox(passengerDoor, 0.035f, 0.31f, 0.66f, 0.070f, 1.15f, 0.39f, 0x79AFC1);
         addBox(passengerDoor, 0.08f, 0.035f, 0.12f, 0.055f, 0.92f, 0.42f, 0xD6C9B4);
         root.addChild(passengerDoor);
-        addBox(root, 0.16f, 0.12f, 0.16f, -0.82f, 1.24f, -0.50f, 0xA82B30);
-        addBox(root, 0.16f, 0.12f, 0.16f, 0.82f, 1.24f, -0.50f, 0xA82B30);
+        addBox(root, 0.16f, 0.12f, 0.16f, -0.82f, 1.24f, -0.50f, bodyColor);
+        addBox(root, 0.16f, 0.12f, 0.16f, 0.82f, 1.24f, -0.50f, bodyColor);
     }
 
     private void addWheel(float x, float y, float z) {
