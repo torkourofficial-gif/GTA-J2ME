@@ -1165,6 +1165,13 @@ final class GameCanvas extends Canvas implements Runnable {
                     trafficStop[i] = 0.6f;
                     bikeSpeed *= 0.8f;
                 }
+            } else if (bikeSourceIndex < 0) {
+                float bx = trafficX[i] - bikeX, bz = trafficZ[i] - bikeZ;
+                if (bx * bx + bz * bz < 4.2f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficSpeed[i] = 0.7f;
+                }
             }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
@@ -1544,6 +1551,10 @@ final class GameCanvas extends Canvas implements Runnable {
         for (int i = 0; i < trafficBikes.length; i++) {
             if (i == self || !bikeTrafficActive[i]) continue;
             float dx = x - bikeTrafficX[i], dz = z - bikeTrafficZ[i];
+            if (dx * dx + dz * dz < 1.4f) return true;
+        }
+        if (!inBike && bikeSourceIndex < 0) {
+            float dx = x - bikeX, dz = z - bikeZ;
             if (dx * dx + dz * dz < 1.4f) return true;
         }
         return false;
