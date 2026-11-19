@@ -66,6 +66,12 @@ final class CarModel {
         root.addChild(passengerDoor);
         addBox(root, 0.16f, 0.12f, 0.16f, -0.82f, 1.24f, -0.50f, bodyColor);
         addBox(root, 0.16f, 0.12f, 0.16f, 0.82f, 1.24f, -0.50f, bodyColor);
+        if (bodyColor == 0x263C62) {
+            // Compact red/blue roof lightbar for pursuit vehicles.
+            addBox(root, 0.24f, 0.12f, 0.20f, -0.16f, 1.48f, -0.12f, 0xD83A42);
+            addBox(root, 0.24f, 0.12f, 0.20f, 0.16f, 1.48f, -0.12f, 0x367BD6);
+            addBox(root, 0.18f, 0.06f, 0.24f, 0.0f, 1.49f, -0.12f, 0xE8E8E8);
+        }
     }
 
     private void addWheel(float x, float y, float z) {
