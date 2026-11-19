@@ -394,7 +394,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private boolean carBlocked(float x, float z) {
         if (x < -18.0f || x > 18.0f || z < -18.0f || z > 18.0f) return true;
-        if (circleHitsRect(x,z,0.85f,-6.0f,-5.0f,3.8f,5.0f)) return true;
+        if (circleHitsRect(x,z,1.45f,-6.0f,-5.0f,3.8f,5.0f)) return true;
         if (circleHitsRect(x,z,0.85f,6.0f,-7.0f,4.2f,6.0f)) return true;
         if (circleHitsRect(x,z,0.85f,-6.0f,5.0f,4.0f,4.0f)) return true;
         if (circleHitsRect(x,z,0.85f,6.0f,6.0f,3.5f,5.0f)) return true;
