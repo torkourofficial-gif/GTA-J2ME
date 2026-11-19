@@ -212,7 +212,7 @@ final class ModelFactory {
         int baseR = (color >> 16) & 255;
         int baseG = (color >> 8) & 255;
         int baseB = color & 255;
-        int[] faceLight = {218, 218, 148, 148, 255, 105};
+        int[] faceLight = {160, 235, 220, 155, 255, 105};
         byte[] faceColors = new byte[24 * 3];
         for (int face = 0; face < 6; face++) {
             int shade = faceLight[face];
