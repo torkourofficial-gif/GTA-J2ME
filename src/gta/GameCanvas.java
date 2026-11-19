@@ -412,6 +412,18 @@ final class GameCanvas extends Canvas implements Runnable {
         if (cameraPitch > 35.0f) cameraPitch = 35.0f;
     }
 
+    // Java ME compatibility: calculate atan2 without relying on Math.atan2.
+    private double atan2Compat(double y, double x) {
+        if (x > 0.0) return Math.atan(y / x);
+        if (x < 0.0) {
+            if (y >= 0.0) return Math.atan(y / x) + Math.PI;
+            return Math.atan(y / x) - Math.PI;
+        }
+        if (y > 0.0) return Math.PI * 0.5;
+        if (y < 0.0) return -Math.PI * 0.5;
+        return 0.0;
+    }
+
     private float normalizeAngle(float angle) {
         while (angle > 180.0f) angle -= 360.0f;
         while (angle < -180.0f) angle += 360.0f;
@@ -689,13 +701,13 @@ final class GameCanvas extends Canvas implements Runnable {
             boolean running = false;
             if (pedState[i] == 1) {
                 // Most pedestrians panic and flee from CJ.
-                pedHeading[i] = (float)(Math.atan2(dx, dz) * 57.29578f);
+                pedHeading[i] = (float)(atan2Compat(dx, dz) * 57.29578f);
                 speed = 3.0f; running = true;
                 pedTimer[i] -= dt;
                 if (dist2 > 225.0f) { pedState[i] = 0; pedTimer[i] = 1.5f; }
             } else if (pedState[i] == 2) {
                 // A few confront CJ and shove him if he stays close.
-                pedHeading[i] = (float)(Math.atan2(-dx, -dz) * 57.29578f);
+                pedHeading[i] = (float)(atan2Compat(-dx, -dz) * 57.29578f);
                 speed = dist2 > 1.7f ? 1.65f : 0.0f;
                 if (dist2 < 2.0f && pedAttackCooldown[i] <= 0.0f && !inCar) {
                     float inv = 1.0f / (float)Math.sqrt(Math.max(0.01f, dist2));
