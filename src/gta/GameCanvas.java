@@ -972,49 +972,6 @@ final class GameCanvas extends Canvas implements Runnable {
             trafficHeading[i] = headings[i];
             trafficSpeed[i] = 3.0f + (i % 4) * 0.42f;
             trafficCruiseSpeed[i] = trafficSpeed[i];
-            // Traffic vehicles have solid body-to-body collision. A car
-            // yields and brakes instead of passing through another vehicle.
-            for (int j = 0; j < i; j++) {
-                if (trafficCars[j] == null) continue;
-                float cx = trafficX[i] - trafficX[j];
-                float cz = trafficZ[i] - trafficZ[j];
-                if (cx * cx + cz * cz < 5.8f) {
-                    trafficX[i] = oldTrafficX;
-                    trafficZ[i] = oldTrafficZ;
-                    trafficSpeed[i] = 0.7f;
-                    break;
-                }
-            }
-            // The player's sedan is solid to NPC traffic as well.
-            if (inCar) {
-                float px = trafficX[i] - carX, pz = trafficZ[i] - carZ;
-                if (px * px + pz * pz < 6.0f) {
-                    trafficX[i] = oldTrafficX;
-                    trafficZ[i] = oldTrafficZ;
-                    trafficStop[i] = 0.7f;
-                    carSpeed *= 0.82f;
-                }
-            }
-            for (int k = 0; k < trafficBikes.length; k++) {
-                if (!bikeTrafficActive[k]) continue;
-                float bx = trafficX[i] - bikeTrafficX[k];
-                float bz = trafficZ[i] - bikeTrafficZ[k];
-                if (bx * bx + bz * bz < 3.0f) {
-                    trafficX[i] = oldTrafficX;
-                    trafficZ[i] = oldTrafficZ;
-                    trafficSpeed[i] = 0.7f;
-                    break;
-                }
-            }
-            if (inBike) {
-                float bx = trafficX[i] - bikeX, bz = trafficZ[i] - bikeZ;
-                if (bx * bx + bz * bz < 4.2f) {
-                    trafficX[i] = oldTrafficX;
-                    trafficZ[i] = oldTrafficZ;
-                    trafficStop[i] = 0.6f;
-                    bikeSpeed *= 0.8f;
-                }
-            }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
@@ -1158,6 +1115,48 @@ final class GameCanvas extends Canvas implements Runnable {
                 trafficX[i] = nx; trafficZ[i] = nz;
                 if (trafficZ[i] < -CITY_LIMIT + 6.0f) trafficHeading[i] = 180.0f;
                 else if (trafficZ[i] > CITY_LIMIT - 6.0f) trafficHeading[i] = 0.0f;
+            }
+            // Traffic vehicles have solid body-to-body collision. A car
+            // yields and brakes instead of passing through another vehicle.
+            for (int j = 0; j < i; j++) {
+                if (trafficCars[j] == null) continue;
+                float cx = trafficX[i] - trafficX[j];
+                float cz = trafficZ[i] - trafficZ[j];
+                if (cx * cx + cz * cz < 5.8f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficSpeed[i] = 0.7f;
+                    break;
+                }
+            }
+            if (inCar) {
+                float px = trafficX[i] - carX, pz = trafficZ[i] - carZ;
+                if (px * px + pz * pz < 6.0f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficStop[i] = 0.7f;
+                    carSpeed *= 0.82f;
+                }
+            }
+            for (int k = 0; k < trafficBikes.length; k++) {
+                if (!bikeTrafficActive[k]) continue;
+                float bx = trafficX[i] - bikeTrafficX[k];
+                float bz = trafficZ[i] - bikeTrafficZ[k];
+                if (bx * bx + bz * bz < 3.0f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficSpeed[i] = 0.7f;
+                    break;
+                }
+            }
+            if (inBike) {
+                float bx = trafficX[i] - bikeX, bz = trafficZ[i] - bikeZ;
+                if (bx * bx + bz * bz < 4.2f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficStop[i] = 0.6f;
+                    bikeSpeed *= 0.8f;
+                }
             }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
