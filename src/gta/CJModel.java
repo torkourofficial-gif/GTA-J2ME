@@ -127,6 +127,20 @@ final class CJModel {
         root.setRenderingEnable(visible);
     }
 
+    /** Temporary leaning/stepping pose used while entering or leaving the sedan. */
+    void setEntryPose(float amount, boolean entering) {
+        if (amount < 0.0f) amount = 0.0f;
+        if (amount > 1.0f) amount = 1.0f;
+        float sign = entering ? 1.0f : -1.0f;
+        upperBody.setOrientation(-12.0f * amount, 0.0f, 0.0f, 1.0f);
+        leftArm.setOrientation(-62.0f * amount * sign, 1.0f, 0.0f, 0.0f);
+        rightArm.setOrientation(-28.0f * amount * sign, 1.0f, 0.0f, 0.0f);
+        leftForearm.setOrientation(-35.0f * amount, 1.0f, 0.0f, 0.0f);
+        rightForearm.setOrientation(-18.0f * amount, 1.0f, 0.0f, 0.0f);
+        leftLeg.setOrientation(18.0f * amount, 1.0f, 0.0f, 0.0f);
+        rightLeg.setOrientation(-12.0f * amount, 1.0f, 0.0f, 0.0f);
+    }
+
     void animate(float walkPhase, boolean moving, float punchAngle,
                  boolean backward, boolean jumping, boolean crouching,
                  float turnAmount) {
