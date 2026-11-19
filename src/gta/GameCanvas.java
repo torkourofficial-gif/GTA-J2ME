@@ -56,6 +56,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private boolean inCar = false;
     private int carTransition = 0;
     private float carTransitionTime = 0.0f;
+    private float transitionStartX, transitionStartZ, transitionEndX, transitionEndZ;
     private static final float CAR_TRANSITION_LENGTH = 0.9f;
     private boolean reverseFacing = false;
     private float reverseTargetHeading = 0.0f;
@@ -325,70 +326,116 @@ final class GameCanvas extends Canvas implements Runnable {
     private void toggleCar() {
         if (carTransition != 0) return;
         if (inCar) {
-            carTransition = 2;
-            carTransitionTime = 0.0f;
-            carSpeed = 0.0f;
-            float a = carHeading * 0.0174532925f;
-            playerX = carX - (float)Math.cos(a) * 1.15f;
-            playerZ = carZ - (float)Math.sin(a) * 1.15f;
-            playerY = 0.0f;
-            playerHeading = carHeading;
-            cj.setPosition(playerX, playerY, playerZ);
-            cj.setHeading(playerHeading);
-            cj.setVisible(true);
-            car.setDoorOpen(72.0f);
-            status = "EXITING VEHICLE...";
+            beginCarTransition(false);
             return;
         }
         float dx = playerX - carX;
         float dz = playerZ - carZ;
-        if (dx * dx + dz * dz < 12.0f) {
-            carTransition = 1;
-            carTransitionTime = 0.0f;
-            playerVelocityX = 0.0f;
-            playerVelocityZ = 0.0f;
-            float a = carHeading * 0.0174532925f;
-            playerX = carX - (float)Math.cos(a) * 1.15f;
-            playerZ = carZ - (float)Math.sin(a) * 1.15f;
-            playerY = 0.0f;
+        if (dx * dx + dz * dz < 12.0f) beginCarTransition(true);
+        else status = "GET CLOSER TO THE CAR";
+    }
+
+    private void beginCarTransition(boolean entering) {
+        carTransition = entering ? 1 : 2;
+        carTransitionTime = 0.0f;
+        carSpeed = 0.0f;
+        playerVelocityX = 0.0f;
+        playerVelocityZ = 0.0f;
+
+        // The driver seat and the standing point are expressed in car-local
+        // coordinates, then transformed by the sedan's current heading.
+        float seatX = -0.32f;
+        float seatZ = -0.28f;
+        float outsideX = -1.28f;
+        float outsideZ = -0.25f;
+        if (entering) {
+            transitionStartX = playerX;
+            transitionStartZ = playerZ;
+            worldPoint(outsideX, outsideZ, true);
+            transitionStartX = playerX;
+            transitionStartZ = playerZ;
+            worldPoint(seatX, seatZ, false);
+            transitionEndX = playerX;
+            transitionEndZ = playerZ;
+            playerX = transitionStartX;
+            playerZ = transitionStartZ;
             playerHeading = normalizeAngle(carHeading + 90.0f);
-            cj.setPosition(playerX, playerY, playerZ);
-            cj.setHeading(playerHeading);
-            cj.setVisible(true);
-            car.setDoorOpen(0.0f);
             status = "ENTERING VEHICLE...";
-        } else status = "GET CLOSER TO THE CAR";
+        } else {
+            worldPoint(seatX, seatZ, false);
+            transitionStartX = playerX;
+            transitionStartZ = playerZ;
+            worldPoint(outsideX, outsideZ, true);
+            transitionEndX = playerX;
+            transitionEndZ = playerZ;
+            playerX = transitionStartX;
+            playerZ = transitionStartZ;
+            playerHeading = normalizeAngle(carHeading + 90.0f);
+            status = "EXITING VEHICLE...";
+        }
+        playerY = 0.0f;
+        cj.setPosition(playerX, playerY, playerZ);
+        cj.setHeading(playerHeading);
+        cj.setVisible(true);
+        cj.setEntryPose(entering ? 0.0f : 1.0f, entering);
+        car.setDoorOpen(0.0f);
+    }
+
+    /** Convert a car-local X/Z point to world space and store it in playerX/Z. */
+    private void worldPoint(float localX, float localZ, boolean outside) {
+        float a = carHeading * 0.0174532925f;
+        playerX = carX + localX * (float)Math.cos(a) + localZ * (float)Math.sin(a);
+        playerZ = carZ - localX * (float)Math.sin(a) + localZ * (float)Math.cos(a);
     }
 
     private void updateCarTransition(float dt) {
         carTransitionTime += dt;
-        float t = carTransitionTime / CAR_TRANSITION_LENGTH;
+        float t = carTransitionTime / 1.45f;
         if (t > 1.0f) t = 1.0f;
         float smooth = t * t * (3.0f - 2.0f * t);
-        if (carTransition == 1) {
-            car.setDoorOpen(72.0f * smooth);
-            cj.setEntryPose(smooth, true);
-            if (t >= 1.0f) {
+
+        // Door opens first, CJ moves through the doorway, then the door closes.
+        float door;
+        if (t < 0.22f) door = smooth / (0.22f * 0.22f * (3.0f - 2.0f * 0.22f));
+        else if (t < 0.78f) door = 1.0f;
+        else {
+            float close = (t - 0.78f) / 0.22f;
+            if (close > 1.0f) close = 1.0f;
+            door = 1.0f - close * close * (3.0f - 2.0f * close);
+        }
+        if (door < 0.0f) door = 0.0f;
+        if (door > 1.0f) door = 1.0f;
+        car.setDoorOpen(72.0f * door);
+
+        float moveT = (t - 0.18f) / 0.64f;
+        if (moveT < 0.0f) moveT = 0.0f;
+        if (moveT > 1.0f) moveT = 1.0f;
+        float moveSmooth = moveT * moveT * (3.0f - 2.0f * moveT);
+        playerX = transitionStartX + (transitionEndX - transitionStartX) * moveSmooth;
+        playerZ = transitionStartZ + (transitionEndZ - transitionStartZ) * moveSmooth;
+        cj.setPosition(playerX, playerY, playerZ);
+        cj.setHeading(normalizeAngle(carHeading + 90.0f));
+        float pose = carTransition == 1 ? moveSmooth : 1.0f - moveSmooth;
+        cj.setEntryPose(pose, carTransition == 1);
+
+        if (t >= 1.0f) {
+            car.setDoorOpen(0.0f);
+            cj.setEntryPose(0.0f, carTransition == 1);
+            if (carTransition == 1) {
                 inCar = true;
-                carTransition = 0;
-                car.setDoorOpen(0.0f);
-                cj.setEntryPose(0.0f, true);
                 cj.setVisible(false);
                 playerX = carX;
                 playerZ = carZ;
-                playerY = 0.0f;
                 status = "DRIVING  |  3 EXIT";
-            }
-        } else {
-            car.setDoorOpen(72.0f * (1.0f - smooth));
-            cj.setEntryPose(1.0f - smooth, false);
-            if (t >= 1.0f) {
-                carTransition = 0;
-                car.setDoorOpen(0.0f);
-                cj.setEntryPose(0.0f, false);
+            } else {
                 inCar = false;
+                cj.setVisible(true);
+                playerX = transitionEndX;
+                playerZ = transitionEndZ;
+                cj.setPosition(playerX, playerY, playerZ);
                 status = "ON FOOT  |  3 ENTER CAR";
             }
+            carTransition = 0;
         }
     }
 
