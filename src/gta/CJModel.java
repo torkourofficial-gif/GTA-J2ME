@@ -9,6 +9,7 @@ import javax.microedition.m3g.Mesh;
  */
 final class CJModel {
     final Group root = new Group();
+    private final Group body = new Group();
     final Group leftArm = new Group();
     final Group rightArm = new Group();
     final Group leftLeg = new Group();
@@ -38,7 +39,7 @@ final class CJModel {
 
     CJModel() {
         // Waist, belt and denim waistband.
-        addBox(root, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, JEANS);
+        addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, JEANS);
         addBox(root, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
         addBox(root, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
 
@@ -58,7 +59,7 @@ final class CJModel {
         addBox(upperBody, 0.027f, 0.025f, 0.012f, 0.052f, 1.735f, -0.122f, 0x171717);
         addBox(upperBody, 0.13f, 0.045f, 0.23f, 0.0f, 1.87f, 0.0f, 0x24201D);
         addBox(upperBody, 0.23f, 0.065f, 0.22f, 0.0f, 1.82f, 0.0f, 0x30251F);
-        root.addChild(upperBody);
+        body.addChild(upperBody);
 
         // Shoulder pivots. Forearms and hands rotate independently at elbows.
         leftArm.setTranslation(-0.29f, 1.43f, 0.0f);
@@ -96,8 +97,9 @@ final class CJModel {
         addBox(rightShin, 0.22f, 0.025f, 0.32f, 0.0f, -0.525f, -0.045f, 0x151515);
         leftLeg.addChild(leftShin);
         rightLeg.addChild(rightShin);
-        root.addChild(leftLeg);
-        root.addChild(rightLeg);
+        body.addChild(leftLeg);
+        body.addChild(rightLeg);
+        root.addChild(body);
     }
 
 
@@ -129,6 +131,7 @@ final class CJModel {
 
     /** Temporary leaning/stepping pose used while entering or leaving the sedan. */
     void setEntryPose(float amount, boolean entering) {
+        body.setOrientation(0.0f, 0.0f, 1.0f, 0.0f);
         if (amount < 0.0f) amount = 0.0f;
         if (amount > 1.0f) amount = 1.0f;
         float sign = entering ? 1.0f : -1.0f;
@@ -147,6 +150,12 @@ final class CJModel {
     }
 
     void animateRagdoll(float roll, float pitch, float rollSpeed, float pitchSpeed) {
+        float tilt = (float)Math.sqrt(roll * roll + pitch * pitch);
+        if (tilt > 82.0f) tilt = 82.0f;
+        if (tilt > 0.01f) {
+            float inv = 1.0f / (float)Math.sqrt(roll * roll + pitch * pitch);
+            body.setOrientation(tilt, pitch * inv, 0.0f, roll * inv);
+        }
         upperBody.setOrientation(68.0f + pitch * 0.22f, 0.0f, 0.0f, 1.0f);
         leftArm.setOrientation(-55.0f + roll * 0.35f, 1.0f, 0.0f, 0.0f);
         rightArm.setOrientation(62.0f - roll * 0.31f, 1.0f, 0.0f, 0.0f);
@@ -161,6 +170,7 @@ final class CJModel {
     void animate(float walkPhase, boolean moving, float punchAngle,
                  boolean backward, boolean jumping, boolean crouching,
                  float turnAmount) {
+        body.setOrientation(0.0f, 0.0f, 1.0f, 0.0f);
         float targetCrouch = crouching ? 1.0f : 0.0f;
         float targetJump = jumping ? 1.0f : 0.0f;
         float targetWalk = moving ? 1.0f : 0.0f;
