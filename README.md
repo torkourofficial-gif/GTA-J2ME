@@ -9,7 +9,7 @@ The initial scene is intentionally small and procedural:
 - A compact urban test block with a road and simple buildings.
 - CJ assembled from separate low-poly body parts in Java.
 - A larger procedural city with pedestrian sidewalks and street traffic.
-- Ten active low-poly pedestrians using twenty clothing/skin appearance presets.
+- Twenty active low-poly pedestrians with distinct clothing/skin combinations.
 - Pedestrians wander, flee from CJ, or confront and shove him; punch interactions are arcade-style and non-graphic.
 - Three traffic vehicles patrol the long streets, can stop for ten seconds, and can be taken over.
 - Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver joins the pedestrian population.
