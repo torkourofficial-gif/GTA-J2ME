@@ -2119,9 +2119,13 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private boolean circleHitsRect(float x,float z,float radius,
                                    float rx,float rz,float width,float depth) {
-        float nx=x, nz=z;
         float minX=rx-width*0.5f, maxX=rx+width*0.5f;
         float minZ=rz-depth*0.5f, maxZ=rz+depth*0.5f;
+        // Reject distant buildings before clamping coordinates. Pedestrian,
+        // vehicle and player collision queries call this many times per frame.
+        if (x < minX-radius || x > maxX+radius ||
+            z < minZ-radius || z > maxZ+radius) return false;
+        float nx=x, nz=z;
         if(nx<minX)nx=minX; if(nx>maxX)nx=maxX;
         if(nz<minZ)nz=minZ; if(nz>maxZ)nz=maxZ;
         float dx=x-nx, dz=z-nz;
