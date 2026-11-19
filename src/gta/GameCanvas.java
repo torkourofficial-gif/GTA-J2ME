@@ -57,6 +57,13 @@ final class GameCanvas extends Canvas implements Runnable {
     private int bikeSourceIndex = -1;
     private float bikeX = -3.0f, bikeZ = 0.0f, bikeHeading, bikeSpeed, bikeSteering;
     private float bikeMountTimer, bikeMountStartX, bikeMountStartZ;
+    private boolean jetpackOwned, jetpackThrust;
+    private float jetpackFlamePhase;
+    private Group jetpackVisual;
+    private Group jetpackFlames;
+    private int cheatProgress;
+    private long cheatLastKeyTime;
+    private static final int[] JETPACK_CHEAT = {3,3,3,8,8,2,2,5,5};
     private CarModel[] policeCars = new CarModel[3];
     private float[] policeX = new float[3], policeZ = new float[3];
     private boolean[] policeActive = new boolean[3];
@@ -322,6 +329,7 @@ final class GameCanvas extends Canvas implements Runnable {
         cj = new CJModel(false);
         cj.setPosition(playerX, playerY, playerZ);
         world.addChild(cj.root);
+        initializeJetpackVisual();
         secondProtagonist = new CJModel(true);
         secondProtagonist.setPosition(playerX, playerY, playerZ);
         secondProtagonist.setVisible(false);
@@ -756,7 +764,21 @@ final class GameCanvas extends Canvas implements Runnable {
                 playerVelocityZ = 0.0f;
             }
 
-            if (jumpVelocity != 0.0f || playerY > 0.0f) {
+            if (jetpackOwned && !inBike && !inCar && playerRagdollTime <= 0.0f) {
+                if (jetpackThrust) {
+                    playerY += 7.0f * dt;
+                    if (playerY > 18.0f) playerY = 18.0f;
+                    jumpVelocity = 0.0f;
+                } else if ((keys & CROUCH) != 0) {
+                    playerY -= 5.0f * dt;
+                    if (playerY < 0.0f) playerY = 0.0f;
+                    jumpVelocity = 0.0f;
+                } else if (playerY > 0.0f) {
+                    playerY -= 1.35f * dt;
+                    if (playerY < 0.0f) playerY = 0.0f;
+                    jumpVelocity = 0.0f;
+                }
+            } else if (jumpVelocity != 0.0f || playerY > 0.0f) {
                 playerY += jumpVelocity * dt;
                 jumpVelocity -= 9.8f * dt;
                 if (playerY <= 0.0f) {
@@ -778,6 +800,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
         activeCharacter().setPosition(playerX, playerY, playerZ);
         activeCharacter().setHeading(playerHeading);
+        updateJetpackVisual(dt);
         boolean crouching = inBike || (!inCar && (keys & CROUCH) != 0);
         boolean jumping = !inCar && (playerY > 0.001f || jumpVelocity > 0.0f);
         float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
@@ -919,6 +942,69 @@ final class GameCanvas extends Canvas implements Runnable {
         float w = getWidth();
         float h = getHeight();
         if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 160.0f);
+    }
+
+    private boolean handleJetpackCheatKey(int keyCode) {
+        int digit = -1;
+        if (keyCode >= '0' && keyCode <= '9') digit = keyCode - '0';
+        long now = System.currentTimeMillis();
+        if (cheatProgress > 0 && now - cheatLastKeyTime > 3500L) cheatProgress = 0;
+        if (cheatProgress == 0 && digit != 3) return false;
+        if (digit == JETPACK_CHEAT[cheatProgress]) {
+            cheatProgress++;
+            cheatLastKeyTime = now;
+            if (cheatProgress >= JETPACK_CHEAT.length) {
+                cheatProgress = 0;
+                jetpackOwned = true;
+                jetpackThrust = false;
+                status = "JETPACK UNLOCKED!  5 FLY  9 DESCEND";
+            }
+            return true;
+        }
+        cheatProgress = digit == 3 ? 1 : 0;
+        cheatLastKeyTime = now;
+        return digit == 3;
+    }
+
+    private void initializeJetpackVisual() {
+        jetpackVisual = new Group();
+        Group pack = new Group();
+        pack.addChild(ModelFactory.box(0.72f, 0.92f, 0.28f, 0x343A40));
+        Mesh tankLeft = ModelFactory.box(0.22f, 0.82f, 0.32f, 0xAEB8BC);
+        tankLeft.setTranslation(-0.27f, 0.02f, 0.0f);
+        pack.addChild(tankLeft);
+        Mesh tankRight = ModelFactory.box(0.22f, 0.82f, 0.32f, 0xAEB8BC);
+        tankRight.setTranslation(0.27f, 0.02f, 0.0f);
+        pack.addChild(tankRight);
+        Mesh strap = ModelFactory.box(0.78f, 0.12f, 0.12f, 0x20252A);
+        strap.setTranslation(0.0f, 0.25f, 0.18f);
+        pack.addChild(strap);
+        jetpackVisual.addChild(pack);
+        jetpackFlames = new Group();
+        Mesh flameL = ModelFactory.box(0.13f, 0.52f, 0.13f, 0x39BDE8);
+        flameL.setTranslation(-0.25f, -0.68f, 0.0f);
+        jetpackFlames.addChild(flameL);
+        Mesh flameR = ModelFactory.box(0.13f, 0.52f, 0.13f, 0x39BDE8);
+        flameR.setTranslation(0.25f, -0.68f, 0.0f);
+        jetpackFlames.addChild(flameR);
+        jetpackVisual.addChild(jetpackFlames);
+        jetpackVisual.setRenderingEnable(false);
+        world.addChild(jetpackVisual);
+    }
+
+    private void updateJetpackVisual(float dt) {
+        if (jetpackVisual == null) return;
+        boolean visible = jetpackOwned && !inCar && !inBike &&
+                          playerRagdollTime <= 0.0f;
+        jetpackVisual.setRenderingEnable(visible);
+        if (!visible) return;
+        jetpackVisual.setTranslation(playerX, playerY + 1.0f, playerZ);
+        Transform jetTransform = new Transform();
+        jetTransform.setIdentity();
+        jetTransform.postRotate(playerHeading, 0.0f, 1.0f, 0.0f);
+        jetpackVisual.setTransform(jetTransform);
+        jetpackFlamePhase += dt;
+        jetpackFlames.setRenderingEnable(jetpackThrust);
     }
 
     private void jump() {
@@ -1896,6 +1982,7 @@ final class GameCanvas extends Canvas implements Runnable {
             repaint();
             return;
         }
+        if (handleJetpackCheatKey(keyCode)) return;
         if (keyCode == '2') {
             if ((keys & FORWARD) == 0) {
                 long now = System.currentTimeMillis();
@@ -1915,7 +2002,7 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '4') keys |= LEFT;
         else if (keyCode == '6') keys |= RIGHT;
         else if (keyCode == '9') keys |= CROUCH;
-        else if (keyCode == '5') jump();
+        else if (keyCode == '5') { if (jetpackOwned) jetpackThrust = true; else jump(); }
         else if (keyCode == '1') punch();
         else if (keyCode == '3') toggleCar();
         else if (keyCode == '*') beginCharacterSwitch();
@@ -1934,6 +2021,7 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
         else if (keyCode == '9') keys &= ~CROUCH;
+        else if (keyCode == '5') jetpackThrust = false;
         else {
             int action = getGameAction(keyCode);
             if (action == Canvas.UP) cameraKeys &= ~CAM_UP;
