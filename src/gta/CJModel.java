@@ -38,8 +38,8 @@ final class CJModel {
     private boolean ragdollActive;
 
     // CJ's palette: white tank, blue loose jeans, dark sneakers, warm skin.
-    private static final int SKIN = 0xBD896F;
-    private static final int SKIN_LIGHT = 0xD6A58A;
+    private static final int SKIN = 0xD6B091;
+    private static final int SKIN_LIGHT = 0xE5C1A4;
     private static final int SKIN_DARK = 0x75432F;
     private static final int SHIRT = 0xE9E9E2;
     private static final int SHIRT_SHADE = 0xBFC2C0;
@@ -54,8 +54,8 @@ final class CJModel {
         this.lucia = lucia;
         shirtColor = lucia ? 0xD96F91 : 0xD8D6D0;
         pantsColor = lucia ? 0x456C9A : 0x555B50;
-        skinColor = lucia ? 0xA96F53 : SKIN;
-        skinLightColor = lucia ? 0xC58B6C : SKIN_LIGHT;
+        skinColor = lucia ? 0xC99A7D : SKIN;
+        skinLightColor = lucia ? 0xDDB092 : SKIN_LIGHT;
         // Waist, belt and denim waistband.
         addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, pantsColor);
         addBox(body, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
