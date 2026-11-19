@@ -12,8 +12,8 @@ The initial scene is intentionally small and procedural:
 - Twenty active low-poly pedestrians with distinct clothing/skin combinations.
 - Pedestrians wander, flee from CJ, or confront and shove him; punch interactions are arcade-style and non-graphic.
 - Nine traffic vehicles in several body colors patrol the three main avenues, can stop for ten seconds, and can be taken over.
-- Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver tumbles to the pavement with a lightweight articulated ragdoll, then settles and despawns.
-- Pedestrians use a low-cost ragdoll simulation with gravity, horizontal momentum, angular motion, ground bounce and damping.
+- Taking a stopped vehicle plays a short driver-ejection/entry sequence; the former driver exits, recovers and runs away instead of despawning.
+- The player uses a low-cost articulated ragdoll with speed-scaled knockback, gravity, joint motion, ground bounce and damping when struck by moving traffic. Traffic follows separate directional lanes and changes lanes gradually to avoid slower cars.
 - Third-person camera, walking, jumping, punching and vehicle driving.
 
 ## Controls
