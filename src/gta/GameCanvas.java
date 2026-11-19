@@ -38,6 +38,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private CarModel car;
     private Camera camera;
     private static final int PED_COUNT = 20;
+    private static final int TRAFFIC_COUNT = 9;
     private PedestrianModel[] pedestrians = new PedestrianModel[PED_COUNT];
     private boolean[] pedActive = new boolean[PED_COUNT];
     private int[] pedState = new int[PED_COUNT]; // 0 wander, 1 flee, 2 confront, 3 down
@@ -45,10 +46,15 @@ final class GameCanvas extends Canvas implements Runnable {
     private float[] pedHeading = new float[PED_COUNT], pedTimer = new float[PED_COUNT];
     private float[] pedPhase = new float[PED_COUNT], pedAttackCooldown = new float[PED_COUNT];
     private int nextPedVariant = 0;
-    private CarModel[] trafficCars = new CarModel[3];
-    private float[] trafficX = new float[3], trafficZ = new float[3];
-    private float[] trafficHeading = new float[3], trafficSpeed = new float[3];
-    private float[] trafficStop = new float[3], trafficHitCooldown = new float[3];
+    private CarModel[] trafficCars = new CarModel[TRAFFIC_COUNT];
+    private float[] trafficX = new float[TRAFFIC_COUNT], trafficZ = new float[TRAFFIC_COUNT];
+    private float[] trafficHeading = new float[TRAFFIC_COUNT], trafficSpeed = new float[TRAFFIC_COUNT];
+    private float[] trafficStop = new float[TRAFFIC_COUNT], trafficHitCooldown = new float[TRAFFIC_COUNT];
+    private float[] pedRagdollVX = new float[PED_COUNT], pedRagdollVY = new float[PED_COUNT];
+    private float[] pedRagdollY = new float[PED_COUNT];
+    private float[] pedRagdollVZ = new float[PED_COUNT];
+    private float[] pedRagdollRoll = new float[PED_COUNT], pedRagdollPitch = new float[PED_COUNT];
+    private float[] pedRagdollRollSpeed = new float[PED_COUNT], pedRagdollPitchSpeed = new float[PED_COUNT];
     private int trafficHijackIndex = -1;
     private float trafficHijackTime = 0.0f;
     private boolean trafficDriverEjected = false;
@@ -640,13 +646,17 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void initializeTraffic() {
-        float[] xs = {-29.5f, 1.5f, 26.5f};
-        float[] zs = {-48.0f, 18.0f, 62.0f};
+        // Nine low-poly traffic vehicles spread across the three main avenues.
+        float[] xs = {-28.0f, -28.0f, -28.0f, 0.0f, 0.0f, 0.0f, 28.0f, 28.0f, 28.0f};
+        float[] zs = {-66.0f, -4.0f, 58.0f, -48.0f, 16.0f, 70.0f, -62.0f, 2.0f, 54.0f};
+        float[] headings = {0.0f, 180.0f, 0.0f, 180.0f, 0.0f, 180.0f, 0.0f, 180.0f, 0.0f};
+        int[] colors = {0xB72E32,0x315B91,0xD0B43B,0x39764B,0x777777,
+                        0xD16A32,0x3D8587,0xB7B7B7,0x6B477E};
         for (int i = 0; i < trafficCars.length; i++) {
-            trafficCars[i] = new CarModel();
+            trafficCars[i] = new CarModel(colors[i]);
             trafficX[i] = xs[i]; trafficZ[i] = zs[i];
-            trafficHeading[i] = (i == 1) ? 180.0f : 0.0f;
-            trafficSpeed[i] = 3.4f + i * 0.55f;
+            trafficHeading[i] = headings[i];
+            trafficSpeed[i] = 3.0f + (i % 4) * 0.42f;
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
@@ -703,8 +713,35 @@ final class GameCanvas extends Canvas implements Runnable {
             float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
             float dist2 = dx * dx + dz * dz;
             if (pedState[i] == 3) {
+                // Lightweight articulated ragdoll: integrate body motion and
+                // angular momentum, then settle against the ground plane.
+                pedRagdollVY[i] -= 9.8f * dt;
+                pedX[i] += pedRagdollVX[i] * dt;
+                pedZ[i] += pedRagdollVZ[i] * dt;
+                pedRagdollVX[i] *= 0.985f;
+                pedRagdollVZ[i] *= 0.985f;
+                pedRagdollRoll[i] += pedRagdollRollSpeed[i] * dt;
+                pedRagdollPitch[i] += pedRagdollPitchSpeed[i] * dt;
+                pedRagdollRollSpeed[i] *= 0.97f;
+                pedRagdollPitchSpeed[i] *= 0.97f;
+                float ragY = pedRagdollY[i] + pedRagdollVY[i] * dt;
+                pedRagdollY[i] = ragY;
+                if (ragY <= 0.0f) {
+                    pedRagdollY[i] = 0.0f;
+                    if (pedRagdollVY[i] < -1.0f) {
+                        pedRagdollVY[i] = -pedRagdollVY[i] * 0.16f;
+                        pedRagdollRollSpeed[i] *= 0.55f;
+                        pedRagdollPitchSpeed[i] *= 0.55f;
+                    } else {
+                        pedRagdollVY[i] = 0.0f;
+                        pedRagdollRollSpeed[i] *= 0.82f;
+                        pedRagdollPitchSpeed[i] *= 0.82f;
+                    }
+                }
+                pedestrians[i].setPosition(pedX[i], pedRagdollY[i], pedZ[i]);
+                pedestrians[i].setHeading(pedHeading[i]);
+                pedestrians[i].animateRagdoll(pedRagdollRoll[i], pedRagdollPitch[i]);
                 pedTimer[i] -= dt;
-                pedestrians[i].animate(pedPhase[i], false, false, true);
                 if (pedTimer[i] <= 0.0f) {
                     pedActive[i] = false;
                     pedestrians[i].setVisible(false);
@@ -775,10 +812,25 @@ final class GameCanvas extends Canvas implements Runnable {
                 pedState[i] = 1;
                 pedTimer[i] = 4.0f;
             } else {
-                pedState[i] = 3;
-                pedTimer[i] = 1.45f;
+                beginPedRagdoll(i,
+                    -(float)Math.sin(playerHeading * 0.0174532925f) * 2.2f,
+                    2.8f,
+                    -(float)Math.cos(playerHeading * 0.0174532925f) * 2.2f);
             }
         }
+    }
+
+    private void beginPedRagdoll(int i, float vx, float vy, float vz) {
+        pedState[i] = 3;
+        pedTimer[i] = 3.2f;
+        pedRagdollY[i] = 0.08f;
+        pedRagdollVX[i] = vx;
+        pedRagdollVY[i] = vy;
+        pedRagdollVZ[i] = vz;
+        pedRagdollRoll[i] = 0.0f;
+        pedRagdollPitch[i] = 0.0f;
+        pedRagdollRollSpeed[i] = (randomInt(2) == 0 ? -1.0f : 1.0f) * (100.0f + randomInt(100));
+        pedRagdollPitchSpeed[i] = (randomInt(2) == 0 ? -1.0f : 1.0f) * (70.0f + randomInt(90));
     }
 
     private int spawnPedestrian(float x, float z, float heading) {
@@ -803,6 +855,10 @@ final class GameCanvas extends Canvas implements Runnable {
         pedX[slot] = x; pedZ[slot] = z; pedHeading[slot] = heading;
         pedTimer[slot] = 4.0f; pedPhase[slot] = 0.0f;
         pedAttackCooldown[slot] = 2.0f;
+        pedRagdollY[slot] = 0.0f;
+        pedRagdollVX[slot] = pedRagdollVY[slot] = pedRagdollVZ[slot] = 0.0f;
+        pedRagdollRoll[slot] = pedRagdollPitch[slot] = 0.0f;
+        pedRagdollRollSpeed[slot] = pedRagdollPitchSpeed[slot] = 0.0f;
         pedestrians[slot].setPosition(x, 0.0f, z);
         pedestrians[slot].setHeading(heading);
         return slot;
@@ -853,7 +909,13 @@ final class GameCanvas extends Canvas implements Runnable {
             // The driver is converted into an ordinary fleeing pedestrian.
             float driverX = trafficX[i] + side * 2.0f * (float)Math.cos(a);
             float driverZ = trafficZ[i] - side * 2.0f * (float)Math.sin(a);
-            spawnPedestrian(driverX, driverZ, trafficHeading[i] + 90.0f);
+            int driver = spawnPedestrian(driverX, driverZ, trafficHeading[i] + 90.0f);
+            if (driver >= 0) {
+                // The ejected driver tumbles onto the pavement and settles.
+                float kickX = side * (float)Math.cos(a) * 2.0f;
+                float kickZ = -side * (float)Math.sin(a) * 2.0f;
+                beginPedRagdoll(driver, kickX, 3.1f, kickZ);
+            }
             trafficDriverEjected = true;
         }
         if (t < 0.65f) {
