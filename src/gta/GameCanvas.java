@@ -236,10 +236,10 @@ final class GameCanvas extends Canvas implements Runnable {
             carSpeed *= 0.985f;
             if (carSpeed > 8.0f) carSpeed = 8.0f;
             if (carSpeed < -3.0f) carSpeed = -3.0f;
-            // Front-wheel steering. The model's heading convention is the
-            // opposite of the world-space travel convention, so invert yaw.
+            // Front-wheel steering: with RIGHT-LEFT input, positive yaw
+            // makes a left input curve toward world-space left.
             float steeringRad = carSteering * 0.0174532925f;
-            float yawRate = -(float)Math.tan(steeringRad) * carSpeed / 2.45f;
+            float yawRate = (float)Math.tan(steeringRad) * carSpeed / 2.45f;
             carHeading = normalizeAngle(carHeading + yawRate * 57.29578f * dt);
             float radians = carHeading * 0.0174532925f;
             float moveX = (float)Math.sin(radians) * carSpeed * dt;
@@ -256,7 +256,8 @@ final class GameCanvas extends Canvas implements Runnable {
                 // a short, damped rebound instead of pinning it to the wall.
                 float impactSpeed = Math.abs(carSpeed);
                 float rebound = impactSpeed > 5.0f ? 0.34f :
-                                (impactSpeed > 2.2f ? 0.20f : 0.0f);
+                                (impactSpeed > 2.2f ? 0.20f :
+                                (impactSpeed > 0.15f ? 0.18f : 0.0f));
                 carSpeed = -carSpeed * rebound;
                 carSteering *= 0.45f;
                 if (hitX && hitZ) {
