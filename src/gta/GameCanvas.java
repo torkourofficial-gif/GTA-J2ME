@@ -6,7 +6,6 @@ import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Group;
-import javax.microedition.m3g.Light;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
 
@@ -96,12 +95,6 @@ final class GameCanvas extends Canvas implements Runnable {
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
-
-        Light ambient = new Light();
-        ambient.setMode(Light.AMBIENT);
-        ambient.setColor(0xFFFFFF);
-        ambient.setIntensity(1.0f);
-        world.addChild(ambient);
 
         updateCamera();
     }
