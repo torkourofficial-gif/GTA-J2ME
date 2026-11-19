@@ -236,16 +236,34 @@ final class GameCanvas extends Canvas implements Runnable {
             carSpeed *= 0.985f;
             if (carSpeed > 8.0f) carSpeed = 8.0f;
             if (carSpeed < -3.0f) carSpeed = -3.0f;
-            // Front-wheel steering: the car only yaws while moving, and
-            // reversing naturally changes the direction of the turn.
+            // Front-wheel steering. The model's heading convention is the
+            // opposite of the world-space travel convention, so invert yaw.
             float steeringRad = carSteering * 0.0174532925f;
-            float yawRate = (float)Math.tan(steeringRad) * carSpeed / 2.45f;
+            float yawRate = -(float)Math.tan(steeringRad) * carSpeed / 2.45f;
             carHeading = normalizeAngle(carHeading + yawRate * 57.29578f * dt);
             float radians = carHeading * 0.0174532925f;
-            float nextX = carX + (float)Math.sin(radians) * carSpeed * dt;
-            float nextZ = carZ - (float)Math.cos(radians) * carSpeed * dt;
-            if (!carBlocked(nextX, carZ)) carX = nextX; else carSpeed = 0.0f;
-            if (!carBlocked(carX, nextZ)) carZ = nextZ; else carSpeed = 0.0f;
+            float moveX = (float)Math.sin(radians) * carSpeed * dt;
+            float moveZ = -(float)Math.cos(radians) * carSpeed * dt;
+            float nextX = carX + moveX;
+            float nextZ = carZ + moveZ;
+            boolean hitX = carBlocked(nextX, carZ);
+            boolean hitZ = carBlocked(carX, nextZ);
+
+            if (!hitX) carX = nextX;
+            if (!hitZ) carZ = nextZ;
+            if (hitX || hitZ) {
+                // A low-speed bump settles the car; a fast impact produces
+                // a short, damped rebound instead of pinning it to the wall.
+                float impactSpeed = Math.abs(carSpeed);
+                float rebound = impactSpeed > 5.0f ? 0.34f :
+                                (impactSpeed > 2.2f ? 0.20f : 0.0f);
+                carSpeed = -carSpeed * rebound;
+                carSteering *= 0.45f;
+                if (hitX && hitZ) {
+                    // A head-on impact loses more energy than a glancing one.
+                    carSpeed *= 0.72f;
+                }
+            }
             car.setPosition(carX, 0.0f, carZ);
             car.setHeading(carHeading);
             playerX = carX;
