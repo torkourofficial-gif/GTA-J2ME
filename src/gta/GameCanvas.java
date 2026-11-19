@@ -267,22 +267,28 @@ final class GameCanvas extends Canvas implements Runnable {
                 playerHeading = normalizeAngle(playerHeading - side * 150.0f * dt);
             }
             if ((keys & BACK) != 0 && !backwardFacingActive && !reverseFacing) {
-                // Only turn around the first time 8 is used from a forward
-                // stance. After that CJ is already facing the backward-walk
-                // direction, so tapping/holding 8 again must not spin him.
+                // Pressing 8 from a forward stance turns CJ around once.
                 reverseFacing = true;
                 backwardFacingActive = true;
                 reverseTargetHeading = normalizeAngle(playerHeading + 180.0f);
-            } else if ((keys & BACK) == 0) {
-                reverseFacing = false;
+            } else if ((keys & FORWARD) != 0 && backwardFacingActive && !reverseFacing) {
+                // Pressing 2 while CJ is in the backward-facing stance makes
+                // him turn back toward his original forward direction.
+                reverseFacing = true;
+                backwardFacingActive = false;
+                reverseTargetHeading = normalizeAngle(playerHeading + 180.0f);
             }
-            if ((keys & FORWARD) != 0) backwardFacingActive = false;
             if (reverseFacing) {
                 float difference = normalizeAngle(reverseTargetHeading - playerHeading);
                 float maxTurn = 300.0f * dt;
                 if (difference > maxTurn) difference = maxTurn;
                 else if (difference < -maxTurn) difference = -maxTurn;
-                playerHeading = normalizeAngle(playerHeading + difference);
+                if (Math.abs(difference) <= maxTurn) {
+                    playerHeading = normalizeAngle(reverseTargetHeading);
+                    reverseFacing = false;
+                } else {
+                    playerHeading = normalizeAngle(playerHeading + difference);
+                }
             }
 
             float inputLength = (float)Math.sqrt(forward * forward + side * side);
@@ -592,7 +598,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     protected void keyReleased(int keyCode) {
         if (keyCode == '2') { keys &= ~FORWARD; keys &= ~SPRINT; }
-        else if (keyCode == '8') { keys &= ~BACK; keys &= ~SPRINT; reverseFacing = false; }
+        else if (keyCode == '8') { keys &= ~BACK; keys &= ~SPRINT; }
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
         else if (keyCode == '9') keys &= ~CROUCH;
