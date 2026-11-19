@@ -127,7 +127,7 @@ final class GameCanvas extends Canvas implements Runnable {
         Fog fog = new Fog();
         fog.setColor(0x87B6D8);
         fog.setLinear(48.0f, 112.0f);
-        world.setFog(fog);
+        ModelFactory.setFog(fog);
         scenery = new Group();
         world.addChild(scenery);
 
@@ -741,7 +741,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updateTrafficLane(int index, float dt) {
         if (trafficLaneCooldown[index] > 0.0f) trafficLaneCooldown[index] -= dt;
         float dirZ = -(float)Math.cos(trafficHeading[index] * 0.0174532925f);
-        float roadCenter = (float)Math.round(trafficLaneX[index] / 28.0f) * 28.0f;
+        float roadCenter = (int)(trafficLaneX[index] / 28.0f + 0.5f) * 28.0f;
         boolean blockedAhead = false;
         boolean changedLane = false;
         for (int j = 0; j < trafficCars.length; j++) {
