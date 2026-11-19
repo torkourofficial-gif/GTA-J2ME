@@ -3,7 +3,6 @@ package gta;
 import javax.microedition.m3g.Appearance;
 import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Mesh;
-import javax.microedition.m3g.Material;
 import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
@@ -25,12 +24,6 @@ final class ModelFactory {
 
     private static Appearance createAppearance() {
         Appearance appearance = new Appearance();
-        Material material = new Material();
-        material.setColor(Material.AMBIENT, 0xFFFFFFFF);
-        material.setColor(Material.DIFFUSE, 0xFFFFFFFF);
-        material.setColor(Material.SPECULAR, 0x303038);
-        material.setShininess(10.0f);
-        appearance.setMaterial(material);
         if (sceneFog != null) appearance.setFog(sceneFog);
         return appearance;
     }
