@@ -161,11 +161,6 @@ final class GameCanvas extends Canvas implements Runnable {
                        road, -0.015f, along, 0x41464A);
                 addBox(scenery, CITY_SPACING, 0.025f, 7.5f,
                        along, -0.014f, road, 0x41464A);
-                // Sun-faded lane markings, kept as short inexpensive meshes.
-                addBox(scenery, 0.12f, 0.018f, 3.0f,
-                       road, 0.008f, along - 5.0f, 0xD8CDA7);
-                addBox(scenery, 3.0f, 0.018f, 0.12f,
-                       along - 5.0f, 0.009f, road, 0xD8CDA7);
             }
         }
 
