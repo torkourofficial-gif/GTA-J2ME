@@ -72,6 +72,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private float[] buildingD = new float[CITY_BLOCKS * CITY_BLOCKS];
     private int buildingCount = 0;
     private boolean reverseFacing = false;
+    private boolean backwardFacingActive = false;
     private float reverseTargetHeading = 0.0f;
     private boolean initialized = false;
     private String status = "2/4/6/8 MOVE  3 CAR";
@@ -265,12 +266,17 @@ final class GameCanvas extends Canvas implements Runnable {
             if (side != 0.0f) {
                 playerHeading = normalizeAngle(playerHeading - side * 150.0f * dt);
             }
-            if ((keys & BACK) != 0 && !reverseFacing) {
+            if ((keys & BACK) != 0 && !backwardFacingActive && !reverseFacing) {
+                // Only turn around the first time 8 is used from a forward
+                // stance. After that CJ is already facing the backward-walk
+                // direction, so tapping/holding 8 again must not spin him.
                 reverseFacing = true;
+                backwardFacingActive = true;
                 reverseTargetHeading = normalizeAngle(playerHeading + 180.0f);
             } else if ((keys & BACK) == 0) {
                 reverseFacing = false;
             }
+            if ((keys & FORWARD) != 0) backwardFacingActive = false;
             if (reverseFacing) {
                 float difference = normalizeAngle(reverseTargetHeading - playerHeading);
                 float maxTurn = 300.0f * dt;
