@@ -972,6 +972,29 @@ final class GameCanvas extends Canvas implements Runnable {
             trafficHeading[i] = headings[i];
             trafficSpeed[i] = 3.0f + (i % 4) * 0.42f;
             trafficCruiseSpeed[i] = trafficSpeed[i];
+            // Traffic vehicles have solid body-to-body collision. A car
+            // yields and brakes instead of passing through another vehicle.
+            for (int j = 0; j < i; j++) {
+                if (trafficCars[j] == null) continue;
+                float cx = trafficX[i] - trafficX[j];
+                float cz = trafficZ[i] - trafficZ[j];
+                if (cx * cx + cz * cz < 5.8f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficSpeed[i] = 0.7f;
+                    break;
+                }
+            }
+            // The player's sedan is solid to NPC traffic as well.
+            if (inCar) {
+                float px = trafficX[i] - carX, pz = trafficZ[i] - carZ;
+                if (px * px + pz * pz < 6.0f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficStop[i] = 0.7f;
+                    carSpeed *= 0.82f;
+                }
+            }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
@@ -1103,6 +1126,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updateTraffic(float dt) {
         for (int i = 0; i < trafficCars.length; i++) {
             if (trafficCars[i] == null) continue;
+            float oldTrafficX = trafficX[i], oldTrafficZ = trafficZ[i];
             if (trafficHitCooldown[i] > 0.0f) trafficHitCooldown[i] -= dt;
             if (trafficStop[i] > 0.0f) {
                 trafficStop[i] -= dt;
