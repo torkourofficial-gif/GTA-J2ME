@@ -1617,6 +1617,21 @@ final class GameCanvas extends Canvas implements Runnable {
             if (circleHitsRect(x, z, 1.75f, buildingX[i], buildingZ[i],
                                buildingW[i], buildingD[i])) return true;
         }
+        // NPC cars, motorcycles and the player's motorcycle are solid bodies.
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] == null) continue;
+            float dx = x - trafficX[i], dz = z - trafficZ[i];
+            if (dx * dx + dz * dz < 7.0f) return true;
+        }
+        for (int i = 0; i < trafficBikes.length; i++) {
+            if (!bikeTrafficActive[i]) continue;
+            float dx = x - bikeTrafficX[i], dz = z - bikeTrafficZ[i];
+            if (dx * dx + dz * dz < 4.0f) return true;
+        }
+        if (inBike) {
+            float dx = x - bikeX, dz = z - bikeZ;
+            if (dx * dx + dz * dz < 4.0f) return true;
+        }
         return false;
     }
 
