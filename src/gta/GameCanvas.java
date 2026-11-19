@@ -223,10 +223,12 @@ final class GameCanvas extends Canvas implements Runnable {
         float eyeX = playerX + (float)Math.sin(radians) * distance;
         float eyeZ = playerZ + (float)Math.cos(radians) * distance;
         float eyeY = playerY + 2.3f + cameraPitch * 0.035f;
-        cameraTransform.setLookAt(eyeX, eyeY, eyeZ,
-                                  playerX, playerY + targetY, playerZ,
-                                  0.0f, 1.0f, 0.0f);
+        // M3G Transform has no lookAt helper: compose yaw and pitch directly.
+        cameraTransform.setIdentity();
+        cameraTransform.postRotate(cameraYaw, 0.0f, 1.0f, 0.0f);
+        cameraTransform.postRotate(-cameraPitch, 1.0f, 0.0f, 0.0f);
         camera.setTransform(cameraTransform);
+        camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
         if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.1f, 90.0f);
