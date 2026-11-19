@@ -193,11 +193,14 @@ final class GameCanvas extends Canvas implements Runnable {
                                z + depth * 0.5f + 0.05f, 0x6C9BAA);
                     }
                 }
-                buildingX[buildingCount] = x;
-                buildingZ[buildingCount] = z;
-                buildingW[buildingCount] = width;
-                buildingD[buildingCount] = depth;
-                buildingCount++;
+                // Only actual buildings enter the collision grid; parks stay walkable.
+                if ((seed % 9) != 0) {
+                    buildingX[buildingCount] = x;
+                    buildingZ[buildingCount] = z;
+                    buildingW[buildingCount] = width;
+                    buildingD[buildingCount] = depth;
+                    buildingCount++;
+                }
             }
         }
 
