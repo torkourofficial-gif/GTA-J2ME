@@ -2,6 +2,7 @@ package gta;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.Image;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
@@ -58,6 +59,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private boolean[] policeActive = new boolean[3];
     private int wantedLevel;
     private float wantedDecay, arrestTimer;
+    private Image wantedStarOn, wantedStarOff;
     private Camera camera;
     private static final int PED_COUNT = 28;
     private static final int TRAFFIC_COUNT = 12;
@@ -132,6 +134,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     GameCanvas() {
         setFullScreenMode(true);
+        loadWantedStarImages();
         try {
             initializeScene();
             initialized = true;
@@ -139,6 +142,40 @@ final class GameCanvas extends Canvas implements Runnable {
             fatalError = error.toString();
             debugStage = "scene initialization";
             status = "M3G INIT ERROR";
+        }
+    }
+
+    private void loadWantedStarImages() {
+        try {
+            Image source = Image.createImage("/gta/stars.png");
+            int sw = source.getWidth();
+            int sh = source.getHeight();
+            int size = 12;
+            int[] pixels = new int[sw * sh];
+            source.getRGB(pixels, 0, sw, 0, 0, sw, sh);
+            int[] scaled = new int[size * size];
+            for (int y = 0; y < size; y++) {
+                int sy = y * sh / size;
+                for (int x = 0; x < size; x++) {
+                    int sx = x * sw / size;
+                    scaled[y * size + x] = pixels[sy * sw + sx];
+                }
+            }
+            wantedStarOn = Image.createRGBImage(scaled, size, size, true);
+            int[] gray = new int[scaled.length];
+            for (int i = 0; i < scaled.length; i++) {
+                int pixel = scaled[i];
+                int alpha = pixel & 0xFF000000;
+                int red = (pixel >> 16) & 255;
+                int green = (pixel >> 8) & 255;
+                int blue = pixel & 255;
+                int light = (red * 30 + green * 59 + blue * 11) / 100;
+                gray[i] = alpha | (light << 16) | (light << 8) | light;
+            }
+            wantedStarOff = Image.createRGBImage(gray, size, size, true);
+        } catch (Throwable ignored) {
+            wantedStarOn = null;
+            wantedStarOff = null;
         }
     }
 
@@ -1840,10 +1877,16 @@ final class GameCanvas extends Canvas implements Runnable {
         g.fillRect(0, 0, getWidth(), 17);
         g.setColor(0xFFFFFF);
         g.drawString(status, 3, 1, Graphics.TOP | Graphics.LEFT);
-        if (wantedLevel > 0) {
-            String stars = "WANTED ";
+        if (wantedStarOn != null && wantedStarOff != null) {
+            int starX = getWidth() - 5 * 14 - 3;
+            for (int wi = 0; wi < 5; wi++) {
+                g.drawImage(wi < wantedLevel ? wantedStarOn : wantedStarOff,
+                            starX + wi * 14, 2, Graphics.TOP | Graphics.LEFT);
+            }
+        } else if (wantedLevel > 0) {
+            String stars = "";
             for (int wi = 0; wi < wantedLevel; wi++) stars += "*";
-            g.drawString(stars, getWidth() - 82, 1, Graphics.TOP | Graphics.LEFT);
+            g.drawString(stars, getWidth() - 42, 1, Graphics.TOP | Graphics.LEFT);
         }
         g.drawString("2/8 MOVE  4/6 TURN  * SWITCH  D-PAD CAMERA", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
