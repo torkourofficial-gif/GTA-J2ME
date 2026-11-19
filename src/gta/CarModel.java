@@ -77,11 +77,11 @@ final class CarModel {
         parent.addChild(mesh);
     }
 
-    void setDoorOpen(float degrees) {
+    void setDoorOpen(float degrees, boolean driverSide) {
         if (degrees < 0.0f) degrees = 0.0f;
         if (degrees > 72.0f) degrees = 72.0f;
-        driverDoor.setOrientation(-degrees, 0.0f, 1.0f, 0.0f);
-        passengerDoor.setOrientation(degrees, 0.0f, 1.0f, 0.0f);
+        driverDoor.setOrientation(driverSide ? -degrees : 0.0f, 0.0f, 1.0f, 0.0f);
+        passengerDoor.setOrientation(driverSide ? 0.0f : degrees, 0.0f, 1.0f, 0.0f);
     }
 
     void setPosition(float x, float y, float z) {
