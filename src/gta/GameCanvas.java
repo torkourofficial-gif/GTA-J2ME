@@ -55,6 +55,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private float bikeX = -3.0f, bikeZ = 0.0f, bikeHeading, bikeSpeed, bikeSteering;
     private CarModel[] policeCars = new CarModel[3];
     private float[] policeX = new float[3], policeZ = new float[3];
+    private boolean[] policeActive = new boolean[3];
     private int wantedLevel;
     private float wantedDecay, arrestTimer;
     private Camera camera;
@@ -1401,6 +1402,174 @@ final class GameCanvas extends Canvas implements Runnable {
         float ox = Math.max(Math.abs(lx) - (0.92f + radius), 0.0f);
         float oz = Math.max(Math.abs(lz) - (1.48f + radius), 0.0f);
         return ox * ox + oz * oz < radius * radius;
+    }
+
+    private void addWanted(int amount) {
+        wantedLevel += amount;
+        if (wantedLevel > 5) wantedLevel = 5;
+        wantedDecay = 0.0f;
+    }
+
+    private int findNearbyMotorcycle() {
+        float best2 = 25.0f;
+        int result = -2;
+        float dx = playerX - bikeX, dz = playerZ - bikeZ;
+        if (!inBike && dx * dx + dz * dz < best2) {
+            best2 = dx * dx + dz * dz;
+            result = -1;
+        }
+        for (int i = 0; i < trafficBikes.length; i++) {
+            if (!bikeTrafficActive[i]) continue;
+            dx = playerX - bikeTrafficX[i]; dz = playerZ - bikeTrafficZ[i];
+            float d2 = dx * dx + dz * dz;
+            if (d2 < best2) { best2 = d2; result = i; }
+        }
+        return result;
+    }
+
+    private void initializeMotorcycles() {
+        float[] xs = {-30.0f, 2.0f, 30.0f};
+        float[] zs = {-24.0f, 32.0f, 76.0f};
+        int[] colors = {0xD16A32, 0x315B91, 0x39764B};
+        for (int i = 0; i < trafficBikes.length; i++) {
+            trafficBikes[i] = new MotorcycleModel(colors[i]);
+            bikeTrafficX[i] = xs[i]; bikeTrafficZ[i] = zs[i];
+            bikeTrafficHeading[i] = i == 1 ? 180.0f : 0.0f;
+            bikeTrafficSpeed[i] = 3.2f + i * 0.45f;
+            bikeTrafficActive[i] = true;
+            trafficBikes[i].setPosition(xs[i], 0.0f, zs[i]);
+            trafficBikes[i].setHeading(bikeTrafficHeading[i]);
+            world.addChild(trafficBikes[i].root);
+        }
+    }
+
+    private void updateMotorcycles(float dt) {
+        for (int i = 0; i < trafficBikes.length; i++) {
+            if (!bikeTrafficActive[i]) continue;
+            float a = bikeTrafficHeading[i] * 0.0174532925f;
+            float nx = bikeTrafficX[i] - (float)Math.sin(a) * bikeTrafficSpeed[i] * dt;
+            float nz = bikeTrafficZ[i] - (float)Math.cos(a) * bikeTrafficSpeed[i] * dt;
+            if (!bikeBlocked(nx, nz, i)) {
+                bikeTrafficX[i] = nx; bikeTrafficZ[i] = nz;
+            } else {
+                bikeTrafficHeading[i] = normalizeAngle(bikeTrafficHeading[i] + 180.0f);
+            }
+            if (bikeTrafficZ[i] < -CITY_LIMIT + 5.0f) bikeTrafficHeading[i] = 180.0f;
+            else if (bikeTrafficZ[i] > CITY_LIMIT - 5.0f) bikeTrafficHeading[i] = 0.0f;
+            trafficBikes[i].setPosition(bikeTrafficX[i], 0.0f, bikeTrafficZ[i]);
+            trafficBikes[i].setHeading(bikeTrafficHeading[i]);
+        }
+    }
+
+    private boolean bikeBlocked(float x, float z, int self) {
+        if (x < -CITY_LIMIT + 1.0f || x > CITY_LIMIT - 1.0f ||
+            z < -CITY_LIMIT + 1.0f || z > CITY_LIMIT - 1.0f) return true;
+        for (int i = 0; i < buildingCount; i++)
+            if (circleHitsRect(x, z, 0.55f, buildingX[i], buildingZ[i],
+                               buildingW[i], buildingD[i])) return true;
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] == null) continue;
+            float dx = x - trafficX[i], dz = z - trafficZ[i];
+            if (dx * dx + dz * dz < 2.5f) return true;
+        }
+        for (int i = 0; i < trafficBikes.length; i++) {
+            if (i == self || !bikeTrafficActive[i]) continue;
+            float dx = x - bikeTrafficX[i], dz = z - bikeTrafficZ[i];
+            if (dx * dx + dz * dz < 1.4f) return true;
+        }
+        return false;
+    }
+
+    private boolean vehicleBlocked(float x, float z, float radius) {
+        if (x < -CITY_LIMIT + 1.8f || x > CITY_LIMIT - 1.8f ||
+            z < -CITY_LIMIT + 1.8f || z > CITY_LIMIT - 1.8f) return true;
+        for (int i = 0; i < buildingCount; i++)
+            if (circleHitsRect(x, z, radius, buildingX[i], buildingZ[i],
+                               buildingW[i], buildingD[i])) return true;
+        for (int i = 0; i < trafficCars.length; i++) {
+            if (trafficCars[i] == null) continue;
+            float dx = x - trafficX[i], dz = z - trafficZ[i];
+            if (dx * dx + dz * dz < (radius + 1.15f) * (radius + 1.15f)) return true;
+        }
+        for (int i = 0; i < trafficBikes.length; i++) {
+            if (!bikeTrafficActive[i]) continue;
+            float dx = x - bikeTrafficX[i], dz = z - bikeTrafficZ[i];
+            if (dx * dx + dz * dz < (radius + 0.65f) * (radius + 0.65f)) return true;
+        }
+        return false;
+    }
+
+    private void initializePolice() {
+        for (int i = 0; i < policeCars.length; i++) {
+            policeCars[i] = new CarModel(0x263C62);
+            policeCars[i].setPosition(0.0f, -20.0f, 0.0f);
+            policeCars[i].root.setRenderingEnable(false);
+            policeActive[i] = false;
+            world.addChild(policeCars[i].root);
+        }
+    }
+
+    private void updatePolice(float dt) {
+        if (wantedLevel <= 0) {
+            arrestTimer = 0.0f;
+            for (int i = 0; i < policeCars.length; i++) {
+                policeActive[i] = false;
+                policeCars[i].root.setRenderingEnable(false);
+            }
+            return;
+        }
+        int active = wantedLevel;
+        if (active > policeCars.length) active = policeCars.length;
+        boolean nearby = false;
+        for (int i = 0; i < policeCars.length; i++) {
+            if (i >= active) {
+                policeActive[i] = false;
+                policeCars[i].root.setRenderingEnable(false);
+                continue;
+            }
+            if (!policeActive[i]) {
+                float angle = (i * 120.0f + 45.0f) * 0.0174532925f;
+                policeX[i] = playerX + (float)Math.sin(angle) * (13.0f + i * 2.0f);
+                policeZ[i] = playerZ + (float)Math.cos(angle) * (13.0f + i * 2.0f);
+                policeActive[i] = true;
+                policeCars[i].root.setRenderingEnable(true);
+            }
+            float dx = playerX - policeX[i], dz = playerZ - policeZ[i];
+            float dist = (float)Math.sqrt(dx * dx + dz * dz);
+            if (dist > 0.01f) {
+                float heading = (float)(atan2Compat(-dx, -dz) * 57.29578f);
+                float speed = 3.0f + wantedLevel * 0.75f;
+                float a = heading * 0.0174532925f;
+                float nx = policeX[i] - (float)Math.sin(a) * speed * dt;
+                float nz = policeZ[i] - (float)Math.cos(a) * speed * dt;
+                if (!carBlocked(nx, nz)) { policeX[i] = nx; policeZ[i] = nz; }
+                policeCars[i].setPosition(policeX[i], 0.0f, policeZ[i]);
+                policeCars[i].setHeading(heading);
+            }
+            if (dist < 3.4f) nearby = true;
+        }
+        if (nearby && (!inCar || Math.abs(carSpeed) < 2.0f) &&
+            (!inBike || Math.abs(bikeSpeed) < 2.0f)) {
+            arrestTimer += dt;
+            if (arrestTimer > 1.8f) {
+                wantedLevel = 0; arrestTimer = 0.0f;
+                if (inCar) { inCar = false; carSpeed = 0.0f; }
+                if (inBike) { inBike = false; bikeSpeed = 0.0f; playerBike.setVisible(false); }
+                playerX = policeX[0] + 2.0f; playerZ = policeZ[0] + 2.0f;
+                playerY = 0.0f; playerRagdollTime = 0.0f;
+                status = "BUSTED - ARRESTED";
+                for (int j = 0; j < policeCars.length; j++) {
+                    policeActive[j] = false;
+                    policeCars[j].root.setRenderingEnable(false);
+                }
+            }
+        } else {
+            arrestTimer = 0.0f;
+            wantedDecay += dt;
+            if (!nearby && wantedDecay > 45.0f) {
+                wantedLevel--; wantedDecay = 0.0f;
+            }
+        }
     }
 
     private boolean carBlocked(float x, float z) {
