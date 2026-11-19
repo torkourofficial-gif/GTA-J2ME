@@ -118,6 +118,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private int selectedWeapon = 0; // 0 fists, 1 pistol, 2 shotgun, 3 SMG
     private int[] weaponAmmo = {0, 120, 48, 180};
     private float weaponCooldown = 0.0f;
+    private float pedestrianSpawnTimer = 2.0f;
     private float carSpeed = 0.0f;
     private float carSteering = 0.0f;
     private long lastForwardTap = 0L;
@@ -1528,6 +1529,26 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void updatePedestrians(float dt) {
+        // Keep a small living crowd around the player. New pedestrian meshes
+        // are created only when needed, never for far-away city blocks.
+        pedestrianSpawnTimer -= dt;
+        if (pedestrianSpawnTimer <= 0.0f) {
+            int nearbyCount = 0;
+            for (int i = 0; i < PED_COUNT; i++) {
+                if (!pedActive[i] || pedestrians[i] == null) continue;
+                float sx = pedX[i] - playerX, sz = pedZ[i] - playerZ;
+                if (sx * sx + sz * sz < 2500.0f) nearbyCount++;
+            }
+            if (nearbyCount < 10) {
+                int angle = randomInt(360);
+                float radians = angle * 0.0174532925f;
+                float distance = 18.0f + randomInt(13);
+                float sx = playerX - (float)Math.sin(radians) * distance;
+                float sz = playerZ - (float)Math.cos(radians) * distance;
+                if (!playerBlocked(sx, sz)) spawnPedestrian(sx, sz, angle);
+            }
+            pedestrianSpawnTimer = 3.0f;
+        }
         for (int i = 0; i < PED_COUNT; i++) {
             if (!pedActive[i] || pedestrians[i] == null) continue;
             float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
@@ -1742,9 +1763,9 @@ final class GameCanvas extends Canvas implements Runnable {
             world.addChild(pedestrians[slot].root);
         }
         pedActive[slot] = true;
-        pedState[slot] = 1;
+        pedState[slot] = 0;
         pedX[slot] = x; pedZ[slot] = z; pedHeading[slot] = heading;
-        pedTimer[slot] = 4.0f; pedPhase[slot] = 0.0f;
+        pedTimer[slot] = 3.0f; pedPhase[slot] = 0.0f;
         pedAttackCooldown[slot] = 2.0f;
         pedRagdollY[slot] = 0.0f;
         pedRagdollVX[slot] = pedRagdollVY[slot] = pedRagdollVZ[slot] = 0.0f;
