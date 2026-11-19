@@ -745,8 +745,38 @@ final class GameCanvas extends Canvas implements Runnable {
     private void updatePlayerRagdoll(float dt) {
         playerRagdollTime -= dt;
         playerRagdollVY -= 9.8f * dt;
-        playerX += playerRagdollVX * dt;
-        playerZ += playerRagdollVZ * dt;
+
+        // Resolve the horizontal movement one axis at a time. This preserves
+        // motion parallel to a wall instead of freezing CJ or letting him pass
+        // through the obstacle.
+        float nextX = playerX + playerRagdollVX * dt;
+        boolean hitX = playerBlocked(nextX, playerZ);
+        if (!hitX) {
+            playerX = nextX;
+        } else {
+            float impact = Math.abs(playerRagdollVX);
+            playerRagdollVX = impact > 1.0f ? -playerRagdollVX * 0.16f : 0.0f;
+            playerRagdollVZ *= 0.78f;
+            playerRagdollRollSpeed *= 0.88f;
+        }
+
+        float nextZ = playerZ + playerRagdollVZ * dt;
+        boolean hitZ = playerBlocked(playerX, nextZ);
+        if (!hitZ) {
+            playerZ = nextZ;
+        } else {
+            float impact = Math.abs(playerRagdollVZ);
+            playerRagdollVZ = impact > 1.0f ? -playerRagdollVZ * 0.16f : 0.0f;
+            playerRagdollVX *= 0.78f;
+            playerRagdollPitchSpeed *= 0.88f;
+        }
+        if (hitX && hitZ) {
+            playerRagdollVX *= 0.45f;
+            playerRagdollVZ *= 0.45f;
+            playerRagdollRollSpeed *= 0.72f;
+            playerRagdollPitchSpeed *= 0.72f;
+        }
+
         playerRagdollVX *= 0.965f;
         playerRagdollVZ *= 0.965f;
         playerRagdollRoll += playerRagdollRollSpeed * dt;
