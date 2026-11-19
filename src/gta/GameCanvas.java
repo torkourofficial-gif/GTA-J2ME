@@ -588,8 +588,8 @@ final class GameCanvas extends Canvas implements Runnable {
     private void initializePedestrians() {
         // Ten lightweight active pedestrians; their palette index cycles through
         // twenty distinct clothing/skin combinations.
-        float[] px = {-8.0f, 8.0f, -36.0f, -20.0f, 36.0f, 20.0f, -64.0f, 64.0f, 50.0f, -50.0f};
-        float[] pz = {-19.0f, 18.0f, 9.0f, -48.0f, 48.0f, -8.0f, 36.0f, -36.0f, 64.0f, -64.0f};
+        float[] px = {-5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f, -5.2f, 5.2f};
+        float[] pz = {-56.0f, -56.0f, -28.0f, -28.0f, 0.0f, 0.0f, 28.0f, 28.0f, 56.0f, 56.0f};
         for (int i = 0; i < PED_COUNT; i++) {
             pedestrians[i] = new PedestrianModel(i);
             world.addChild(pedestrians[i].root);
