@@ -3,7 +3,7 @@ package gta;
 import javax.microedition.m3g.Group;
 import javax.microedition.m3g.Mesh;
 
-/** Lightweight low-poly pedestrian with twenty color/appearance presets. */
+/** Compact low-poly pedestrian; twenty palette presets keep silhouettes readable. */
 final class PedestrianModel {
     final Group root = new Group();
     private final Group torso = new Group();
@@ -32,13 +32,11 @@ final class PedestrianModel {
     PedestrianModel(int variant) {
         int v = variant % 20;
         int skin = SKINS[v % SKINS.length];
-        addBox(root, 0.38f, 0.18f, 0.25f, 0, 0.86f, 0, PANTS[v]);
-        addBox(torso, 0.43f, 0.55f, 0.27f, 0, 1.24f, 0, SHIRTS[v]);
-        addBox(torso, 0.24f, 0.25f, 0.24f, 0, 1.68f, 0, skin);
-        addBox(torso, 0.055f, 0.055f, 0.025f, -0.055f, 1.70f, -0.126f, 0x171717);
-        addBox(torso, 0.055f, 0.055f, 0.025f, 0.055f, 1.70f, -0.126f, 0x171717);
-        // A small color-coded cap/hair block makes silhouettes easier to tell apart.
-        addBox(torso, 0.27f, 0.075f, 0.27f, 0, 1.82f, 0, v % 3 == 0 ? 0x25201D : skin);
+        addBox(root, 0.39f, 0.18f, 0.25f, 0, 0.86f, 0, PANTS[v]);
+        addBox(torso, 0.43f, 0.57f, 0.27f, 0, 1.25f, 0, SHIRTS[v]);
+        Mesh head = ModelFactory.ellipsoid(0.25f, 0.29f, 0.23f, skin);
+        head.setTranslation(0, 1.70f, 0);
+        torso.addChild(head);
         root.addChild(torso);
 
         leftArm.setTranslation(-0.27f, 1.43f, 0);
@@ -50,10 +48,8 @@ final class PedestrianModel {
 
         leftLeg.setTranslation(-0.12f, 0.78f, 0);
         rightLeg.setTranslation(0.12f, 0.78f, 0);
-        addBox(leftLeg, 0.17f, 0.43f, 0.20f, 0, -0.22f, 0, PANTS[v]);
-        addBox(rightLeg, 0.17f, 0.43f, 0.20f, 0, -0.22f, 0, PANTS[v]);
-        addBox(leftLeg, 0.18f, 0.10f, 0.27f, 0, -0.46f, -0.035f, 0x242321);
-        addBox(rightLeg, 0.18f, 0.10f, 0.27f, 0, -0.46f, -0.035f, 0x242321);
+        addBox(leftLeg, 0.17f, 0.54f, 0.20f, 0, -0.27f, 0, PANTS[v]);
+        addBox(rightLeg, 0.17f, 0.54f, 0.20f, 0, -0.27f, 0, PANTS[v]);
         root.addChild(leftLeg);
         root.addChild(rightLeg);
     }
