@@ -3,6 +3,7 @@ package gta;
 import javax.microedition.m3g.Appearance;
 import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Mesh;
+import javax.microedition.m3g.Material;
 import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
@@ -24,6 +25,12 @@ final class ModelFactory {
 
     private static Appearance createAppearance() {
         Appearance appearance = new Appearance();
+        Material material = new Material();
+        material.setColor(Material.AMBIENT, 0xFFFFFFFF);
+        material.setColor(Material.DIFFUSE, 0xFFFFFFFF);
+        material.setColor(Material.SPECULAR, 0x303038);
+        material.setShininess(10.0f);
+        appearance.setMaterial(material);
         if (sceneFog != null) appearance.setFog(sceneFog);
         return appearance;
     }
@@ -180,6 +187,17 @@ final class ModelFactory {
 
         VertexBuffer vertices = new VertexBuffer();
         vertices.setPositions(positions, 0.001f, null);
+        short[] normalsData = new short[] {
+            0,0,1000, 0,0,1000, 0,0,1000, 0,0,1000,
+            0,0,-1000, 0,0,-1000, 0,0,-1000, 0,0,-1000,
+            -1000,0,0, -1000,0,0, -1000,0,0, -1000,0,0,
+            1000,0,0, 1000,0,0, 1000,0,0, 1000,0,0,
+            0,1000,0, 0,1000,0, 0,1000,0, 0,1000,0,
+            0,-1000,0, 0,-1000,0, 0,-1000,0, 0,-1000,0
+        };
+        VertexArray normals = new VertexArray(24, 3, 2);
+        normals.set(0, 24, normalsData);
+        vertices.setNormals(normals);
         short[] uv = new short[] {
             0,0, 1000,0, 0,1000, 1000,1000,
             0,0, 1000,0, 0,1000, 1000,1000,
@@ -229,6 +247,23 @@ final class ModelFactory {
         positions.set(0, vertexCount, p);
         VertexBuffer vertices = new VertexBuffer();
         vertices.setPositions(positions, 0.001f, null);
+        short[] normalData = new short[vertexCount * 3];
+        int normalOut = 0;
+        for (int r = 0; r < rings; r++) {
+            for (int s = 0; s <= segments; s++) {
+                double lon = Math.PI * 2.0 * s / segments;
+                for (int side = 0; side < 2; side++) {
+                    int row = r + side;
+                    double lat = -Math.PI * 0.5 + Math.PI * row / rings;
+                    normalData[normalOut++] = (short)((float)Math.cos(lon) * (float)Math.cos(lat) * 1000.0f);
+                    normalData[normalOut++] = (short)((float)Math.sin(lat) * 1000.0f);
+                    normalData[normalOut++] = (short)((float)Math.sin(lon) * (float)Math.cos(lat) * 1000.0f);
+                }
+            }
+        }
+        VertexArray normals = new VertexArray(vertexCount, 3, 2);
+        normals.set(0, vertexCount, normalData);
+        vertices.setNormals(normals);
         short[] uv = new short[vertexCount * 2];
         int uvOut = 0;
         for (int r = 0; r < rings; r++) {
