@@ -479,6 +479,30 @@ final class GameCanvas extends Canvas implements Runnable {
             playerHeading = carHeading;
             playerVelocityX = 0.0f;
             playerVelocityZ = 0.0f;
+        } else if (inBike) {
+            if ((keys & FORWARD) != 0) bikeSpeed += 4.0f * dt;
+            if ((keys & BACK) != 0) bikeSpeed -= 3.4f * dt;
+            float steer = ((keys & LEFT) != 0 ? 1.0f : 0.0f) -
+                          ((keys & RIGHT) != 0 ? 1.0f : 0.0f);
+            bikeSteering += (steer * 32.0f - bikeSteering) * Math.min(1.0f, 6.0f * dt);
+            bikeSpeed *= 0.989f;
+            if (bikeSpeed > 10.0f) bikeSpeed = 10.0f;
+            if (bikeSpeed < -2.5f) bikeSpeed = -2.5f;
+            bikeHeading = normalizeAngle(bikeHeading +
+                (float)Math.tan(bikeSteering * 0.0174532925f) *
+                bikeSpeed / 1.65f * 57.29578f * dt);
+            float ba = bikeHeading * 0.0174532925f;
+            float nx = bikeX - (float)Math.sin(ba) * bikeSpeed * dt;
+            float nz = bikeZ - (float)Math.cos(ba) * bikeSpeed * dt;
+            boolean bx = vehicleBlocked(nx, bikeZ, 0.82f);
+            boolean bz = vehicleBlocked(bikeX, nz, 0.82f);
+            if (!bx) bikeX = nx;
+            if (!bz) bikeZ = nz;
+            if (bx || bz) bikeSpeed *= -0.18f;
+            playerBike.setPosition(bikeX, 0.0f, bikeZ);
+            playerBike.setHeading(bikeHeading);
+            playerX = bikeX; playerZ = bikeZ; playerHeading = bikeHeading;
+            playerVelocityX = playerVelocityZ = 0.0f;
         } else if (playerRagdollTime > 0.0f) {
             updatePlayerRagdoll(dt);
             moving = false;
