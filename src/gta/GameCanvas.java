@@ -38,6 +38,11 @@ final class GameCanvas extends Canvas implements Runnable {
     private Group[][] cityChunks = new Group[CITY_BLOCKS][CITY_BLOCKS];
     private int activeChunkX = -99, activeChunkZ = -99;
     private CJModel cj;
+    private CJModel secondProtagonist;
+    private boolean luciaActive;
+    private boolean characterSwitching;
+    private float characterSwitchTime;
+    private float switchFromX, switchFromZ, switchToX, switchToZ;
     private CarModel car;
     private Camera camera;
     private static final int PED_COUNT = 28;
@@ -257,9 +262,13 @@ final class GameCanvas extends Canvas implements Runnable {
         }
 
         debugStage = "create CJ model";
-        cj = new CJModel();
+        cj = new CJModel(false);
         cj.setPosition(playerX, playerY, playerZ);
         world.addChild(cj.root);
+        secondProtagonist = new CJModel(true);
+        secondProtagonist.setPosition(playerX, playerY, playerZ);
+        secondProtagonist.setVisible(false);
+        world.addChild(secondProtagonist.root);
 
         debugStage = "create player car";
         car = new CarModel();
@@ -389,6 +398,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private void update(float dt) {
         debugStage = "camera input";
         updateCameraInput(dt);
+        if (characterSwitching) { updateCharacterSwitch(dt); updateCamera(); return; }
         debugStage = "city chunk visibility";
         updateCityChunks();
         if (carTransition == 3) {
@@ -1306,6 +1316,7 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '5') jump();
         else if (keyCode == '1') punch();
         else if (keyCode == '3') toggleCar();
+        else if (keyCode == '*') beginCharacterSwitch();
         else {
             int action = getGameAction(keyCode);
             if (action == Canvas.UP) cameraKeys |= CAM_UP;
@@ -1409,7 +1420,7 @@ final class GameCanvas extends Canvas implements Runnable {
         g.fillRect(0, 0, getWidth(), 17);
         g.setColor(0xFFFFFF);
         g.drawString(status, 3, 1, Graphics.TOP | Graphics.LEFT);
-        g.drawString("2/8 MOVE (DOUBLE TAP RUN)  4/6 TURN  D-PAD CAMERA", 3,
+        g.drawString("2/8 MOVE  4/6 TURN  * SWITCH  D-PAD CAMERA", 3,
                      getHeight() - 16, Graphics.TOP | Graphics.LEFT);
     }
 }
