@@ -995,6 +995,26 @@ final class GameCanvas extends Canvas implements Runnable {
                     carSpeed *= 0.82f;
                 }
             }
+            for (int k = 0; k < trafficBikes.length; k++) {
+                if (!bikeTrafficActive[k]) continue;
+                float bx = trafficX[i] - bikeTrafficX[k];
+                float bz = trafficZ[i] - bikeTrafficZ[k];
+                if (bx * bx + bz * bz < 3.0f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficSpeed[i] = 0.7f;
+                    break;
+                }
+            }
+            if (inBike) {
+                float bx = trafficX[i] - bikeX, bz = trafficZ[i] - bikeZ;
+                if (bx * bx + bz * bz < 4.2f) {
+                    trafficX[i] = oldTrafficX;
+                    trafficZ[i] = oldTrafficZ;
+                    trafficStop[i] = 0.6f;
+                    bikeSpeed *= 0.8f;
+                }
+            }
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
