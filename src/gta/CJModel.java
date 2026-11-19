@@ -55,7 +55,7 @@ final class CJModel {
         shirtColor = lucia ? 0xD96F91 : 0xD8D6D0;
         pantsColor = lucia ? 0x456C9A : 0x555B50;
         skinColor = lucia ? 0xA96F53 : SKIN;
-        skinLightColor = lucia ? 0xC58B6C : skinLightColor;
+        skinLightColor = lucia ? 0xC58B6C : SKIN_LIGHT;
         // Waist, belt and denim waistband.
         addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, pantsColor);
         addBox(body, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
@@ -69,7 +69,7 @@ final class CJModel {
             addBox(upperBody, 0.31f, 0.035f, 0.19f, 0.0f, 1.84f, -0.12f, 0xA84449);
         }
         // Tank top and shoulder straps.
-        addTexturedOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, shirtColor, 7);
+        addTexturedOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, shirtColor, lucia ? 8 : 7);
         addBox(upperBody, 0.15f, 0.34f, 0.29f, -0.16f, 1.30f, 0.0f, shirtColor);
         addBox(upperBody, 0.15f, 0.34f, 0.29f, 0.16f, 1.30f, 0.0f, shirtColor);
         addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, skinColor);
