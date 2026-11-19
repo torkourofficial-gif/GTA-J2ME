@@ -10,19 +10,23 @@ final class CJModel {
     final Group rightArm = new Group();
     final Group leftLeg = new Group();
     final Group rightLeg = new Group();
+    private final Group upperBody = new Group();
+    private float crouchBlend = 0.0f;
+    private float jumpBlend = 0.0f;
 
     CJModel() {
-        addBox(root, 0.52f, 0.62f, 0.28f, 0.0f, 1.02f, 0.0f, 0xFF9A32); // shirt
-        addBox(root, 0.24f, 0.28f, 0.24f, 0.0f, 1.52f, 0.0f, 0xFF9B65); // head
-        addBox(root, 0.27f, 0.12f, 0.27f, 0.0f, 1.70f, 0.0f, 0x252525); // hair
-        addBox(root, 0.18f, 0.12f, 0.20f, 0.0f, 1.37f, 0.0f, 0xFF9B65); // neck
+        addBox(upperBody, 0.52f, 0.62f, 0.28f, 0.0f, 1.02f, 0.0f, 0xFF9A32); // shirt
+        addBox(upperBody, 0.24f, 0.28f, 0.24f, 0.0f, 1.52f, 0.0f, 0xFF9B65); // head
+        addBox(upperBody, 0.27f, 0.12f, 0.27f, 0.0f, 1.70f, 0.0f, 0x252525); // hair
+        addBox(upperBody, 0.18f, 0.12f, 0.20f, 0.0f, 1.37f, 0.0f, 0xFF9B65); // neck
+        root.addChild(upperBody);
 
         leftArm.setTranslation(-0.34f, 1.28f, 0.0f);
         rightArm.setTranslation(0.34f, 1.28f, 0.0f);
         addBox(leftArm, 0.17f, 0.52f, 0.18f, 0.0f, -0.25f, 0.0f, 0xFF9B65);
         addBox(rightArm, 0.17f, 0.52f, 0.18f, 0.0f, -0.25f, 0.0f, 0xFF9B65);
-        root.addChild(leftArm);
-        root.addChild(rightArm);
+        upperBody.addChild(leftArm);
+        upperBody.addChild(rightArm);
 
         leftLeg.setTranslation(-0.14f, 0.72f, 0.0f);
         rightLeg.setTranslation(0.14f, 0.72f, 0.0f);
@@ -53,11 +57,34 @@ final class CJModel {
         root.setRenderingEnable(visible);
     }
 
-    void animate(float walkPhase, boolean moving, float punchAngle) {
-        float swing = moving ? (float)Math.sin(walkPhase) * 30.0f : 0.0f;
-        leftLeg.setOrientation(swing, 1.0f, 0.0f, 0.0f);
-        rightLeg.setOrientation(-swing, 1.0f, 0.0f, 0.0f);
-        leftArm.setOrientation(-swing * 0.75f, 1.0f, 0.0f, 0.0f);
-        rightArm.setOrientation(swing * 0.75f - punchAngle, 1.0f, 0.0f, 0.0f);
+    void animate(float walkPhase, boolean moving, float punchAngle,
+                  boolean backward, boolean jumping, boolean crouching,
+                  float turnAmount) {
+        // Smoothly blend crouch/jump poses to avoid abrupt limb snapping.
+        float targetCrouch = crouching ? 1.0f : 0.0f;
+        float targetJump = jumping ? 1.0f : 0.0f;
+        crouchBlend += (targetCrouch - crouchBlend) * 0.28f;
+        jumpBlend += (targetJump - jumpBlend) * 0.30f;
+
+        float direction = backward ? -1.0f : 1.0f;
+        float swing = moving ? (float)Math.sin(walkPhase) * 30.0f * direction : 0.0f;
+        float turnStep = turnAmount * (moving ? 12.0f : 22.0f);
+        float crouchLeg = crouchBlend * 48.0f;
+        float jumpLeg = jumpBlend * 22.0f;
+
+        leftLeg.setOrientation(swing + crouchLeg + jumpLeg, 1.0f, 0.0f, 0.0f);
+        rightLeg.setOrientation(-swing + crouchLeg + jumpLeg, 1.0f, 0.0f, 0.0f);
+
+        float armSwing = -swing * 0.75f;
+        leftArm.setOrientation(armSwing - turnStep - jumpBlend * 105.0f,
+                               1.0f, 0.0f, 0.0f);
+        rightArm.setOrientation(-armSwing - turnStep - punchAngle -
+                                jumpBlend * 105.0f, 1.0f, 0.0f, 0.0f);
+
+        // Keep the torso upright during reverse walking; only crouch/jump
+        // change the upper-body height and pitch.
+        upperBody.setTranslation(0.0f, -0.30f * crouchBlend + 0.04f * jumpBlend, 0.0f);
+        upperBody.setOrientation(-8.0f * crouchBlend + 3.0f * jumpBlend,
+                                 1.0f, 0.0f, 0.0f);
     }
 }
