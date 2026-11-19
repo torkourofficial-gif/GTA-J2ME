@@ -194,7 +194,7 @@ final class GameCanvas extends Canvas implements Runnable {
             // Turning is independent of forward/back input, so reverse movement
             // never snaps the character around or makes the body appear tilted.
             if (side != 0.0f) {
-                playerHeading = normalizeAngle(playerHeading + side * 150.0f * dt);
+                playerHeading = normalizeAngle(playerHeading - side * 150.0f * dt);
             }
 
             float inputLength = (float)Math.sqrt(forward * forward + side * side);
@@ -202,7 +202,10 @@ final class GameCanvas extends Canvas implements Runnable {
 
             float angle = playerHeading * 0.0174532925f;
             float targetSpeed = forward * 3.0f;
-            float targetVX = (float)Math.sin(angle) * targetSpeed;
+            // M3G's positive Y rotation turns the model's local -Z forward
+            // axis toward -X. Keep movement in that exact same local-forward
+            // direction, otherwise CJ appears to face one way and walk another.
+            float targetVX = -(float)Math.sin(angle) * targetSpeed;
             float targetVZ = -(float)Math.cos(angle) * targetSpeed;
 
             // Gradual acceleration and deceleration.
@@ -252,24 +255,6 @@ final class GameCanvas extends Canvas implements Runnable {
         updateCamera();
     }
 
-    // CLDC-friendly atan2 approximation; avoids Math.atan2 on limited runtimes.
-    private float angleDegrees(float y, float x) {
-        float ax = x < 0.0f ? -x : x;
-        float ay = y < 0.0f ? -y : y;
-        float angle;
-        if (ax + ay < 0.0001f) return playerHeading;
-        if (ax >= ay) {
-            float r = ay / ax;
-            angle = r * (45.0f - 14.0f * r);
-        } else {
-            float r = ax / ay;
-            angle = 90.0f - r * (45.0f - 14.0f * r);
-        }
-        if (x < 0.0f) angle = 180.0f - angle;
-        if (y < 0.0f) angle = -angle;
-        return angle;
-    }
-
     private void updateCameraInput(float dt) {
         int held = cameraKeys;
         if ((held & CAM_LEFT) != 0) cameraYaw -= 115.0f * dt;
@@ -287,18 +272,6 @@ final class GameCanvas extends Canvas implements Runnable {
         while (angle > 180.0f) angle -= 360.0f;
         while (angle < -180.0f) angle += 360.0f;
         return angle;
-    }
-
-    private float turnTowards(float current, float target, float maxStep) {
-        float difference = target - current;
-        while (difference > 180.0f) difference -= 360.0f;
-        while (difference < -180.0f) difference += 360.0f;
-        if (difference > maxStep) difference = maxStep;
-        else if (difference < -maxStep) difference = -maxStep;
-        current += difference;
-        if (current > 180.0f) current -= 360.0f;
-        if (current < -180.0f) current += 360.0f;
-        return current;
     }
 
     private void updateCamera() {
