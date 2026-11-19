@@ -130,7 +130,7 @@ final class ModelFactory {
 
     static Mesh texturedBox(float width, float height, float depth,
                             int color, int textureKind) {
-        Mesh mesh = box(width, height, depth, color);
+        Mesh mesh = boxGeometry(width, height, depth, color, true);
         Appearance appearance = createAppearance();
         appearance.setTexture(0, getTexture(textureKind));
         // Texture color is modulated with the material tint.
@@ -148,6 +148,11 @@ final class ModelFactory {
     }
 
     static Mesh box(float width, float height, float depth, int color) {
+        return boxGeometry(width, height, depth, color, false);
+    }
+
+    private static Mesh boxGeometry(float width, float height, float depth,
+                                    int color, boolean includeTexCoords) {
         float x = width * 0.5f;
         float y = height * 0.5f;
         float z = depth * 0.5f;
@@ -180,29 +185,20 @@ final class ModelFactory {
 
         VertexBuffer vertices = new VertexBuffer();
         vertices.setPositions(positions, 0.001f, null);
-        short[] normalsData = new short[] {
-            0,0,1000, 0,0,1000, 0,0,1000, 0,0,1000,
-            0,0,-1000, 0,0,-1000, 0,0,-1000, 0,0,-1000,
-            -1000,0,0, -1000,0,0, -1000,0,0, -1000,0,0,
-            1000,0,0, 1000,0,0, 1000,0,0, 1000,0,0,
-            0,1000,0, 0,1000,0, 0,1000,0, 0,1000,0,
-            0,-1000,0, 0,-1000,0, 0,-1000,0, 0,-1000,0
-        };
-        VertexArray normals = new VertexArray(24, 3, 2);
-        normals.set(0, 24, normalsData);
-        vertices.setNormals(normals);
+        if (includeTexCoords) {
         short[] uv = new short[] {
-            0,0, 1000,0, 0,1000, 1000,1000,
-            0,0, 1000,0, 0,1000, 1000,1000,
-            0,0, 1000,0, 0,1000, 1000,1000,
-            0,0, 1000,0, 0,1000, 1000,1000,
-            0,0, 1000,0, 0,1000, 1000,1000,
-            0,0, 1000,0, 0,1000, 1000,1000
-        };
-        VertexArray texCoords = new VertexArray(24, 2, 2);
-        texCoords.set(0, 24, uv);
-        vertices.setTexCoords(0, texCoords, 0.001f, null);
-
+                0,0, 1000,0, 0,1000, 1000,1000,
+                0,0, 1000,0, 0,1000, 1000,1000,
+                0,0, 1000,0, 0,1000, 1000,1000,
+                0,0, 1000,0, 0,1000, 1000,1000,
+                0,0, 1000,0, 0,1000, 1000,1000,
+                0,0, 1000,0, 0,1000, 1000,1000
+            };
+            VertexArray texCoords = new VertexArray(24, 2, 2);
+            texCoords.set(0, 24, uv);
+            vertices.setTexCoords(0, texCoords, 0.001f, null);
+    
+            }
         int[] strips = new int[] {4,4,4,4,4,4};
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
 
@@ -271,9 +267,6 @@ final class ModelFactory {
                 }
             }
         }
-        VertexArray normals = new VertexArray(vertexCount, 3, 2);
-        normals.set(0, vertexCount, normalData);
-        vertices.setNormals(normals);
         short[] uv = new short[vertexCount * 2];
         int uvOut = 0;
         for (int r = 0; r < rings; r++) {
