@@ -118,7 +118,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private int selectedWeapon = 0; // 0 fists, 1 pistol, 2 shotgun, 3 SMG
     private int[] weaponAmmo = {0, 120, 48, 180};
     private float weaponCooldown = 0.0f;
-    private float pedestrianSpawnTimer = 2.0f;
+    private float pedestrianSpawnTimer = 4.0f;
     private float carSpeed = 0.0f;
     private float carSteering = 0.0f;
     private long lastForwardTap = 0L;
@@ -218,24 +218,19 @@ final class GameCanvas extends Canvas implements Runnable {
         // ground across that full footprint so no road or block hangs over
         // the edge of the visible floor.
         debugStage = "create ground tiles";
-        for (int tx = -5; tx <= 5; tx++) {
-            for (int tz = -5; tz <= 5; tz++) {
-                float tileX = tx * CITY_SPACING;
-                float tileZ = tz * CITY_SPACING;
-                addTexturedBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
-                              tileX, -0.12f, tileZ, 0xFFFFFF, 2);
-            }
-        }
+        // One continuous ground mesh replaces 121 tiny tile meshes.
+        addTexturedBox(scenery, CITY_SPACING * 11.0f, 0.18f,
+                       CITY_SPACING * 11.0f, 0.0f, -0.12f, 0.0f,
+                       0xFFFFFF, 2);
         debugStage = "create road meshes";
+        // Each avenue is one long mesh instead of eleven separate segments.
+        // This removes 220 drawables while keeping the same road grid.
         for (int i = -5; i <= 5; i++) {
             float road = i * CITY_SPACING;
-            for (int segment = -5; segment <= 5; segment++) {
-                float along = segment * CITY_SPACING;
-                addTexturedBox(scenery, 7.5f, 0.025f, CITY_SPACING,
-                              road, -0.015f, along, 0xFFFFFF, 1);
-                addTexturedBox(scenery, CITY_SPACING, 0.025f, 7.5f,
-                              along, -0.014f, road, 0xFFFFFF, 1);
-            }
+            addTexturedBox(scenery, 7.5f, 0.025f, CITY_SPACING * 11.0f,
+                           road, -0.015f, 0.0f, 0xFFFFFF, 1);
+            addTexturedBox(scenery, CITY_SPACING * 11.0f, 0.025f, 7.5f,
+                           0.0f, -0.014f, road, 0xFFFFFF, 1);
         }
 
         // Vice City-inspired districts: pastel oceanfront hotels, a denser
@@ -1277,7 +1272,7 @@ final class GameCanvas extends Canvas implements Runnable {
                       -63.0f, -63.0f, -35.0f, -35.0f, -7.0f, -7.0f, 21.0f, 21.0f};
         // Start with only eight nearby pedestrians. Remaining slots are
         // created lazily when gameplay needs to spawn a distant driver/NPC.
-        for (int i = 0; i < 8 && i < PED_COUNT; i++) {
+        for (int i = 0; i < 4 && i < PED_COUNT; i++) {
             int source = i + 8;
             debugStage = "create nearby pedestrian " + i;
             pedestrians[i] = new PedestrianModel(i);
@@ -1292,7 +1287,7 @@ final class GameCanvas extends Canvas implements Runnable {
             pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
             pedestrians[i].setHeading(pedHeading[i]);
         }
-        nextPedVariant = 8;
+        nextPedVariant = 4;
     }
 
     private void initializeTraffic() {
@@ -1537,17 +1532,17 @@ final class GameCanvas extends Canvas implements Runnable {
             for (int i = 0; i < PED_COUNT; i++) {
                 if (!pedActive[i] || pedestrians[i] == null) continue;
                 float sx = pedX[i] - playerX, sz = pedZ[i] - playerZ;
-                if (sx * sx + sz * sz < 2500.0f) nearbyCount++;
+                if (sx * sx + sz * sz < 1024.0f) nearbyCount++;
             }
-            if (nearbyCount < 10) {
+            if (nearbyCount < 6) {
                 int angle = randomInt(360);
                 float radians = angle * 0.0174532925f;
-                float distance = 18.0f + randomInt(13);
+                float distance = 14.0f + randomInt(9);
                 float sx = playerX - (float)Math.sin(radians) * distance;
                 float sz = playerZ - (float)Math.cos(radians) * distance;
                 if (!playerBlocked(sx, sz)) spawnPedestrian(sx, sz, angle);
             }
-            pedestrianSpawnTimer = 3.0f;
+            pedestrianSpawnTimer = 4.0f;
         }
         for (int i = 0; i < PED_COUNT; i++) {
             if (!pedActive[i] || pedestrians[i] == null) continue;
