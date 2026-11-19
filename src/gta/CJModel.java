@@ -136,10 +136,10 @@ final class CJModel {
         // This makes CJ visibly occupy the seat instead of disappearing outside.
         upperBody.setTranslation(0.0f, -0.48f * amount, 0.0f);
         upperBody.setOrientation(-12.0f * amount, 0.0f, 0.0f, 1.0f);
-        leftArm.setOrientation(-62.0f * amount * sign, 1.0f, 0.0f, 0.0f);
-        rightArm.setOrientation(-28.0f * amount * sign, 1.0f, 0.0f, 0.0f);
-        leftForearm.setOrientation(-35.0f * amount, 1.0f, 0.0f, 0.0f);
-        rightForearm.setOrientation(-18.0f * amount, 1.0f, 0.0f, 0.0f);
+        leftArm.setOrientation(-48.0f * amount * sign, 1.0f, 0.0f, 0.0f);
+        rightArm.setOrientation(-38.0f * amount * sign, 1.0f, 0.0f, 0.0f);
+        leftForearm.setOrientation(-52.0f * amount, 1.0f, 0.0f, 0.0f);
+        rightForearm.setOrientation(-42.0f * amount, 1.0f, 0.0f, 0.0f);
         leftLeg.setOrientation(78.0f * amount, 1.0f, 0.0f, 0.0f);
         rightLeg.setOrientation(72.0f * amount, 1.0f, 0.0f, 0.0f);
         leftShin.setOrientation(-72.0f * amount, 1.0f, 0.0f, 0.0f);
@@ -159,8 +159,8 @@ final class CJModel {
         turnBlend += (targetTurn - turnBlend) * 0.20f;
 
         float phase = walkPhase;
-        float stride = (float)Math.sin(phase) * 27.0f * gaitBlend;
-        float opposite = (float)Math.sin(phase + 3.1415926f) * 27.0f * gaitBlend;
+        float stride = (float)Math.sin(phase) * 23.0f * gaitBlend;
+        float opposite = (float)Math.sin(phase + 3.1415926f) * 23.0f * gaitBlend;
         float kneeLeft = Math.max(0.0f, (float)Math.sin(phase + 0.65f)) * 28.0f * gaitBlend;
         float kneeRight = Math.max(0.0f, (float)Math.sin(phase + 3.79f)) * 28.0f * gaitBlend;
         if (backward) {
@@ -190,7 +190,12 @@ final class CJModel {
                                 0.79f - crouch * 0.12f, 0.0f);
         upperBody.setTranslation(0.0f, -0.27f * crouch + 0.055f * jump +
                                  (float)Math.sin(phase * 2.0f) * 0.018f * gaitBlend, 0.0f);
-        upperBody.setOrientation(-7.0f * crouch + 3.0f * jump,
+        upperBody.setOrientation(-7.0f * crouch + 3.0f * jump +
+                                 (float)Math.sin(phase) * 1.8f * gaitBlend,
                                  0.0f, 0.0f, 1.0f);
+        leftForearm.setOrientation(-crouch * 35.0f + jump * 24.0f +
+                                   Math.max(0.0f, stride) * 0.16f, 1, 0, 0);
+        rightForearm.setOrientation(-crouch * 35.0f + jump * 24.0f +
+                                    Math.max(0.0f, opposite) * 0.16f, 1, 0, 0);
     }
 }
