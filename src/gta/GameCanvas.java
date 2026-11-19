@@ -1529,6 +1529,10 @@ final class GameCanvas extends Canvas implements Runnable {
             float dx = x - trafficX[i], dz = z - trafficZ[i];
             if (dx * dx + dz * dz < 2.5f) return true;
         }
+        if (inCar) {
+            float dx = x - carX, dz = z - carZ;
+            if (dx * dx + dz * dz < 4.0f) return true;
+        }
         for (int i = 0; i < trafficBikes.length; i++) {
             if (i == self || !bikeTrafficActive[i]) continue;
             float dx = x - bikeTrafficX[i], dz = z - bikeTrafficZ[i];
