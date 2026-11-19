@@ -26,6 +26,12 @@ final class CJModel {
     private float gaitBlend;
     private float turnBlend;
 
+    // Articulated ragdoll state: angle and angular velocity for torso,
+    // shoulders, elbows, hips and knees. Angles are stored in radians.
+    private final float[] ragAngle = new float[9];
+    private final float[] ragVelocity = new float[9];
+    private boolean ragdollActive;
+
     // CJ's palette: white tank, blue loose jeans, dark sneakers, warm skin.
     private static final int SKIN = 0xA96543;
     private static final int SKIN_LIGHT = 0xC17B55;
@@ -40,8 +46,8 @@ final class CJModel {
     CJModel() {
         // Waist, belt and denim waistband.
         addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, JEANS);
-        addBox(root, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
-        addBox(root, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
+        addBox(body, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
+        addBox(body, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
 
         // Tank top and its shoulder straps, with a visible skin neckline.
         addOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, SHIRT);
@@ -149,28 +155,108 @@ final class CJModel {
         rightShin.setOrientation(-68.0f * amount, 1.0f, 0.0f, 0.0f);
     }
 
-    void animateRagdoll(float roll, float pitch, float rollSpeed, float pitchSpeed) {
+    /**
+     * Lightweight articulated rigid-body approximation for Java ME.
+     * Every limb is a child of its shoulder/hip/elbow/knee pivot, so joint
+     * transforms preserve attachment. Each joint integrates angular momentum
+     * under gravity, damping, impact impulse and hard angular limits.
+     */
+    void animateRagdoll(float dt, float roll, float pitch,
+                        float rollSpeed, float pitchSpeed) {
+        if (dt < 0.001f) dt = 0.001f;
+        if (dt > 0.08f) dt = 0.08f;
+        if (!ragdollActive) {
+            ragdollActive = true;
+            for (int i = 0; i < ragAngle.length; i++) {
+                ragAngle[i] = 0.0f;
+                ragVelocity[i] = 0.0f;
+            }
+            // Impact angular momentum is transferred into the connected joints.
+            ragVelocity[0] = pitchSpeed * 0.0065f;
+            ragVelocity[1] = rollSpeed * 0.0018f;
+            ragVelocity[2] = -rollSpeed * 0.0018f;
+            ragVelocity[3] = pitchSpeed * 0.0012f;
+            ragVelocity[4] = -pitchSpeed * 0.0012f;
+            ragVelocity[5] = -pitchSpeed * 0.0015f;
+            ragVelocity[6] = pitchSpeed * 0.0015f;
+            ragVelocity[7] = pitchSpeed * 0.0010f;
+            ragVelocity[8] = -pitchSpeed * 0.0010f;
+        }
+
+        // Body is the pelvis/root rigid segment; its angular state is supplied
+        // by the translational collision solver in GameCanvas.
         float tilt = (float)Math.sqrt(roll * roll + pitch * pitch);
         if (tilt > 82.0f) tilt = 82.0f;
         if (tilt > 0.01f) {
             float inv = 1.0f / (float)Math.sqrt(roll * roll + pitch * pitch);
             body.setOrientation(tilt, pitch * inv, 0.0f, roll * inv);
+        } else {
+            body.setOrientation(0.0f, 0.0f, 1.0f, 0.0f);
         }
-        upperBody.setOrientation(68.0f + pitch * 0.22f, 0.0f, 0.0f, 1.0f);
-        leftArm.setOrientation(-55.0f + roll * 0.35f, 1.0f, 0.0f, 0.0f);
-        rightArm.setOrientation(62.0f - roll * 0.31f, 1.0f, 0.0f, 0.0f);
-        leftForearm.setOrientation(-28.0f + pitch * 0.18f, 1.0f, 0.0f, 0.0f);
-        rightForearm.setOrientation(34.0f - pitch * 0.16f, 1.0f, 0.0f, 0.0f);
-        leftLeg.setOrientation(72.0f + pitch * 0.16f, 1.0f, 0.0f, 0.0f);
-        rightLeg.setOrientation(54.0f - pitch * 0.13f, 1.0f, 0.0f, 0.0f);
-        leftShin.setOrientation(-42.0f + roll * 0.12f, 1.0f, 0.0f, 0.0f);
-        rightShin.setOrientation(-25.0f - roll * 0.10f, 1.0f, 0.0f, 0.0f);
+
+        // Pendulum-like joint dynamics. The gravity term makes unsupported
+        // limbs fall; angular damping dissipates energy; limits keep anatomy
+        // connected and prevent joints from folding through the body.
+        float gravity = 7.8f;
+        float damping = 1.65f;
+        for (int i = 0; i < ragAngle.length; i++) {
+            float torque = gravity * (float)Math.sin(ragAngle[i]);
+            // The torso and limbs inherit acceleration from the tumbling body.
+            if (i == 0) torque += pitchSpeed * 0.0009f;
+            else if (i == 1 || i == 2) torque += rollSpeed * 0.00035f;
+            ragVelocity[i] += (torque - damping * ragVelocity[i]) * dt;
+            ragAngle[i] += ragVelocity[i] * dt;
+        }
+
+        // Soft anatomical limits become stiff restoring constraints at the
+        // extremes, rather than allowing a limb to detach or flip endlessly.
+        constrainJoint(0, -0.85f, 1.35f);
+        constrainJoint(1, -2.15f, 2.15f);
+        constrainJoint(2, -2.15f, 2.15f);
+        constrainJoint(3, -1.75f, 1.75f);
+        constrainJoint(4, -1.75f, 1.75f);
+        constrainJoint(5, -1.25f, 1.55f);
+        constrainJoint(6, -1.25f, 1.55f);
+        constrainJoint(7, -0.15f, 2.25f);
+        constrainJoint(8, -0.15f, 2.25f);
+
+        float d = 57.29578f;
+        upperBody.setTranslation(0.0f, 0.0f, 0.0f);
+        upperBody.setOrientation(ragAngle[0] * d, 1.0f, 0.0f, 0.0f);
+        leftArm.setOrientation(ragAngle[1] * d, 1.0f, 0.0f, 0.0f);
+        rightArm.setOrientation(ragAngle[2] * d, 1.0f, 0.0f, 0.0f);
+        leftForearm.setOrientation(ragAngle[3] * d, 1.0f, 0.0f, 0.0f);
+        rightForearm.setOrientation(ragAngle[4] * d, 1.0f, 0.0f, 0.0f);
+        leftLeg.setOrientation(ragAngle[5] * d, 1.0f, 0.0f, 0.0f);
+        rightLeg.setOrientation(ragAngle[6] * d, 1.0f, 0.0f, 0.0f);
+        leftShin.setOrientation(ragAngle[7] * d, 1.0f, 0.0f, 0.0f);
+        rightShin.setOrientation(ragAngle[8] * d, 1.0f, 0.0f, 0.0f);
+    }
+
+    private void constrainJoint(int index, float minimum, float maximum) {
+        if (ragAngle[index] < minimum) {
+            ragAngle[index] = minimum;
+            if (ragVelocity[index] < 0.0f) ragVelocity[index] *= -0.18f;
+        } else if (ragAngle[index] > maximum) {
+            ragAngle[index] = maximum;
+            if (ragVelocity[index] > 0.0f) ragVelocity[index] *= -0.18f;
+        }
+    }
+
+    void endRagdoll() {
+        ragdollActive = false;
+        for (int i = 0; i < ragAngle.length; i++) {
+            ragAngle[i] = 0.0f;
+            ragVelocity[i] = 0.0f;
+        }
     }
 
     void animate(float walkPhase, boolean moving, float punchAngle,
                  boolean backward, boolean jumping, boolean crouching,
                  float turnAmount) {
+        endRagdoll();
         body.setOrientation(0.0f, 0.0f, 1.0f, 0.0f);
+        upperBody.setTranslation(0.0f, 0.0f, 0.0f);
         float targetCrouch = crouching ? 1.0f : 0.0f;
         float targetJump = jumping ? 1.0f : 0.0f;
         float targetWalk = moving ? 1.0f : 0.0f;
