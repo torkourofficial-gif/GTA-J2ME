@@ -1597,9 +1597,9 @@ final class GameCanvas extends Canvas implements Runnable {
                 continue;
             }
             if (!policeActive[i]) {
-                float angle = (i * 120.0f + 45.0f) * 0.0174532925f;
-                policeX[i] = playerX + (float)Math.sin(angle) * (13.0f + i * 2.0f);
-                policeZ[i] = playerZ + (float)Math.cos(angle) * (13.0f + i * 2.0f);
+                float avenueX = (float)Math.floor(playerX / CITY_SPACING + 0.5f) * CITY_SPACING;
+                policeX[i] = avenueX + (i - 1) * 2.0f;
+                policeZ[i] = playerZ + (i % 2 == 0 ? -15.0f : 15.0f);
                 policeActive[i] = true;
                 policeCars[i].root.setRenderingEnable(true);
             }
