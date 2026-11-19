@@ -18,6 +18,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private static final int BACK = 2;
     private static final int LEFT = 4;
     private static final int RIGHT = 8;
+    private static final int CROUCH = 16;
 
     private static final int CAM_UP = 1;
     private static final int CAM_DOWN = 2;
@@ -189,19 +190,20 @@ final class GameCanvas extends Canvas implements Runnable {
             if ((keys & RIGHT) != 0) side += 1.0f;
             if ((keys & LEFT) != 0) side -= 1.0f;
 
-            // Character-relative movement: the control axes rotate with CJ.
-            // Forward always follows his facing direction; left/right are strafes.
-            float inputLength = (float)Math.sqrt(forward * forward + side * side);
-            if (inputLength > 1.0f) {
-                forward /= inputLength;
-                side /= inputLength;
+            // 4/6 turn CJ; 2/8 move along his facing direction (SA-like).
+            // Turning is independent of forward/back input, so reverse movement
+            // never snaps the character around or makes the body appear tilted.
+            if (side != 0.0f) {
+                playerHeading = normalizeAngle(playerHeading + side * 150.0f * dt);
             }
 
+            float inputLength = (float)Math.sqrt(forward * forward + side * side);
+            if (inputLength > 1.0f) inputLength = 1.0f;
+
             float angle = playerHeading * 0.0174532925f;
-            float targetVX = ((float)Math.sin(angle) * forward +
-                              (float)Math.cos(angle) * side) * 3.0f;
-            float targetVZ = (-(float)Math.cos(angle) * forward +
-                              (float)Math.sin(angle) * side) * 3.0f;
+            float targetSpeed = forward * 3.0f;
+            float targetVX = (float)Math.sin(angle) * targetSpeed;
+            float targetVZ = -(float)Math.cos(angle) * targetSpeed;
 
             // Gradual acceleration and deceleration.
             float response = inputLength > 0.01f ? 12.0f : 15.0f;
@@ -216,14 +218,8 @@ final class GameCanvas extends Canvas implements Runnable {
             float speed = (float)Math.sqrt(playerVelocityX * playerVelocityX +
                                            playerVelocityZ * playerVelocityZ);
             moving = speed > 0.12f;
-            if (moving) {
-                // Forward/back movement can turn CJ toward its travel direction.
-                // Pure lateral input remains a strafe, instead of causing a spin.
-                if (forward != 0.0f) {
-                    float desiredHeading = angleDegrees(playerVelocityX, -playerVelocityZ);
-                    playerHeading = turnTowards(playerHeading, desiredHeading, 300.0f * dt);
-                }
-                walkPhase += dt * (7.0f + speed * 2.0f);
+            if (moving || side != 0.0f) {
+                walkPhase += dt * (7.0f + speed * 2.0f + (side != 0.0f ? 2.0f : 0.0f));
             }
 
             if (inputLength < 0.01f && speed < 0.035f) {
@@ -247,7 +243,12 @@ final class GameCanvas extends Canvas implements Runnable {
 
         cj.setPosition(playerX, playerY, playerZ);
         cj.setHeading(playerHeading);
-        cj.animate(walkPhase, moving && !inCar, punchAngle);
+        boolean crouching = !inCar && (keys & CROUCH) != 0;
+        boolean jumping = !inCar && (playerY > 0.001f || jumpVelocity > 0.0f);
+        float turnAmount = !inCar ? (((keys & RIGHT) != 0 ? 1.0f : 0.0f) -
+                                    ((keys & LEFT) != 0 ? 1.0f : 0.0f)) : 0.0f;
+        cj.animate(walkPhase, moving && !inCar, punchAngle,
+                   (keys & BACK) != 0, jumping, crouching, turnAmount);
         updateCamera();
     }
 
@@ -280,6 +281,12 @@ final class GameCanvas extends Canvas implements Runnable {
         if (cameraYaw < -180.0f) cameraYaw += 360.0f;
         if (cameraPitch < -5.0f) cameraPitch = -5.0f;
         if (cameraPitch > 35.0f) cameraPitch = 35.0f;
+    }
+
+    private float normalizeAngle(float angle) {
+        while (angle > 180.0f) angle -= 360.0f;
+        while (angle < -180.0f) angle += 360.0f;
+        return angle;
     }
 
     private float turnTowards(float current, float target, float maxStep) {
@@ -356,6 +363,7 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '8') keys |= BACK;
         else if (keyCode == '4') keys |= LEFT;
         else if (keyCode == '6') keys |= RIGHT;
+        else if (keyCode == '9') keys |= CROUCH;
         else if (keyCode == '5') jump();
         else if (keyCode == '1') punch();
         else if (keyCode == '3') toggleCar();
@@ -373,6 +381,7 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '8') keys &= ~BACK;
         else if (keyCode == '4') keys &= ~LEFT;
         else if (keyCode == '6') keys &= ~RIGHT;
+        else if (keyCode == '9') keys &= ~CROUCH;
         else {
             int action = getGameAction(keyCode);
             if (action == Canvas.UP) cameraKeys &= ~CAM_UP;
