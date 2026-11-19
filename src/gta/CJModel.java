@@ -50,11 +50,11 @@ final class CJModel {
         addBox(body, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
 
         // Tank top and its shoulder straps, with a visible skin neckline.
-        addOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, SHIRT);
+        addTexturedOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, SHIRT, 7);
         addBox(upperBody, 0.15f, 0.34f, 0.29f, -0.16f, 1.30f, 0.0f, SHIRT);
         addBox(upperBody, 0.15f, 0.34f, 0.29f, 0.16f, 1.30f, 0.0f, SHIRT);
         addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, SKIN);
-        addOval(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, SKIN);
+        addTexturedOval(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, SKIN, 5);
         // Ears, nose, brows and eyes face local -Z.
         addBox(upperBody, 0.045f, 0.09f, 0.055f, -0.125f, 1.73f, -0.005f, SKIN_LIGHT);
         addBox(upperBody, 0.045f, 0.09f, 0.055f, 0.125f, 1.73f, -0.005f, SKIN_LIGHT);
@@ -70,12 +70,12 @@ final class CJModel {
         // Shoulder pivots. Forearms and hands rotate independently at elbows.
         leftArm.setTranslation(-0.29f, 1.43f, 0.0f);
         rightArm.setTranslation(0.29f, 1.43f, 0.0f);
-        addOval(leftArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN);
-        addOval(rightArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN);
+        addTexturedOval(leftArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN, 5);
+        addTexturedOval(rightArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN, 5);
         leftForearm.setTranslation(0.0f, -0.34f, 0.0f);
         rightForearm.setTranslation(0.0f, -0.34f, 0.0f);
-        addOval(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT);
-        addOval(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT);
+        addTexturedOval(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
+        addTexturedOval(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
         addBox(leftForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
         addBox(rightForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
         leftArm.addChild(leftForearm);
@@ -86,15 +86,15 @@ final class CJModel {
         // Hip and knee pivots create a proper two-part leg silhouette.
         leftLeg.setTranslation(-0.13f, 0.79f, 0.0f);
         rightLeg.setTranslation(0.13f, 0.79f, 0.0f);
-        addOval(leftLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS);
-        addOval(rightLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS);
+        addTexturedOval(leftLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS, 6);
+        addTexturedOval(rightLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS, 6);
         // Denim seams/highlights add shape without expensive textures.
         addBox(leftLeg, 0.025f, 0.36f, 0.012f, -0.075f, -0.22f, -0.123f, JEANS_LIGHT);
         addBox(rightLeg, 0.025f, 0.36f, 0.012f, 0.075f, -0.22f, -0.123f, JEANS_LIGHT);
         leftShin.setTranslation(0.0f, -0.42f, 0.0f);
         rightShin.setTranslation(0.0f, -0.42f, 0.0f);
-        addOval(leftShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS);
-        addOval(rightShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS);
+        addTexturedOval(leftShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS, 6);
+        addTexturedOval(rightShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS, 6);
         addBox(leftShin, 0.025f, 0.31f, 0.012f, -0.055f, -0.20f, -0.115f, JEANS_LIGHT);
         addBox(rightShin, 0.025f, 0.31f, 0.012f, 0.055f, -0.20f, -0.115f, JEANS_LIGHT);
         addBox(leftShin, 0.22f, 0.13f, 0.34f, 0.0f, -0.46f, -0.045f, SHOE);
@@ -112,6 +112,14 @@ final class CJModel {
     private static void addOval(Group parent, float w, float h, float d,
                                 float x, float y, float z, int color) {
         Mesh mesh = ModelFactory.ellipsoid(w, h, d, color);
+        mesh.setTranslation(x, y, z);
+        parent.addChild(mesh);
+    }
+
+    private static void addTexturedOval(Group parent, float w, float h, float d,
+                                        float x, float y, float z,
+                                        int color, int textureKind) {
+        Mesh mesh = ModelFactory.texturedEllipsoid(w, h, d, color, textureKind);
         mesh.setTranslation(x, y, z);
         parent.addChild(mesh);
     }
