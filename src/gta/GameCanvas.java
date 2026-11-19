@@ -676,7 +676,7 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void beginCharacterSwitch() {
-        if (characterSwitching || inCar || carTransition != 0 || playerRagdollTime > 0.0f) return;
+        if (characterSwitching || inCar || inBike || carTransition != 0 || playerRagdollTime > 0.0f) return;
         characterSwitching = true;
         characterSwitchTime = 0.0f;
         switchApplied = false;
@@ -767,6 +767,8 @@ final class GameCanvas extends Canvas implements Runnable {
             inBike = false;
             bikeSpeed = 0.0f;
             playerBike.setVisible(bikeSourceIndex < 0);
+            activeCharacter().setVisible(true);
+            activeCharacter().setPosition(playerX, playerY, playerZ);
             if (bikeSourceIndex >= 0) {
                 bikeTrafficActive[bikeSourceIndex] = true;
                 trafficBikes[bikeSourceIndex].setVisible(true);
@@ -795,6 +797,7 @@ final class GameCanvas extends Canvas implements Runnable {
             playerBike.setPosition(bikeX, 0.0f, bikeZ);
             playerBike.setHeading(bikeHeading);
             playerX = bikeX; playerZ = bikeZ; playerHeading = bikeHeading;
+            activeCharacter().setVisible(false);
             status = "MOTORCYCLE  |  3 EXIT";
             return;
         }
@@ -1615,7 +1618,10 @@ final class GameCanvas extends Canvas implements Runnable {
             if (arrestTimer > 1.8f) {
                 wantedLevel = 0; arrestTimer = 0.0f;
                 if (inCar) { inCar = false; carSpeed = 0.0f; }
-                if (inBike) { inBike = false; bikeSpeed = 0.0f; playerBike.setVisible(false); }
+                if (inBike) {
+                    inBike = false; bikeSpeed = 0.0f; playerBike.setVisible(bikeSourceIndex < 0);
+                    activeCharacter().setVisible(true);
+                }
                 playerX = policeX[0] + 2.0f; playerZ = policeZ[0] + 2.0f;
                 playerY = 0.0f; playerRagdollTime = 0.0f;
                 status = "BUSTED - ARRESTED";
