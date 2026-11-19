@@ -49,6 +49,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private CarModel[] trafficCars = new CarModel[TRAFFIC_COUNT];
     private float[] trafficX = new float[TRAFFIC_COUNT], trafficZ = new float[TRAFFIC_COUNT];
     private float[] trafficHeading = new float[TRAFFIC_COUNT], trafficSpeed = new float[TRAFFIC_COUNT];
+    private float[] trafficCruiseSpeed = new float[TRAFFIC_COUNT];
     private float[] trafficStop = new float[TRAFFIC_COUNT], trafficHitCooldown = new float[TRAFFIC_COUNT];
     private float[] trafficLaneX = new float[TRAFFIC_COUNT], trafficLaneCooldown = new float[TRAFFIC_COUNT];
     private float playerRagdollTime, playerRagdollY, playerRagdollVX, playerRagdollVY, playerRagdollVZ;
@@ -672,6 +673,7 @@ final class GameCanvas extends Canvas implements Runnable {
             trafficLaneCooldown[i] = 1.0f + (i % 3) * 0.7f;
             trafficHeading[i] = headings[i];
             trafficSpeed[i] = 3.0f + (i % 4) * 0.42f;
+            trafficCruiseSpeed[i] = trafficSpeed[i];
             trafficCars[i].setPosition(trafficX[i], 0.0f, trafficZ[i]);
             trafficCars[i].setHeading(trafficHeading[i]);
             world.addChild(trafficCars[i].root);
@@ -683,6 +685,7 @@ final class GameCanvas extends Canvas implements Runnable {
         float dirZ = -(float)Math.cos(trafficHeading[index] * 0.0174532925f);
         float roadCenter = (float)Math.round(trafficLaneX[index] / 28.0f) * 28.0f;
         boolean blockedAhead = false;
+        boolean changedLane = false;
         for (int j = 0; j < trafficCars.length; j++) {
             if (j == index || trafficCars[j] == null) continue;
             if (Math.abs(normalizeAngle(trafficHeading[j] - trafficHeading[index])) > 35.0f) continue;
@@ -701,9 +704,17 @@ final class GameCanvas extends Canvas implements Runnable {
             if (free) {
                 trafficLaneX[index] = candidate;
                 trafficLaneCooldown[index] = 3.0f;
+                changedLane = true;
             }
         } else if (!blockedAhead && trafficLaneCooldown[index] <= 0.0f) {
             trafficLaneX[index] += (roadCenter - trafficLaneX[index]) * 0.04f;
+        }
+        if (blockedAhead && !changedLane) {
+            // No safe adjacent lane: slow down instead of rear-ending the car ahead.
+            trafficSpeed[index] += (1.35f - trafficSpeed[index]) * Math.min(1.0f, 2.8f * dt);
+        } else {
+            trafficSpeed[index] += (trafficCruiseSpeed[index] - trafficSpeed[index]) *
+                                   Math.min(1.0f, 0.8f * dt);
         }
         float dx = trafficLaneX[index] - trafficX[index];
         float step = 1.7f * dt;
