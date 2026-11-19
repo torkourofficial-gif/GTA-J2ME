@@ -268,6 +268,13 @@ final class GameCanvas extends Canvas implements Runnable {
                     default: color = 0xB8C99A; break; // pale green
                 }
 
+                // Street palms: repeat a light tropical rhythm without
+                // filling every block with expensive geometry.
+                if (((bx * 3 + bz * 5) % 3) == 0) {
+                    addPalmTree(chunk, x - 7.2f, z - 7.0f);
+                    addPalmTree(chunk, x + 7.2f, z + 7.0f);
+                }
+
                 boolean park = (Math.abs(seed) % 13) == 0;
                 if (park) {
                     addBox(chunk, 16.0f, 0.12f, 16.0f, x, 0.02f, z, 0x54865B);
@@ -391,7 +398,15 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void createLeonidaRegions() {
         // Ocean under the entire reduced state map.
-        addBox(scenery, 1120.0f, 0.22f, 1120.0f, 0.0f, -0.42f, 0.0f, 0x397F9B);
+        // Oversized water plane: the camera horizon remains ocean even when
+        // the player reaches the outer coastline. It is intentionally much
+        // larger than the playable Leonida footprint.
+        addBox(scenery, 4000.0f, 0.22f, 4000.0f, 0.0f, -0.42f, 0.0f, 0x397F9B);
+        // Pale sand beaches frame the outer edge of the landmass.
+        addBox(scenery, 1080.0f, 0.16f, 34.0f, 0.0f, -0.035f, -535.0f, 0xD9C99B);
+        addBox(scenery, 1080.0f, 0.16f, 34.0f, 0.0f, -0.035f, 535.0f, 0xD9C99B);
+        addBox(scenery, 34.0f, 0.16f, 1080.0f, -535.0f, -0.035f, 0.0f, 0xD9C99B);
+        addBox(scenery, 34.0f, 0.16f, 1080.0f, 535.0f, -0.035f, 0.0f, 0xD9C99B);
 
         regionalRoads = new Group();
         scenery.addChild(regionalRoads);
@@ -960,12 +975,16 @@ final class GameCanvas extends Canvas implements Runnable {
                 jetpackOwned = true;
                 jetpackThrust = false;
                 status = "JETPACK UNLOCKED!  5 FLY  9 DESCEND";
+                return true;
             }
-            return true;
+            // Let the first 3 keep its normal gameplay action. Later digits
+            // in the cheat are consumed while the sequence is in progress.
+            return cheatProgress > 1;
         }
         cheatProgress = digit == 3 ? 1 : 0;
         cheatLastKeyTime = now;
-        return digit == 3;
+        // A failed sequence must never swallow vehicle interaction keys.
+        return false;
     }
 
     private void initializeJetpackVisual() {
