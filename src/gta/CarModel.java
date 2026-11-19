@@ -18,8 +18,11 @@ final class CarModel {
         addBox(root, 0.22f, 0.48f, 0.58f, 0.78f, 0.32f, 0.82f, 0x171717);
         addBox(root, 0.22f, 0.48f, 0.58f, -0.78f, 0.32f, -0.82f, 0x171717);
         addBox(root, 0.22f, 0.48f, 0.58f, 0.78f, 0.32f, -0.82f, 0x171717);
-        addBox(root, 0.18f, 0.16f, 0.10f, -0.48f, 0.48f, 1.34f, 0xFFF0B0);
-        addBox(root, 0.18f, 0.16f, 0.10f, 0.48f, 0.48f, 1.34f, 0xFFF0B0);
+        // Front headlights face the car's local -Z direction.
+        addBox(root, 0.18f, 0.16f, 0.10f, -0.48f, 0.48f, -1.34f, 0xFFF0B0);
+        addBox(root, 0.18f, 0.16f, 0.10f, 0.48f, 0.48f, -1.34f, 0xFFF0B0);
+        addBox(root, 0.18f, 0.16f, 0.10f, -0.48f, 0.48f, 1.34f, 0xB82020);
+        addBox(root, 0.18f, 0.16f, 0.10f, 0.48f, 0.48f, 1.34f, 0xB82020);
     }
 
     private static void addBox(Group parent, float w, float h, float d,
