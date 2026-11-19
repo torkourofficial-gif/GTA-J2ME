@@ -211,7 +211,7 @@ final class GameCanvas extends Canvas implements Runnable {
                 } else {
                     // Main facade and a flat roof/parapet, classic Miami skyline.
                     addTexturedBox(chunk, width, height, depth, x, height * 0.5f, z,
-                                  color, 0);
+                                  color, 4);
                     int trim = district == 0 ? 0xF7E7D0 : 0x786B67;
                     addBox(chunk, width + 0.28f, 0.28f, depth + 0.28f,
                            x, height + 0.14f, z, trim);
