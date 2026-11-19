@@ -28,16 +28,17 @@ final class ModelFactory {
         return appearance;
     }
 
-    private static Texture2D[] proceduralTextures = new Texture2D[8];
+    private static Texture2D[] proceduralTextures = new Texture2D[9];
 
     // Tiny 16x16 RGB textures are generated in memory: no PNG decoding,
     // resource files or external assets are needed on the MIDP device.
     private static Texture2D getTexture(int kind) {
         if (kind < 0 || kind >= proceduralTextures.length) kind = 0;
         if (proceduralTextures[kind] != null) return proceduralTextures[kind];
-        byte[] pixels = new byte[16 * 16 * 3];
-        for (int y = 0; y < 16; y++) {
-            for (int x = 0; x < 16; x++) {
+        int size = kind == 7 ? 32 : 16;
+        byte[] pixels = new byte[size * size * 3];
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
                 int r = 120, g = 120, b = 120;
                 int noise = ((x * 17 + y * 29 + x * y * 3) & 7) - 3;
                 if (kind == 0) {
@@ -77,16 +78,47 @@ final class ModelFactory {
                     r = 48 + noise * 2; g = 70 + noise * 2; b = 111 + noise * 3;
                     if (((x + y * 2) % 7) == 0) { r += 8; g += 10; b += 15; }
                     if (x == 0 || x == 15) { r -= 5; g -= 6; b -= 8; }
+                } else if (kind == 7) {
+                    // Jason's Leonida souvenir tank: ivory cotton, sunset stripes,
+                    // dark palm silhouette and a tiny block-letter LEONIDA mark.
+                    r = 226 + noise * 2; g = 225 + noise * 2; b = 211 + noise * 2;
+                    if (x >= 17 && x <= 30 && y >= 14 && y <= 27) {
+                        if (y == 15 || y == 18 || y == 21 || y == 24) {
+                            r = 214; g = 111; b = 78;
+                        }
+                    }
+                    // Palm trunk and fronds.
+                    if ((x == 23 && y >= 15 && y <= 27) ||
+                        (x == 22 && y == 24) || (x == 21 && y == 22) ||
+                        (x == 24 && y == 20) || (x == 25 && y == 18) ||
+                        (x >= 19 && x <= 22 && y == 15) ||
+                        (x >= 21 && x <= 24 && y == 13) ||
+                        (x >= 24 && x <= 27 && y == 14) ||
+                        (x >= 25 && x <= 28 && y == 16)) {
+                        r = 48; g = 66; b = 51;
+                    }
+                    // Small black-green LEONIDA lettering, centered above artwork.
+                    if (y >= 7 && y <= 11) {
+                        int lx = x - 17;
+                        if (lx >= 0 && lx < 14) {
+                            int ch = lx / 2;
+                            int col = (lx % 2) + (ch % 2);
+                            if (ch < 7 && ((y == 7 && (ch == 0 || ch == 1 || ch == 2 || ch == 3 || ch == 4 || ch == 5 || ch == 6)) ||
+                                (y == 8 && ch == 0) || (y == 9 && ch == 0) ||
+                                (y == 10 && ch == 0) || (y == 11 && (ch == 0 || ch == 1 || ch == 2 || ch == 3 || ch == 4 || ch == 5 || ch == 6))) &&
+                                col == 0) { r = 54; g = 69; b = 55; }
+                        }
+                    }
                 } else {
-                    // Cotton weave for the white tank top.
+                    // Plain cotton weave for Lucia's pink top.
                     r = 224 + noise * 2; g = 225 + noise * 2; b = 218 + noise * 2;
                     if ((x + y) % 9 == 0) { r -= 7; g -= 7; b -= 7; }
                 }
-                int p = (y * 16 + x) * 3;
+                int p = (y * size + x) * 3;
                 pixels[p] = (byte)r; pixels[p + 1] = (byte)g; pixels[p + 2] = (byte)b;
             }
         }
-        Image2D image = new Image2D(Image2D.RGB, 16, 16, pixels);
+        Image2D image = new Image2D(Image2D.RGB, size, size, pixels);
         Texture2D texture = new Texture2D(image);
         texture.setFiltering(Texture2D.FILTER_NEAREST, Texture2D.FILTER_NEAREST);
         texture.setWrapping(Texture2D.WRAP_REPEAT, Texture2D.WRAP_REPEAT);
