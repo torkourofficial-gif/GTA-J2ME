@@ -21,6 +21,10 @@ final class CJModel {
     private final Group leftShin = new Group();
     private final Group rightShin = new Group();
 
+    private final boolean lucia;
+    private final int shirtColor;
+    private final int pantsColor;
+    private final int skinColor;
     private float crouchBlend;
     private float jumpBlend;
     private float gaitBlend;
@@ -43,18 +47,31 @@ final class CJModel {
     private static final int JEANS_DARK = 0x253653;
     private static final int SHOE = 0x292725;
 
-    CJModel() {
+    CJModel() { this(false); }
+
+    CJModel(boolean lucia) {
+        this.lucia = lucia;
+        shirtColor = lucia ? 0xD96F91 : 0xD8D6D0;
+        pantsColor = lucia ? 0x456C9A : 0x555B50;
+        skinColor = lucia ? 0xB87959 : skinColor;
         // Waist, belt and denim waistband.
-        addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, JEANS);
+        addBox(body, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, pantsColor);
         addBox(body, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
         addBox(body, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
 
-        // Tank top and its shoulder straps, with a visible skin neckline.
-        addTexturedOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, SHIRT, 7);
-        addBox(upperBody, 0.15f, 0.34f, 0.29f, -0.16f, 1.30f, 0.0f, SHIRT);
-        addBox(upperBody, 0.15f, 0.34f, 0.29f, 0.16f, 1.30f, 0.0f, SHIRT);
-        addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, SKIN);
-        addTexturedOval(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, SKIN, 5);
+        if (lucia) {
+            addOval(upperBody, 0.27f, 0.34f, 0.24f, 0.0f, 1.73f, 0.055f, 0x211B20);
+            addOval(upperBody, 0.12f, 0.38f, 0.13f, 0.15f, 1.58f, 0.13f, 0x211B20);
+        } else {
+            addBox(upperBody, 0.28f, 0.09f, 0.25f, 0.0f, 1.88f, 0.015f, 0x8D3438);
+            addBox(upperBody, 0.31f, 0.035f, 0.19f, 0.0f, 1.84f, -0.12f, 0xA84449);
+        }
+        // Tank top and shoulder straps.
+        addTexturedOval(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, shirtColor, 7);
+        addBox(upperBody, 0.15f, 0.34f, 0.29f, -0.16f, 1.30f, 0.0f, shirtColor);
+        addBox(upperBody, 0.15f, 0.34f, 0.29f, 0.16f, 1.30f, 0.0f, shirtColor);
+        addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, skinColor);
+        addTexturedOval(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, skinColor, 5);
         // Ears, nose, brows and eyes face local -Z.
         addBox(upperBody, 0.045f, 0.09f, 0.055f, -0.125f, 1.73f, -0.005f, SKIN_LIGHT);
         addBox(upperBody, 0.045f, 0.09f, 0.055f, 0.125f, 1.73f, -0.005f, SKIN_LIGHT);
@@ -70,14 +87,14 @@ final class CJModel {
         // Shoulder pivots. Forearms and hands rotate independently at elbows.
         leftArm.setTranslation(-0.29f, 1.43f, 0.0f);
         rightArm.setTranslation(0.29f, 1.43f, 0.0f);
-        addTexturedOval(leftArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN, 5);
-        addTexturedOval(rightArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN, 5);
+        addTexturedOval(leftArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, skinColor, 5);
+        addTexturedOval(rightArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, skinColor, 5);
         leftForearm.setTranslation(0.0f, -0.34f, 0.0f);
         rightForearm.setTranslation(0.0f, -0.34f, 0.0f);
         addTexturedOval(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
         addTexturedOval(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT, 5);
-        addBox(leftForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
-        addBox(rightForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
+        addBox(leftForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, skinColor);
+        addBox(rightForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, skinColor);
         leftArm.addChild(leftForearm);
         rightArm.addChild(rightForearm);
         upperBody.addChild(leftArm);
@@ -86,15 +103,15 @@ final class CJModel {
         // Hip and knee pivots create a proper two-part leg silhouette.
         leftLeg.setTranslation(-0.13f, 0.79f, 0.0f);
         rightLeg.setTranslation(0.13f, 0.79f, 0.0f);
-        addTexturedOval(leftLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS, 6);
-        addTexturedOval(rightLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS, 6);
+        addTexturedOval(leftLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, pantsColor, 6);
+        addTexturedOval(rightLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, pantsColor, 6);
         // Denim seams/highlights add shape without expensive textures.
         addBox(leftLeg, 0.025f, 0.36f, 0.012f, -0.075f, -0.22f, -0.123f, JEANS_LIGHT);
         addBox(rightLeg, 0.025f, 0.36f, 0.012f, 0.075f, -0.22f, -0.123f, JEANS_LIGHT);
         leftShin.setTranslation(0.0f, -0.42f, 0.0f);
         rightShin.setTranslation(0.0f, -0.42f, 0.0f);
-        addTexturedOval(leftShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS, 6);
-        addTexturedOval(rightShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS, 6);
+        addTexturedOval(leftShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, pantsColor, 6);
+        addTexturedOval(rightShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, pantsColor, 6);
         addBox(leftShin, 0.025f, 0.31f, 0.012f, -0.055f, -0.20f, -0.115f, JEANS_LIGHT);
         addBox(rightShin, 0.025f, 0.31f, 0.012f, 0.055f, -0.20f, -0.115f, JEANS_LIGHT);
         addBox(leftShin, 0.22f, 0.13f, 0.34f, 0.0f, -0.46f, -0.045f, SHOE);
