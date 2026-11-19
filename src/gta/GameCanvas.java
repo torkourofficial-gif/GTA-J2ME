@@ -603,6 +603,7 @@ final class GameCanvas extends Canvas implements Runnable {
             pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
             pedestrians[i].setHeading(pedHeading[i]);
         }
+        nextPedVariant = PED_COUNT;
     }
 
     private void initializeTraffic() {
@@ -686,13 +687,13 @@ final class GameCanvas extends Canvas implements Runnable {
             boolean running = false;
             if (pedState[i] == 1) {
                 // Most pedestrians panic and flee from CJ.
-                pedHeading[i] = (float)(Math.atan2(-dx, dz) * 57.29578f);
+                pedHeading[i] = (float)(Math.atan2(dx, dz) * 57.29578f);
                 speed = 3.0f; running = true;
                 pedTimer[i] -= dt;
                 if (dist2 > 225.0f) { pedState[i] = 0; pedTimer[i] = 1.5f; }
             } else if (pedState[i] == 2) {
                 // A few confront CJ and shove him if he stays close.
-                pedHeading[i] = (float)(Math.atan2(dx, -dz) * 57.29578f);
+                pedHeading[i] = (float)(Math.atan2(-dx, -dz) * 57.29578f);
                 speed = dist2 > 1.7f ? 1.65f : 0.0f;
                 if (dist2 < 2.0f && pedAttackCooldown[i] <= 0.0f && !inCar) {
                     float inv = 1.0f / (float)Math.sqrt(Math.max(0.01f, dist2));
@@ -759,7 +760,11 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
         if (slot < 0) return -1;
-        pedestrians[slot].setVisible(true);
+        // Recycle this slot with the next of twenty appearance presets.
+        world.removeChild(pedestrians[slot].root);
+        pedestrians[slot] = new PedestrianModel(nextPedVariant % 20);
+        nextPedVariant++;
+        world.addChild(pedestrians[slot].root);
         pedActive[slot] = true;
         pedState[slot] = 1;
         pedX[slot] = x; pedZ[slot] = z; pedHeading[slot] = heading;
