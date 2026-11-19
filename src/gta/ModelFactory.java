@@ -206,9 +206,26 @@ final class ModelFactory {
         int[] strips = new int[] {4,4,4,4,4,4};
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
 
-        // No material/lighting is needed for these flat-color prototype meshes.
-        // A default vertex-buffer color keeps the geometry opaque and cheap.
-        vertices.setDefaultColor(color | 0xFF000000);
+        // Baked tropical daylight: vertex colors provide ambient fill plus
+        // a warm upper-left sun direction. This works on textured and plain
+        // meshes without M3G Light/Material state (fragile on older JBed).
+        int baseR = (color >> 16) & 255;
+        int baseG = (color >> 8) & 255;
+        int baseB = color & 255;
+        int[] faceLight = {218, 218, 148, 148, 255, 105};
+        byte[] faceColors = new byte[24 * 3];
+        for (int face = 0; face < 6; face++) {
+            int shade = faceLight[face];
+            for (int vertex = 0; vertex < 4; vertex++) {
+                int ci = (face * 4 + vertex) * 3;
+                faceColors[ci] = (byte)(baseR * shade / 255);
+                faceColors[ci + 1] = (byte)(baseG * shade / 255);
+                faceColors[ci + 2] = (byte)(baseB * shade / 255);
+            }
+        }
+        VertexArray colors = new VertexArray(24, 3, 1);
+        colors.set(0, 24, faceColors);
+        vertices.setColors(colors, 1.0f / 255.0f, null);
         Appearance appearance = createAppearance();
 
         return new Mesh(vertices, triangles, appearance);
@@ -273,7 +290,28 @@ final class ModelFactory {
         int[] strips = new int[rings];
         for (int r = 0; r < rings; r++) strips[r] = stripVertices;
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
-        vertices.setDefaultColor(color | 0xFF000000);
+        // Per-vertex diffuse shading follows the ellipsoid normals. A broad
+        // ambient term keeps character silhouettes readable on small screens.
+        int baseR = (color >> 16) & 255;
+        int baseG = (color >> 8) & 255;
+        int baseB = color & 255;
+        byte[] vertexColors = new byte[vertexCount * 3];
+        for (int i = 0; i < vertexCount; i++) {
+            float nx = normalData[i * 3] / 1000.0f;
+            float ny = normalData[i * 3 + 1] / 1000.0f;
+            float nz = normalData[i * 3 + 2] / 1000.0f;
+            float diffuse = nx * -0.35f + ny * 0.82f + nz * -0.45f;
+            if (diffuse < 0.0f) diffuse = 0.0f;
+            float light = 0.48f + diffuse * 0.52f;
+            if (light > 1.0f) light = 1.0f;
+            int ci = i * 3;
+            vertexColors[ci] = (byte)(baseR * light);
+            vertexColors[ci + 1] = (byte)(baseG * light);
+            vertexColors[ci + 2] = (byte)(baseB * light);
+        }
+        VertexArray colors = new VertexArray(vertexCount, 3, 1);
+        colors.set(0, vertexCount, vertexColors);
+        vertices.setColors(colors, 1.0f / 255.0f, null);
         return new Mesh(vertices, triangles, createAppearance());
     }
 
