@@ -78,6 +78,15 @@ final class PedestrianModel {
 
     // A cheap four-part ragdoll pose suitable for low-memory Java ME devices.
     // The body segments remain separate M3G groups, so each can rotate freely.
+    void animateRunAway(float phase) {
+        float swing = (float)Math.sin(phase) * 34.0f;
+        leftLeg.setOrientation(swing, 1, 0, 0);
+        rightLeg.setOrientation(-swing, 1, 0, 0);
+        leftArm.setOrientation(-swing * 0.75f, 1, 0, 0);
+        rightArm.setOrientation(swing * 0.75f, 1, 0, 0);
+        torso.setOrientation(-5.0f, 1, 0, 0);
+    }
+
     void animateRagdoll(float roll, float pitch) {
         torso.setOrientation(72.0f + pitch * 0.35f, 1.0f, 0.0f, 0.0f);
         leftArm.setOrientation(-38.0f + roll * 0.55f, 0.0f, 0.0f, 1.0f);
