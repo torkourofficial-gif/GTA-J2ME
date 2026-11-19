@@ -54,6 +54,9 @@ final class GameCanvas extends Canvas implements Runnable {
     private float carX = 2.5f;
     private float carZ = 0.0f;
     private boolean inCar = false;
+    private int carTransition = 0;
+    private float carTransitionTime = 0.0f;
+    private static final float CAR_TRANSITION_LENGTH = 0.9f;
     private boolean reverseFacing = false;
     private float reverseTargetHeading = 0.0f;
     private boolean initialized = false;
@@ -164,6 +167,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void update(float dt) {
         updateCameraInput(dt);
+        if (carTransition != 0) { updateCarTransition(dt); updateCamera(); return; }
         boolean moving = false;
 
         if (inCar) {
@@ -175,8 +179,10 @@ final class GameCanvas extends Canvas implements Runnable {
             if (carSpeed > 8.0f) carSpeed = 8.0f;
             if (carSpeed < -3.0f) carSpeed = -3.0f;
             float radians = carHeading * 0.0174532925f;
-            carX += (float)Math.sin(radians) * carSpeed * dt;
-            carZ -= (float)Math.cos(radians) * carSpeed * dt;
+            float nextX = carX + (float)Math.sin(radians) * carSpeed * dt;
+            float nextZ = carZ - (float)Math.cos(radians) * carSpeed * dt;
+            if (!carBlocked(nextX, carZ)) carX = nextX; else carSpeed = 0.0f;
+            if (!carBlocked(carX, nextZ)) carZ = nextZ; else carSpeed = 0.0f;
             car.setPosition(carX, 0.0f, carZ);
             car.setHeading(carHeading);
             playerX = carX;
@@ -317,32 +323,94 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void toggleCar() {
+        if (carTransition != 0) return;
         if (inCar) {
-            inCar = false;
-            cj.setVisible(true);
-            playerX = carX + 1.6f;
-            playerZ = carZ;
-            playerY = 0.0f;
-            playerVelocityX = 0.0f;
-            playerVelocityZ = 0.0f;
+            carTransition = 2;
+            carTransitionTime = 0.0f;
             carSpeed = 0.0f;
-            status = "ON FOOT  |  3 ENTER CAR";
+            float a = carHeading * 0.0174532925f;
+            playerX = carX - (float)Math.cos(a) * 1.15f;
+            playerZ = carZ - (float)Math.sin(a) * 1.15f;
+            playerY = 0.0f;
+            playerHeading = carHeading;
+            cj.setPosition(playerX, playerY, playerZ);
+            cj.setHeading(playerHeading);
+            cj.setVisible(true);
+            car.setDoorOpen(72.0f);
+            status = "EXITING VEHICLE...";
             return;
         }
         float dx = playerX - carX;
         float dz = playerZ - carZ;
         if (dx * dx + dz * dz < 12.0f) {
-            inCar = true;
-            cj.setVisible(false);
-            playerX = carX;
-            playerZ = carZ;
-            playerY = 0.0f;
+            carTransition = 1;
+            carTransitionTime = 0.0f;
             playerVelocityX = 0.0f;
             playerVelocityZ = 0.0f;
-            status = "DRIVING  |  3 EXIT";
+            float a = carHeading * 0.0174532925f;
+            playerX = carX - (float)Math.cos(a) * 1.15f;
+            playerZ = carZ - (float)Math.sin(a) * 1.15f;
+            playerY = 0.0f;
+            playerHeading = normalizeAngle(carHeading + 90.0f);
+            cj.setPosition(playerX, playerY, playerZ);
+            cj.setHeading(playerHeading);
+            cj.setVisible(true);
+            car.setDoorOpen(0.0f);
+            status = "ENTERING VEHICLE...";
+        } else status = "GET CLOSER TO THE CAR";
+    }
+
+    private void updateCarTransition(float dt) {
+        carTransitionTime += dt;
+        float t = carTransitionTime / CAR_TRANSITION_LENGTH;
+        if (t > 1.0f) t = 1.0f;
+        float smooth = t * t * (3.0f - 2.0f * t);
+        if (carTransition == 1) {
+            car.setDoorOpen(72.0f * smooth);
+            cj.setEntryPose(smooth, true);
+            if (t >= 1.0f) {
+                inCar = true;
+                carTransition = 0;
+                car.setDoorOpen(0.0f);
+                cj.setEntryPose(0.0f, true);
+                cj.setVisible(false);
+                playerX = carX;
+                playerZ = carZ;
+                playerY = 0.0f;
+                status = "DRIVING  |  3 EXIT";
+            }
         } else {
-            status = "GET CLOSER TO THE CAR";
+            car.setDoorOpen(72.0f * (1.0f - smooth));
+            cj.setEntryPose(1.0f - smooth, false);
+            if (t >= 1.0f) {
+                carTransition = 0;
+                car.setDoorOpen(0.0f);
+                cj.setEntryPose(0.0f, false);
+                inCar = false;
+                status = "ON FOOT  |  3 ENTER CAR";
+            }
         }
+    }
+
+    private boolean carBlocked(float x, float z) {
+        if (x < -18.0f || x > 18.0f || z < -18.0f || z > 18.0f) return true;
+        if (circleHitsRect(x,z,0.85f,-6.0f,-5.0f,3.8f,5.0f)) return true;
+        if (circleHitsRect(x,z,0.85f,6.0f,-7.0f,4.2f,6.0f)) return true;
+        if (circleHitsRect(x,z,0.85f,-6.0f,5.0f,4.0f,4.0f)) return true;
+        if (circleHitsRect(x,z,0.85f,6.0f,6.0f,3.5f,5.0f)) return true;
+        if (circleHitsRect(x,z,0.85f,-3.7f,-4.0f,1.8f,1.8f)) return true;
+        return false;
+    }
+
+    private boolean circleHitsRect(float x,float z,float radius,
+                                   float rx,float rz,float width,float depth) {
+        float nx=x, nz=z;
+        float minX=rx-width*0.5f, maxX=rx+width*0.5f;
+        float minZ=rz-depth*0.5f, maxZ=rz+depth*0.5f;
+        if(nx<minX)nx=minX; if(nx>maxX)nx=maxX;
+        if(nz<minZ)nz=minZ; if(nz>maxZ)nz=maxZ;
+        float dx=x-nx, dz=z-nz;
+        return dx*dx+dz*dz<radius*radius;
     }
 
     protected void keyPressed(int keyCode) {
