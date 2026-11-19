@@ -3,37 +3,99 @@ package gta;
 import javax.microedition.m3g.Group;
 import javax.microedition.m3g.Mesh;
 
-/** CJ is assembled from independently transformable low-poly body parts. */
+/**
+ * Procedural low-poly CJ. Separate pivots for shoulders, elbows, hips and knees
+ * keep the model light enough for small Java ME/M3G devices.
+ */
 final class CJModel {
     final Group root = new Group();
     final Group leftArm = new Group();
     final Group rightArm = new Group();
     final Group leftLeg = new Group();
     final Group rightLeg = new Group();
+
     private final Group upperBody = new Group();
-    private float crouchBlend = 0.0f;
-    private float jumpBlend = 0.0f;
+    private final Group leftForearm = new Group();
+    private final Group rightForearm = new Group();
+    private final Group leftShin = new Group();
+    private final Group rightShin = new Group();
+
+    private float crouchBlend;
+    private float jumpBlend;
+    private float gaitBlend;
+    private float turnBlend;
+
+    // CJ's palette: white tank, blue loose jeans, dark sneakers, warm skin.
+    private static final int SKIN = 0xA96543;
+    private static final int SKIN_LIGHT = 0xC17B55;
+    private static final int SKIN_DARK = 0x75432F;
+    private static final int SHIRT = 0xE9E9E2;
+    private static final int SHIRT_SHADE = 0xBFC2C0;
+    private static final int JEANS = 0x344D78;
+    private static final int JEANS_LIGHT = 0x526B91;
+    private static final int JEANS_DARK = 0x253653;
+    private static final int SHOE = 0x292725;
 
     CJModel() {
-        addBox(upperBody, 0.52f, 0.62f, 0.28f, 0.0f, 1.02f, 0.0f, 0xFF9A32); // shirt
-        addBox(upperBody, 0.24f, 0.28f, 0.24f, 0.0f, 1.52f, 0.0f, 0xFF9B65); // head
-        addBox(upperBody, 0.27f, 0.12f, 0.27f, 0.0f, 1.70f, 0.0f, 0x252525); // hair
-        addBox(upperBody, 0.18f, 0.12f, 0.20f, 0.0f, 1.37f, 0.0f, 0xFF9B65); // neck
+        // Waist, belt and denim waistband.
+        addBox(root, 0.43f, 0.20f, 0.29f, 0.0f, 0.82f, 0.0f, JEANS);
+        addBox(root, 0.45f, 0.045f, 0.30f, 0.0f, 0.92f, 0.0f, 0xB6A17A);
+        addBox(root, 0.07f, 0.055f, 0.025f, 0.0f, 0.92f, -0.16f, 0xC7B77D);
+
+        // Tank top and its shoulder straps, with a visible skin neckline.
+        addBox(upperBody, 0.48f, 0.54f, 0.27f, 0.0f, 1.19f, 0.0f, SHIRT);
+        addBox(upperBody, 0.15f, 0.34f, 0.29f, -0.16f, 1.30f, 0.0f, SHIRT);
+        addBox(upperBody, 0.15f, 0.34f, 0.29f, 0.16f, 1.30f, 0.0f, SHIRT);
+        addBox(upperBody, 0.18f, 0.15f, 0.18f, 0.0f, 1.52f, 0.0f, SKIN);
+        addBox(upperBody, 0.22f, 0.29f, 0.22f, 0.0f, 1.72f, 0.0f, SKIN);
+        // Ears, nose, brows and eyes face local -Z.
+        addBox(upperBody, 0.045f, 0.09f, 0.055f, -0.125f, 1.73f, -0.005f, SKIN_LIGHT);
+        addBox(upperBody, 0.045f, 0.09f, 0.055f, 0.125f, 1.73f, -0.005f, SKIN_LIGHT);
+        addBox(upperBody, 0.045f, 0.075f, 0.045f, 0.0f, 1.69f, -0.125f, SKIN_LIGHT);
+        addBox(upperBody, 0.055f, 0.018f, 0.018f, -0.055f, 1.77f, -0.116f, 0x29201C);
+        addBox(upperBody, 0.055f, 0.018f, 0.018f, 0.055f, 1.77f, -0.116f, 0x29201C);
+        addBox(upperBody, 0.027f, 0.025f, 0.012f, -0.052f, 1.735f, -0.122f, 0x171717);
+        addBox(upperBody, 0.027f, 0.025f, 0.012f, 0.052f, 1.735f, -0.122f, 0x171717);
+        addBox(upperBody, 0.13f, 0.045f, 0.23f, 0.0f, 1.87f, 0.0f, 0x24201D);
+        addBox(upperBody, 0.23f, 0.065f, 0.22f, 0.0f, 1.82f, 0.0f, 0x30251F);
         root.addChild(upperBody);
 
-        leftArm.setTranslation(-0.34f, 1.28f, 0.0f);
-        rightArm.setTranslation(0.34f, 1.28f, 0.0f);
-        addBox(leftArm, 0.17f, 0.52f, 0.18f, 0.0f, -0.25f, 0.0f, 0xFF9B65);
-        addBox(rightArm, 0.17f, 0.52f, 0.18f, 0.0f, -0.25f, 0.0f, 0xFF9B65);
+        // Shoulder pivots. Forearms and hands rotate independently at elbows.
+        leftArm.setTranslation(-0.29f, 1.43f, 0.0f);
+        rightArm.setTranslation(0.29f, 1.43f, 0.0f);
+        addBox(leftArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN);
+        addBox(rightArm, 0.17f, 0.36f, 0.18f, 0.0f, -0.17f, 0.0f, SKIN);
+        leftForearm.setTranslation(0.0f, -0.34f, 0.0f);
+        rightForearm.setTranslation(0.0f, -0.34f, 0.0f);
+        addBox(leftForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT);
+        addBox(rightForearm, 0.145f, 0.34f, 0.15f, 0.0f, -0.16f, 0.0f, SKIN_LIGHT);
+        addBox(leftForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
+        addBox(rightForearm, 0.13f, 0.12f, 0.15f, 0.0f, -0.37f, -0.005f, SKIN);
+        leftArm.addChild(leftForearm);
+        rightArm.addChild(rightForearm);
         upperBody.addChild(leftArm);
         upperBody.addChild(rightArm);
 
-        leftLeg.setTranslation(-0.14f, 0.72f, 0.0f);
-        rightLeg.setTranslation(0.14f, 0.72f, 0.0f);
-        addBox(leftLeg, 0.21f, 0.66f, 0.23f, 0.0f, -0.31f, 0.0f, 0x303D83);
-        addBox(rightLeg, 0.21f, 0.66f, 0.23f, 0.0f, -0.31f, 0.0f, 0x303D83);
-        addBox(leftLeg, 0.23f, 0.12f, 0.34f, 0.0f, -0.64f, 0.035f, 0x252525);
-        addBox(rightLeg, 0.23f, 0.12f, 0.34f, 0.0f, -0.64f, 0.035f, 0x252525);
+        // Hip and knee pivots create a proper two-part leg silhouette.
+        leftLeg.setTranslation(-0.13f, 0.79f, 0.0f);
+        rightLeg.setTranslation(0.13f, 0.79f, 0.0f);
+        addBox(leftLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS);
+        addBox(rightLeg, 0.205f, 0.43f, 0.235f, 0.0f, -0.22f, 0.0f, JEANS);
+        // Denim seams/highlights add shape without expensive textures.
+        addBox(leftLeg, 0.025f, 0.36f, 0.012f, -0.075f, -0.22f, -0.123f, JEANS_LIGHT);
+        addBox(rightLeg, 0.025f, 0.36f, 0.012f, 0.075f, -0.22f, -0.123f, JEANS_LIGHT);
+        leftShin.setTranslation(0.0f, -0.42f, 0.0f);
+        rightShin.setTranslation(0.0f, -0.42f, 0.0f);
+        addBox(leftShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS);
+        addBox(rightShin, 0.19f, 0.43f, 0.22f, 0.0f, -0.21f, 0.0f, JEANS);
+        addBox(leftShin, 0.025f, 0.31f, 0.012f, -0.055f, -0.20f, -0.115f, JEANS_LIGHT);
+        addBox(rightShin, 0.025f, 0.31f, 0.012f, 0.055f, -0.20f, -0.115f, JEANS_LIGHT);
+        addBox(leftShin, 0.22f, 0.13f, 0.34f, 0.0f, -0.46f, -0.045f, SHOE);
+        addBox(rightShin, 0.22f, 0.13f, 0.34f, 0.0f, -0.46f, -0.045f, SHOE);
+        addBox(leftShin, 0.22f, 0.025f, 0.32f, 0.0f, -0.525f, -0.045f, 0x151515);
+        addBox(rightShin, 0.22f, 0.025f, 0.32f, 0.0f, -0.525f, -0.045f, 0x151515);
+        leftLeg.addChild(leftShin);
+        rightLeg.addChild(rightShin);
         root.addChild(leftLeg);
         root.addChild(rightLeg);
     }
@@ -58,33 +120,50 @@ final class CJModel {
     }
 
     void animate(float walkPhase, boolean moving, float punchAngle,
-                  boolean backward, boolean jumping, boolean crouching,
-                  float turnAmount) {
-        // Smoothly blend crouch/jump poses to avoid abrupt limb snapping.
+                 boolean backward, boolean jumping, boolean crouching,
+                 float turnAmount) {
         float targetCrouch = crouching ? 1.0f : 0.0f;
         float targetJump = jumping ? 1.0f : 0.0f;
-        crouchBlend += (targetCrouch - crouchBlend) * 0.28f;
-        jumpBlend += (targetJump - jumpBlend) * 0.30f;
+        float targetWalk = moving ? 1.0f : 0.0f;
+        float targetTurn = turnAmount;
+        crouchBlend += (targetCrouch - crouchBlend) * 0.20f;
+        jumpBlend += (targetJump - jumpBlend) * 0.22f;
+        gaitBlend += (targetWalk - gaitBlend) * 0.24f;
+        turnBlend += (targetTurn - turnBlend) * 0.20f;
 
-        float direction = backward ? -1.0f : 1.0f;
-        float swing = moving ? (float)Math.sin(walkPhase) * 30.0f * direction : 0.0f;
-        float turnStep = turnAmount * (moving ? 12.0f : 22.0f);
-        float crouchLeg = crouchBlend * 48.0f;
-        float jumpLeg = jumpBlend * 22.0f;
+        float phase = walkPhase;
+        float stride = (float)Math.sin(phase) * 27.0f * gaitBlend;
+        float opposite = (float)Math.sin(phase + 3.1415926f) * 27.0f * gaitBlend;
+        float kneeLeft = Math.max(0.0f, (float)Math.sin(phase + 0.65f)) * 28.0f * gaitBlend;
+        float kneeRight = Math.max(0.0f, (float)Math.sin(phase + 3.79f)) * 28.0f * gaitBlend;
+        if (backward) {
+            stride = -stride;
+            opposite = -opposite;
+        }
 
-        leftLeg.setOrientation(swing + crouchLeg + jumpLeg, 1.0f, 0.0f, 0.0f);
-        rightLeg.setOrientation(-swing + crouchLeg + jumpLeg, 1.0f, 0.0f, 0.0f);
+        float crouch = crouchBlend;
+        float jump = jumpBlend;
+        leftLeg.setOrientation(stride + crouch * 25.0f + jump * 20.0f, 1, 0, 0);
+        rightLeg.setOrientation(opposite + crouch * 25.0f + jump * 20.0f, 1, 0, 0);
+        leftShin.setOrientation(-kneeLeft - crouch * 48.0f - jump * 15.0f, 1, 0, 0);
+        rightShin.setOrientation(-kneeRight - crouch * 48.0f - jump * 15.0f, 1, 0, 0);
 
-        float armSwing = -swing * 0.75f;
-        leftArm.setOrientation(armSwing - turnStep - jumpBlend * 105.0f,
-                               1.0f, 0.0f, 0.0f);
-        rightArm.setOrientation(-armSwing - turnStep - punchAngle -
-                                jumpBlend * 105.0f, 1.0f, 0.0f, 0.0f);
+        float armSwing = -stride * 0.68f;
+        float otherArm = -opposite * 0.68f;
+        leftArm.setOrientation(armSwing - turnBlend * 8.0f - jump * 78.0f, 1, 0, 0);
+        rightArm.setOrientation(otherArm - turnBlend * 8.0f - punchAngle -
+                                jump * 78.0f, 1, 0, 0);
+        leftForearm.setOrientation(-crouch * 35.0f - jump * 20.0f, 1, 0, 0);
+        rightForearm.setOrientation(-crouch * 35.0f - jump * 20.0f, 1, 0, 0);
 
-        // Keep the torso upright during reverse walking; only crouch/jump
-        // change the upper-body height and pitch.
-        upperBody.setTranslation(0.0f, -0.30f * crouchBlend + 0.04f * jumpBlend, 0.0f);
-        upperBody.setOrientation(-8.0f * crouchBlend + 3.0f * jumpBlend,
-                                 1.0f, 0.0f, 0.0f);
+        // Small hip sway and torso counterbalance make gait feel less robotic.
+        leftLeg.setTranslation(-0.13f - (float)Math.sin(phase) * 0.018f * gaitBlend,
+                               0.79f - crouch * 0.12f, 0.0f);
+        rightLeg.setTranslation(0.13f - (float)Math.sin(phase) * 0.018f * gaitBlend,
+                                0.79f - crouch * 0.12f, 0.0f);
+        upperBody.setTranslation(0.0f, -0.27f * crouch + 0.055f * jump +
+                                 (float)Math.sin(phase * 2.0f) * 0.018f * gaitBlend, 0.0f);
+        upperBody.setOrientation(-7.0f * crouch + 3.0f * jump,
+                                 0.0f, 0.0f, 1.0f);
     }
 }
