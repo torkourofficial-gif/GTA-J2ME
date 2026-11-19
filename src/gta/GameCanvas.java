@@ -36,6 +36,7 @@ final class GameCanvas extends Canvas implements Runnable {
     private volatile int cameraKeys;
 
     private World world;
+    private Mesh oceanMesh;
     private Group scenery;
     private Group regionalRoads;
     private Group[] regionChunks = new Group[6];
@@ -401,7 +402,9 @@ final class GameCanvas extends Canvas implements Runnable {
         // Oversized water plane: the camera horizon remains ocean even when
         // the player reaches the outer coastline. It is intentionally much
         // larger than the playable Leonida footprint.
-        addBox(scenery, 4000.0f, 0.22f, 4000.0f, 0.0f, -0.42f, 0.0f, 0x397F9B);
+        oceanMesh = ModelFactory.box(4000.0f, 0.22f, 4000.0f, 0x397F9B);
+        oceanMesh.setTranslation(playerX, -0.42f, playerZ);
+        scenery.addChild(oceanMesh);
         // Pale sand beaches frame the outer edge of the landmass.
         addBox(scenery, 1080.0f, 0.16f, 34.0f, 0.0f, -0.035f, -535.0f, 0xD9C99B);
         addBox(scenery, 1080.0f, 0.16f, 34.0f, 0.0f, -0.035f, 535.0f, 0xD9C99B);
@@ -603,6 +606,9 @@ final class GameCanvas extends Canvas implements Runnable {
         if (characterSwitching) { updateCharacterSwitch(dt); updateCamera(); return; }
         debugStage = "city chunk visibility";
         updateCityChunks();
+        // Recenter the oversized water surface on the player every frame;
+        // its horizon stays ocean no matter how far the player travels.
+        if (oceanMesh != null) oceanMesh.setTranslation(playerX, -0.42f, playerZ);
         if (carTransition == 3) {
             debugStage = "traffic hijack";
             updateTrafficHijack(dt); updateCamera(); return;
