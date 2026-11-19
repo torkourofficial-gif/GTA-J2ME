@@ -115,6 +115,9 @@ final class GameCanvas extends Canvas implements Runnable {
     private float walkPhase = 0.0f;
     private float jumpVelocity = 0.0f;
     private float punchTimer = 0.0f;
+    private int selectedWeapon = 0; // 0 fists, 1 pistol, 2 shotgun, 3 SMG
+    private int[] weaponAmmo = {0, 120, 48, 180};
+    private float weaponCooldown = 0.0f;
     private float carSpeed = 0.0f;
     private float carSteering = 0.0f;
     private long lastForwardTap = 0L;
@@ -383,21 +386,32 @@ final class GameCanvas extends Canvas implements Runnable {
         activeChunkX = cx; activeChunkZ = cz;
         // Spread M3G allocation over several frames instead of allocating
         // an entire 5x5 neighborhood in one burst on constrained Java ME heaps.
-        int buildBudget = 2;
+        int buildBudget = 4;
         for (int x = 0; x < CITY_BLOCKS; x++) {
             for (int z = 0; z < CITY_BLOCKS; z++) {
                 int dx = x - cx; if (dx < 0) dx = -dx;
                 int dz = z - cz; if (dz < 0) dz = -dz;
-                boolean nearby = inCity && dx <= 2 && dz <= 2;
-                Group chunk = cityChunks[x][z];
-                if (nearby) {
-                    if (chunk == null && buildBudget > 0) {
+                if (!inCity || dx > 2 || dz > 2) {
+                    Group oldChunk = cityChunks[x][z];
+                    if (oldChunk != null) {
+                        scenery.removeChild(oldChunk);
+                        cityChunks[x][z] = null;
+                    }
+                }
+            }
+        }
+        // Build the current block first, then its immediate neighbors, then
+        // the outer ring. This prevents visible holes around the player.
+        for (int radius = 0; radius <= 2 && buildBudget > 0; radius++) {
+            for (int dx = -radius; dx <= radius && buildBudget > 0; dx++) {
+                for (int dz = -radius; dz <= radius && buildBudget > 0; dz++) {
+                    if (radius > 0 && Math.abs(dx) != radius && Math.abs(dz) != radius) continue;
+                    int x = cx + dx, z = cz + dz;
+                    if (x < 0 || x >= CITY_BLOCKS || z < 0 || z >= CITY_BLOCKS) continue;
+                    if (cityChunks[x][z] == null && inCity) {
                         buildCityChunk(x, z);
                         buildBudget--;
                     }
-                } else if (chunk != null) {
-                    scenery.removeChild(chunk);
-                    cityChunks[x][z] = null;
                 }
             }
         }
@@ -615,6 +629,7 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void update(float dt) {
+        if (weaponCooldown > 0.0f) weaponCooldown -= dt;
         debugStage = "camera input";
         updateCameraInput(dt);
         if (characterSwitching) { updateCharacterSwitch(dt); updateCamera(); return; }
@@ -1259,12 +1274,15 @@ final class GameCanvas extends Canvas implements Runnable {
         float[] pz = {-70.0f, -70.0f, -56.0f, -56.0f, -42.0f, -42.0f, -28.0f, -28.0f, -14.0f, -14.0f,
                        0.0f, 0.0f, 14.0f, 14.0f, 28.0f, 28.0f, 42.0f, 42.0f, 56.0f, 56.0f,
                       -63.0f, -63.0f, -35.0f, -35.0f, -7.0f, -7.0f, 21.0f, 21.0f};
-        for (int i = 0; i < px.length && i < PED_COUNT; i++) {
-            debugStage = "create pedestrian " + i;
+        // Start with only eight nearby pedestrians. Remaining slots are
+        // created lazily when gameplay needs to spawn a distant driver/NPC.
+        for (int i = 0; i < 8 && i < PED_COUNT; i++) {
+            int source = i + 8;
+            debugStage = "create nearby pedestrian " + i;
             pedestrians[i] = new PedestrianModel(i);
             world.addChild(pedestrians[i].root);
             pedActive[i] = true;
-            pedX[i] = px[i]; pedZ[i] = pz[i];
+            pedX[i] = px[source]; pedZ[i] = pz[source];
             pedHeading[i] = (i * 47) % 360;
             pedTimer[i] = 1.0f + (i % 4) * 0.7f;
             pedPhase[i] = i * 0.73f;
@@ -1273,7 +1291,7 @@ final class GameCanvas extends Canvas implements Runnable {
             pedestrians[i].setPosition(pedX[i], 0.0f, pedZ[i]);
             pedestrians[i].setHeading(pedHeading[i]);
         }
-        nextPedVariant = PED_COUNT;
+        nextPedVariant = 8;
     }
 
     private void initializeTraffic() {
@@ -1511,10 +1529,15 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void updatePedestrians(float dt) {
         for (int i = 0; i < PED_COUNT; i++) {
-            if (!pedActive[i]) continue;
-            if (pedAttackCooldown[i] > 0.0f) pedAttackCooldown[i] -= dt;
+            if (!pedActive[i] || pedestrians[i] == null) continue;
             float dx = playerX - pedX[i], dz = playerZ - pedZ[i];
             float dist2 = dx * dx + dz * dz;
+            if (dist2 > 2500.0f) {
+                pedestrians[i].setVisible(false);
+                continue;
+            }
+            pedestrians[i].setVisible(true);
+            if (pedAttackCooldown[i] > 0.0f) pedAttackCooldown[i] -= dt;
             if ((inCar || inBike) && pedState[i] != 3 &&
                 ((inCar && Math.abs(carSpeed) > 2.2f) ||
                  (inBike && Math.abs(bikeSpeed) > 3.0f)) &&
@@ -1612,13 +1635,63 @@ final class GameCanvas extends Canvas implements Runnable {
         }
     }
 
+    private void cycleWeapon() {
+        selectedWeapon++;
+        if (selectedWeapon > 3) selectedWeapon = 0;
+        cj.setWeaponType(selectedWeapon);
+        secondProtagonist.setWeaponType(selectedWeapon);
+        status = selectedWeapon == 0 ? "UNARMED" :
+                 selectedWeapon == 1 ? "PISTOL EQUIPPED" :
+                 selectedWeapon == 2 ? "SHOTGUN EQUIPPED" : "SMG EQUIPPED";
+    }
+
+    private void fireWeapon() {
+        if (inCar || inBike || characterSwitching || playerRagdollTime > 0.0f) return;
+        if (weaponCooldown > 0.0f) return;
+        if (weaponAmmo[selectedWeapon] <= 0) {
+            status = "OUT OF AMMO";
+            weaponCooldown = 0.25f;
+            return;
+        }
+        weaponAmmo[selectedWeapon]--;
+        float range = selectedWeapon == 2 ? 15.0f :
+                      selectedWeapon == 3 ? 30.0f : 24.0f;
+        float minDot = selectedWeapon == 2 ? 0.72f :
+                       selectedWeapon == 3 ? 0.82f : 0.91f;
+        float fx = -(float)Math.sin(playerHeading * 0.0174532925f);
+        float fz = -(float)Math.cos(playerHeading * 0.0174532925f);
+        int target = -1;
+        float best = range * range;
+        for (int i = 0; i < PED_COUNT; i++) {
+            if (!pedActive[i] || pedestrians[i] == null || pedState[i] == 3) continue;
+            float dx = pedX[i] - playerX, dz = pedZ[i] - playerZ;
+            float d2 = dx * dx + dz * dz;
+            if (d2 <= 0.04f || d2 >= best) continue;
+            float inv = 1.0f / (float)Math.sqrt(d2);
+            float dot = (dx * fx + dz * fz) * inv;
+            if (dot >= minDot) { best = d2; target = i; }
+        }
+        weaponCooldown = selectedWeapon == 2 ? 0.75f :
+                         selectedWeapon == 3 ? 0.13f : 0.32f;
+        if (target >= 0) {
+            float force = selectedWeapon == 2 ? 4.2f :
+                          selectedWeapon == 3 ? 2.7f : 3.2f;
+            beginPedRagdoll(target,
+                fx * force, selectedWeapon == 2 ? 3.6f : 2.8f, fz * force);
+            addWanted(1);
+            status = "HIT CONFIRMED";
+        } else {
+            status = "SHOT FIRED";
+        }
+    }
+
     private void hitPedestrian() {
         float best = 4.0f;
         int target = -1;
         float fx = -(float)Math.sin(playerHeading * 0.0174532925f);
         float fz = -(float)Math.cos(playerHeading * 0.0174532925f);
         for (int i = 0; i < PED_COUNT; i++) {
-            if (!pedActive[i] || pedState[i] == 3) continue;
+            if (!pedActive[i] || pedestrians[i] == null || pedState[i] == 3) continue;
             float dx = pedX[i] - playerX, dz = pedZ[i] - playerZ;
             float d2 = dx * dx + dz * dz;
             if (d2 < best && dx * fx + dz * fz > 0.0f) { best = d2; target = i; }
@@ -1663,10 +1736,11 @@ final class GameCanvas extends Canvas implements Runnable {
         }
         if (slot < 0) return -1;
         // Recycle this slot with the next of twenty appearance presets.
-        world.removeChild(pedestrians[slot].root);
-        pedestrians[slot] = new PedestrianModel(nextPedVariant % 20);
-        nextPedVariant++;
-        world.addChild(pedestrians[slot].root);
+        if (pedestrians[slot] == null) {
+            pedestrians[slot] = new PedestrianModel(nextPedVariant % 20);
+            nextPedVariant++;
+            world.addChild(pedestrians[slot].root);
+        }
         pedActive[slot] = true;
         pedState[slot] = 1;
         pedX[slot] = x; pedZ[slot] = z; pedHeading[slot] = heading;
@@ -1676,6 +1750,7 @@ final class GameCanvas extends Canvas implements Runnable {
         pedRagdollVX[slot] = pedRagdollVY[slot] = pedRagdollVZ[slot] = 0.0f;
         pedRagdollRoll[slot] = pedRagdollPitch[slot] = 0.0f;
         pedRagdollRollSpeed[slot] = pedRagdollPitchSpeed[slot] = 0.0f;
+        pedestrians[slot].setVisible(true);
         pedestrians[slot].setPosition(x, 0.0f, z);
         pedestrians[slot].setHeading(heading);
         return slot;
@@ -2049,7 +2124,11 @@ final class GameCanvas extends Canvas implements Runnable {
         else if (keyCode == '6') keys |= RIGHT;
         else if (keyCode == '9') keys |= CROUCH;
         else if (keyCode == '5') { if (jetpackOwned) jetpackThrust = true; else jump(); }
-        else if (keyCode == '1') punch();
+        else if (keyCode == '1') {
+            if (selectedWeapon == 0) punch();
+            else fireWeapon();
+        }
+        else if (keyCode == '7') cycleWeapon();
         else if (keyCode == '3') toggleCar();
         else if (keyCode == '*') beginCharacterSwitch();
         else {
