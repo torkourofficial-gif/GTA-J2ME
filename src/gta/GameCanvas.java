@@ -5,6 +5,7 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
+import javax.microedition.m3g.Fog;
 import javax.microedition.m3g.Group;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
@@ -34,6 +35,8 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private World world;
     private Group scenery;
+    private Group[][] cityChunks = new Group[CITY_BLOCKS][CITY_BLOCKS];
+    private int activeChunkX = -99, activeChunkZ = -99;
     private CJModel cj;
     private CarModel car;
     private Camera camera;
@@ -121,14 +124,18 @@ final class GameCanvas extends Canvas implements Runnable {
         sky.setColor(0x87B6D8);
         sky.setColorClearEnable(true);
         world.setBackground(sky);
+        Fog fog = new Fog();
+        fog.setColor(0x87B6D8);
+        fog.setLinear(48.0f, 112.0f);
+        world.setFog(fog);
         scenery = new Group();
         world.addChild(scenery);
 
         // Tile ground and roads: vertex coordinates are signed 16-bit
         // millimetres, so a single 190 m mesh overflows and gets clamped.
         // Keep each piece at 28 m so the entire city floor remains visible.
-        for (int tx = -5; tx <= 5; tx++) {
-            for (int tz = -5; tz <= 5; tz++) {
+        for (int tx = -2; tx <= 2; tx++) {
+            for (int tz = -2; tz <= 2; tz++) {
                 float tileX = tx * CITY_SPACING;
                 float tileZ = tz * CITY_SPACING;
                 addBox(scenery, CITY_SPACING, 0.18f, CITY_SPACING,
@@ -151,6 +158,9 @@ final class GameCanvas extends Canvas implements Runnable {
         buildingCount = 0;
         for (int bz = 0; bz < CITY_BLOCKS; bz++) {
             for (int bx = 0; bx < CITY_BLOCKS; bx++) {
+                Group chunk = new Group();
+                cityChunks[bx][bz] = chunk;
+                scenery.addChild(chunk);
                 float x = (bx - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
                 float z = (bz - (CITY_BLOCKS - 1) * 0.5f) * CITY_SPACING;
                 int seed = bx * 17 + bz * 31;
@@ -172,24 +182,24 @@ final class GameCanvas extends Canvas implements Runnable {
                 }
                 if ((seed % 9) == 0) {
                     // Small pocket park: green square, paths and three low-poly trees.
-                    addBox(scenery, 15.0f, 0.12f, 15.0f, x, 0.02f, z, 0x47784B);
-                    addBox(scenery, 1.2f, 0.08f, 13.0f, x, 0.09f, z, 0xB7A98A);
-                    addBox(scenery, 13.0f, 0.08f, 1.2f, x, 0.10f, z, 0xB7A98A);
-                    addTree(x - 4.8f, z - 4.8f);
-                    addTree(x + 4.8f, z - 4.8f);
-                    addTree(x + 4.8f, z + 4.8f);
+                    addBox(chunk, 15.0f, 0.12f, 15.0f, x, 0.02f, z, 0x47784B);
+                    addBox(chunk, 1.2f, 0.08f, 13.0f, x, 0.09f, z, 0xB7A98A);
+                    addBox(chunk, 13.0f, 0.08f, 1.2f, x, 0.10f, z, 0xB7A98A);
+                    addTree(chunk, x - 4.8f, z - 4.8f);
+                    addTree(chunk, x + 4.8f, z - 4.8f);
+                    addTree(chunk, x + 4.8f, z + 4.8f);
                 } else {
-                    addBox(scenery, width, height, depth,
+                    addBox(chunk, width, height, depth,
                            x, height * 0.5f, z, color);
                     // Roof trim and a few simple storefront/window details.
-                    addBox(scenery, width + 0.18f, 0.22f, depth + 0.18f,
+                    addBox(chunk, width + 0.18f, 0.22f, depth + 0.18f,
                            x, height + 0.11f, z, 0x665044);
-                    addBox(scenery, 1.05f, 1.35f, 0.08f, x, 0.68f,
+                    addBox(chunk, 1.05f, 1.35f, 0.08f, x, 0.68f,
                            z + depth * 0.5f + 0.045f, 0x49372D);
                     if ((seed & 1) == 0) {
-                        addBox(scenery, 0.85f, 0.85f, 0.07f, x - 2.0f, 1.75f,
+                        addBox(chunk, 0.85f, 0.85f, 0.07f, x - 2.0f, 1.75f,
                                z + depth * 0.5f + 0.05f, 0x6C9BAA);
-                        addBox(scenery, 0.85f, 0.85f, 0.07f, x + 2.0f, 1.75f,
+                        addBox(chunk, 0.85f, 0.85f, 0.07f, x + 2.0f, 1.75f,
                                z + depth * 0.5f + 0.05f, 0x6C9BAA);
                     }
                 }
@@ -216,7 +226,7 @@ final class GameCanvas extends Canvas implements Runnable {
         initializeTraffic();
 
         camera = new Camera();
-        camera.setPerspective(62.0f, 1.0f, 0.25f, 320.0f);
+        camera.setPerspective(62.0f, 1.0f, 0.25f, 120.0f);
         cameraTransform = new Transform();
         world.addChild(camera);
         world.setActiveCamera(camera);
@@ -224,10 +234,27 @@ final class GameCanvas extends Canvas implements Runnable {
         updateCamera();
     }
 
-    private void addTree(float x, float z) {
-        addBox(scenery, 0.42f, 2.1f, 0.42f, x, 1.05f, z, 0x68462E);
-        addBox(scenery, 2.0f, 1.7f, 2.0f, x, 2.35f, z, 0x397044);
-        addBox(scenery, 1.35f, 1.25f, 1.35f, x, 3.05f, z, 0x4D8650);
+    private void updateCityChunks() {
+        int cx = (int)((playerX / CITY_SPACING) + CITY_BLOCKS * 0.5f);
+        int cz = (int)((playerZ / CITY_SPACING) + CITY_BLOCKS * 0.5f);
+        if (cx < 0) cx = 0; else if (cx >= CITY_BLOCKS) cx = CITY_BLOCKS - 1;
+        if (cz < 0) cz = 0; else if (cz >= CITY_BLOCKS) cz = CITY_BLOCKS - 1;
+        if (cx == activeChunkX && cz == activeChunkZ) return;
+        activeChunkX = cx; activeChunkZ = cz;
+        // Keep only the nearby 5x5 block area submitted to the renderer.
+        for (int x = 0; x < CITY_BLOCKS; x++) {
+            for (int z = 0; z < CITY_BLOCKS; z++) {
+                int dx = x - cx; if (dx < 0) dx = -dx;
+                int dz = z - cz; if (dz < 0) dz = -dz;
+                cityChunks[x][z].setRenderingEnable(dx <= 2 && dz <= 2);
+            }
+        }
+    }
+
+    private void addTree(Group parent, float x, float z) {
+        addBox(parent, 0.42f, 2.1f, 0.42f, x, 1.05f, z, 0x68462E);
+        addBox(parent, 2.0f, 1.7f, 2.0f, x, 2.35f, z, 0x397044);
+        addBox(parent, 1.35f, 1.25f, 1.35f, x, 3.05f, z, 0x4D8650);
     }
 
     private void addBuilding(float x, float z, float width, float depth, int color) {
@@ -284,6 +311,7 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private void update(float dt) {
         updateCameraInput(dt);
+        updateCityChunks();
         if (carTransition == 3) { updateTrafficHijack(dt); updateCamera(); return; }
         if (carTransition != 0) { updateCarTransition(dt); updateCamera(); return; }
         boolean moving = false;
@@ -514,7 +542,7 @@ final class GameCanvas extends Canvas implements Runnable {
         camera.setTranslation(eyeX, eyeY, eyeZ);
         float w = getWidth();
         float h = getHeight();
-        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 320.0f);
+        if (w > 0 && h > 0) camera.setPerspective(62.0f, w / h, 0.25f, 120.0f);
     }
 
     private void jump() {
