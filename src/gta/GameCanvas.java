@@ -36,6 +36,8 @@ final class GameCanvas extends Canvas implements Runnable {
 
     private World world;
     private Group scenery;
+    private Group regionalRoads;
+    private Group[] regionChunks = new Group[6];
     private Group[][] cityChunks = new Group[CITY_BLOCKS][CITY_BLOCKS];
     private int activeChunkX = -99, activeChunkZ = -99;
     private CJModel cj;
@@ -117,11 +119,11 @@ final class GameCanvas extends Canvas implements Runnable {
     private static final float CAR_TRANSITION_LENGTH = 0.9f;
     private static final int CITY_BLOCKS = 10;
     private static final float CITY_SPACING = 28.0f;
-    private static final float CITY_LIMIT = 144.0f;
-    private float[] buildingX = new float[CITY_BLOCKS * CITY_BLOCKS];
-    private float[] buildingZ = new float[CITY_BLOCKS * CITY_BLOCKS];
-    private float[] buildingW = new float[CITY_BLOCKS * CITY_BLOCKS];
-    private float[] buildingD = new float[CITY_BLOCKS * CITY_BLOCKS];
+    private static final float CITY_LIMIT = 560.0f;
+    private float[] buildingX = new float[180];
+    private float[] buildingZ = new float[180];
+    private float[] buildingW = new float[180];
+    private float[] buildingD = new float[180];
     private int buildingCount = 0;
     private boolean reverseFacing = false;
     private boolean backwardFacingActive = false;
@@ -190,7 +192,7 @@ final class GameCanvas extends Canvas implements Runnable {
         debugStage = "create fog";
         Fog fog = new Fog();
         fog.setColor(0x87B6D8);
-        fog.setLinear(48.0f, 112.0f);
+        fog.setLinear(95.0f, 285.0f);
         ModelFactory.setFog(fog);
         debugStage = "create scenery group";
         scenery = new Group();
@@ -312,6 +314,9 @@ final class GameCanvas extends Canvas implements Runnable {
             }
         }
 
+        debugStage = "create Leonida regions";
+        createLeonidaRegions();
+
         debugStage = "create CJ model";
         cj = new CJModel(false);
         cj.setPosition(playerX, playerY, playerZ);
@@ -349,19 +354,141 @@ final class GameCanvas extends Canvas implements Runnable {
     }
 
     private void updateCityChunks() {
+        float cityDistance2 = playerX * playerX + playerZ * playerZ;
+        boolean inCity = cityDistance2 < 205.0f * 205.0f;
         int cx = (int)((playerX / CITY_SPACING) + CITY_BLOCKS * 0.5f);
         int cz = (int)((playerZ / CITY_SPACING) + CITY_BLOCKS * 0.5f);
         if (cx < 0) cx = 0; else if (cx >= CITY_BLOCKS) cx = CITY_BLOCKS - 1;
         if (cz < 0) cz = 0; else if (cz >= CITY_BLOCKS) cz = CITY_BLOCKS - 1;
-        if (cx == activeChunkX && cz == activeChunkZ) return;
-        activeChunkX = cx; activeChunkZ = cz;
-        // Keep only the nearby 5x5 block area submitted to the renderer.
-        for (int x = 0; x < CITY_BLOCKS; x++) {
-            for (int z = 0; z < CITY_BLOCKS; z++) {
-                int dx = x - cx; if (dx < 0) dx = -dx;
-                int dz = z - cz; if (dz < 0) dz = -dz;
-                cityChunks[x][z].setRenderingEnable(dx <= 2 && dz <= 2);
+        if (cx != activeChunkX || cz != activeChunkZ) {
+            activeChunkX = cx; activeChunkZ = cz;
+            for (int x = 0; x < CITY_BLOCKS; x++) {
+                for (int z = 0; z < CITY_BLOCKS; z++) {
+                    int dx = x - cx; if (dx < 0) dx = -dx;
+                    int dz = z - cz; if (dz < 0) dz = -dz;
+                    cityChunks[x][z].setRenderingEnable(inCity && dx <= 2 && dz <= 2);
+                }
             }
+        } else if (!inCity) {
+            for (int x = 0; x < CITY_BLOCKS; x++)
+                for (int z = 0; z < CITY_BLOCKS; z++)
+                    cityChunks[x][z].setRenderingEnable(false);
+        }
+        if (regionChunks[0] != null) {
+            float[] rx = {0.0f, 20.0f, -245.0f, -350.0f, -55.0f, 175.0f};
+            float[] rz = {0.0f, 390.0f, 225.0f, -45.0f, -285.0f, -445.0f};
+            for (int i = 0; i < regionChunks.length; i++) {
+                float dx = playerX - rx[i], dz = playerZ - rz[i];
+                regionChunks[i].setRenderingEnable(dx * dx + dz * dz < 245.0f * 245.0f);
+            }
+        }
+    }
+
+    private void createLeonidaRegions() {
+        // Ocean under the entire reduced state map.
+        addBox(scenery, 1120.0f, 0.22f, 1120.0f, 0.0f, -0.42f, 0.0f, 0x397F9B);
+
+        regionalRoads = new Group();
+        scenery.addChild(regionalRoads);
+
+        // Compact regional road network. The coordinates are a scaled,
+        // gameplay-friendly interpretation of the community Leonida map.
+        addTexturedBox(regionalRoads, 9.0f, 0.04f, 185.0f,
+                       18.0f, -0.015f, 285.0f, 0xFFFFFF, 1); // Vice City to Keys
+        addTexturedBox(regionalRoads, 185.0f, 0.04f, 8.0f,
+                       -245.0f, -0.015f, -45.0f, 0xFFFFFF, 1); // Port Gellhorn
+        addTexturedBox(regionalRoads, 8.0f, 0.04f, 160.0f,
+                       -245.0f, -0.015f, 135.0f, 0xFFFFFF, 1); // Port to Grassrivers
+        addTexturedBox(regionalRoads, 9.0f, 0.04f, 175.0f,
+                       -55.0f, -0.015f, -205.0f, 0xFFFFFF, 1); // Vice to Ambrosia
+        addTexturedBox(regionalRoads, 8.0f, 0.04f, 150.0f,
+                       70.0f, -0.015f, -365.0f, 0xFFFFFF, 1); // Ambrosia to Kalaga
+        addTexturedBox(regionalRoads, 170.0f, 0.04f, 8.0f,
+                       -165.0f, -0.015f, 205.0f, 0xFFFFFF, 1); // Grassrivers access
+        addTexturedBox(regionalRoads, 8.0f, 0.04f, 115.0f,
+                       -80.0f, -0.015f, 145.0f, 0xFFFFFF, 1); // City southwest connector
+        addTexturedBox(regionalRoads, 150.0f, 0.04f, 8.0f,
+                       100.0f, -0.015f, -300.0f, 0xFFFFFF, 1);
+
+        // Vice City: existing dense downtown and Art Deco coast remain the
+        // central/eastern urban anchor of Leonida.
+        regionChunks[0] = new Group();
+        scenery.addChild(regionChunks[0]);
+        addBox(regionChunks[0], 45.0f, 0.12f, 100.0f, 151.0f, -0.02f, -5.0f, 0xD9C6A0);
+        for (int i = 0; i < 5; i++) addPalmTree(regionChunks[0], 137.0f + i * 5.0f, -42.0f + i * 18.0f);
+        addBox(regionChunks[0], 3.0f, 7.0f, 2.0f, 164.0f, 3.5f, -24.0f, 0xE9D7B9);
+        addBox(regionChunks[0], 3.0f, 9.0f, 2.0f, 164.0f, 4.5f, 3.0f, 0xE9D7B9);
+        addBox(regionChunks[0], 3.0f, 6.0f, 2.0f, 164.0f, 3.0f, 29.0f, 0xE9D7B9);
+
+        // Leonida Keys: a thin chain of small islands linked by causeways.
+        regionChunks[1] = new Group(); scenery.addChild(regionChunks[1]);
+        for (int i = 0; i < 6; i++) {
+            float x = 12.0f + (i % 2) * 18.0f;
+            float z = 315.0f + i * 25.0f;
+            addBox(regionChunks[1], 34.0f, 0.28f, 21.0f, x, -0.20f, z, 0xCBBE91);
+            addBox(regionChunks[1], 7.0f, 0.05f, 23.0f, x, -0.02f, z - 12.0f, 0x777C78);
+            addPalmTree(regionChunks[1], x - 8.0f, z - 2.0f);
+            addPalmTree(regionChunks[1], x + 8.0f, z + 4.0f);
+            if (i == 1 || i == 4) {
+                addBox(regionChunks[1], 12.0f, 2.5f, 8.0f, x, 1.25f, z, 0xE9D1A4);
+                addBox(regionChunks[1], 13.0f, 0.35f, 9.0f, x, 2.65f, z, 0xA45C42);
+            }
+        }
+        addBox(regionChunks[1], 4.0f, 0.12f, 120.0f, 20.0f, 0.03f, 390.0f, 0x686D70);
+
+        // Grassrivers: wetlands, shallow channels, mangroves and stilt huts.
+        regionChunks[2] = new Group(); scenery.addChild(regionChunks[2]);
+        addBox(regionChunks[2], 170.0f, 0.18f, 130.0f, -245.0f, -0.24f, 225.0f, 0x617F54);
+        addBox(regionChunks[2], 28.0f, 0.10f, 145.0f, -270.0f, -0.05f, 225.0f, 0x397F9B);
+        addBox(regionChunks[2], 18.0f, 0.10f, 95.0f, -205.0f, -0.04f, 225.0f, 0x397F9B);
+        for (int i = 0; i < 9; i++) {
+            float x = -310.0f + (i % 3) * 58.0f;
+            float z = 180.0f + (i / 3) * 42.0f;
+            addTree(regionChunks[2], x, z);
+        }
+        for (int i = 0; i < 3; i++) {
+            float x = -300.0f + i * 48.0f;
+            addBox(regionChunks[2], 9.0f, 2.0f, 8.0f, x, 1.25f, 260.0f, 0xA98B65);
+            addBox(regionChunks[2], 10.0f, 0.35f, 9.0f, x, 2.4f, 260.0f, 0x76513C);
+            addBox(regionChunks[2], 0.35f, 1.8f, 0.35f, x - 3.5f, 0.8f, 256.5f, 0x735A3D);
+            addBox(regionChunks[2], 0.35f, 1.8f, 0.35f, x + 3.5f, 0.8f, 256.5f, 0x735A3D);
+        }
+
+        // Port Gellhorn: faded Gulf coast resort, motel blocks and marina.
+        regionChunks[3] = new Group(); scenery.addChild(regionChunks[3]);
+        addBox(regionChunks[3], 135.0f, 0.16f, 100.0f, -350.0f, -0.22f, -45.0f, 0xCBBE91);
+        for (int i = 0; i < 4; i++) {
+            float x = -395.0f + i * 28.0f;
+            addBox(regionChunks[3], 20.0f, 5.0f, 13.0f, x, 2.5f, -48.0f, 0xD4B18B);
+            addBox(regionChunks[3], 21.0f, 0.35f, 14.0f, x, 5.1f, -48.0f, 0x9C5E4B);
+            addBox(regionChunks[3], 4.0f, 2.0f, 0.12f, x, 2.0f, -41.4f, 0x83AFC0);
+        }
+        addBox(regionChunks[3], 42.0f, 0.16f, 8.0f, -360.0f, 0.02f, 18.0f, 0x795B43);
+        for (int i = 0; i < 5; i++)
+            addBox(regionChunks[3], 1.0f, 0.10f, 20.0f, -380.0f + i * 10.0f, 0.10f, 31.0f, 0x795B43);
+
+        // Ambrosia: central sugar country, flat fields and the refinery.
+        regionChunks[4] = new Group(); scenery.addChild(regionChunks[4]);
+        addBox(regionChunks[4], 145.0f, 0.16f, 110.0f, -55.0f, -0.22f, -285.0f, 0x9EAC68);
+        for (int i = 0; i < 5; i++)
+            addBox(regionChunks[4], 22.0f, 0.05f, 78.0f, -110.0f + i * 26.0f, -0.10f, -285.0f, 0xB6B77A);
+        addBox(regionChunks[4], 34.0f, 13.0f, 27.0f, -20.0f, 6.5f, -285.0f, 0xA5A39A);
+        addBox(regionChunks[4], 10.0f, 22.0f, 10.0f, -36.0f, 11.0f, -285.0f, 0x888D8A);
+        addBox(regionChunks[4], 10.0f, 18.0f, 10.0f, -4.0f, 9.0f, -285.0f, 0x888D8A);
+        addBox(regionChunks[4], 3.0f, 28.0f, 3.0f, -20.0f, 14.0f, -300.0f, 0x777F80);
+        addBox(regionChunks[4], 3.0f, 24.0f, 3.0f, -7.0f, 12.0f, -300.0f, 0x777F80);
+        for (int i = 0; i < 5; i++)
+            addBox(regionChunks[4], 0.6f, 0.6f, 30.0f, 5.0f + i * 5.0f, 8.0f, -285.0f, 0xB7B8B2);
+
+        // Mount Kalaga: northern wooded highlands, ridges and pine silhouettes.
+        regionChunks[5] = new Group(); scenery.addChild(regionChunks[5]);
+        addBox(regionChunks[5], 150.0f, 0.22f, 125.0f, 175.0f, -0.18f, -445.0f, 0x607C4B);
+        addBox(regionChunks[5], 65.0f, 8.0f, 45.0f, 150.0f, 3.8f, -465.0f, 0x71865B);
+        addBox(regionChunks[5], 42.0f, 12.0f, 35.0f, 205.0f, 5.8f, -420.0f, 0x667D53);
+        for (int i = 0; i < 12; i++) {
+            float x = 120.0f + (i % 4) * 28.0f;
+            float z = -485.0f + (i / 4) * 35.0f;
+            addTree(regionChunks[5], x, z);
         }
     }
 
