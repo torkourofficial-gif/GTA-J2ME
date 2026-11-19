@@ -6,8 +6,10 @@ import javax.microedition.m3g.Mesh;
 /** Compact low-poly motorcycle for the Java ME traffic and player vehicle system. */
 final class MotorcycleModel {
     final Group root = new Group();
+    private final Group body = new Group();
 
     MotorcycleModel(int bodyColor) {
+        root.addChild(body);
         // Two wheels, narrow chassis, tank, seat and handlebar.
         addWheel(0.0f, 0.34f, -0.82f);
         addWheel(0.0f, 0.34f, 0.82f);
@@ -27,19 +29,20 @@ final class MotorcycleModel {
     private void addWheel(float x, float y, float z) {
         Mesh tire = ModelFactory.ellipsoid(0.22f, 0.58f, 0.58f, 0x171717);
         tire.setTranslation(x, y, z);
-        root.addChild(tire);
+        body.addChild(tire);
         Mesh hub = ModelFactory.ellipsoid(0.24f, 0.25f, 0.25f, 0xA7A7A7);
         hub.setTranslation(x, y, z);
-        root.addChild(hub);
+        body.addChild(hub);
     }
 
     private void addBox(float w, float h, float d, float x, float y, float z, int color) {
         Mesh mesh = ModelFactory.box(w, h, d, color);
         mesh.setTranslation(x, y, z);
-        root.addChild(mesh);
+        body.addChild(mesh);
     }
 
     void setPosition(float x, float y, float z) { root.setTranslation(x, y, z); }
     void setHeading(float degrees) { root.setOrientation(degrees, 0.0f, 1.0f, 0.0f); }
+    void setLean(float degrees) { body.setOrientation(degrees, 0.0f, 0.0f, 1.0f); }
     void setVisible(boolean visible) { root.setRenderingEnable(visible); }
 }
