@@ -52,8 +52,9 @@ final class ModelFactory {
         TriangleStripArray triangles = new TriangleStripArray(0, strips);
 
         Material material = new Material();
-        material.setColor(Material.DIFFUSE, color);
-        material.setColor(Material.AMBIENT, color);
+        int opaqueColor = color | 0xFF000000;
+        material.setColor(Material.DIFFUSE, opaqueColor);
+        material.setColor(Material.AMBIENT, opaqueColor);
         material.setShininess(0.0f);
 
         Appearance appearance = new Appearance();
