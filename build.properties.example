@@ -1,0 +1,9 @@
+# Copy this file to build.properties and set paths for your Java ME SDK.
+# Include the boot/API jars for CLDC 1.1, MIDP 2.0, and JSR-184 (M3G).
+# On Windows, separate multiple jar paths with semicolons.
+j2me.bootclasspath=C:/JavaME/lib/cldcapi11.jar;C:/JavaME/lib/midpapi20.jar;C:/JavaME/lib/m3g.jar
+preverify.executable=C:/JavaME/bin/preverify.exe
+
+# The build uses Java ME-era bytecode settings; use the compiler bundled with
+# your Java ME toolchain if a modern JDK rejects source 1.3 / target 1.1.
+

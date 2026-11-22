@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="CSViewer" default="package" basedir=".">
+    <property file="build.properties" />
+    <property name="src.dir" value="src" />
+    <property name="res.dir" value="res" />
+    <property name="build.dir" value="build" />
+    <property name="classes.dir" value="${build.dir}/classes" />
+    <property name="verified.dir" value="${build.dir}/verified" />
+    <property name="dist.dir" value="dist" />
+    <property name="app.name" value="CSViewer" />
+    <property name="app.version" value="1.0.0" />
+    <property name="app.vendor" value="GTA-J2ME" />
+    <property name="javac.source" value="1.3" />
+    <property name="javac.target" value="1.1" />
+
+    <target name="prepare-model">
+        <exec executable="powershell.exe" failonerror="true">
+            <arg value="-NoProfile" />
+            <arg value="-ExecutionPolicy" />
+            <arg value="Bypass" />
+            <arg value="-File" />
+            <arg value="${basedir}/tools/prepare.ps1" />
+        </exec>
+    </target>
+
+    <target name="check-config" depends="prepare-model">
+        <fail unless="j2me.bootclasspath" message="Set j2me.bootclasspath in build.properties to the CLDC, MIDP, and M3G API JARs." />
+        <fail unless="preverify.executable" message="Set preverify.executable in build.properties to the Java ME preverifier." />
+        <available file="${preverify.executable}" property="preverify.exists" />
+        <fail unless="preverify.exists" message="preverify.executable does not point to a file: ${preverify.executable}" />
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}" />
+        <delete dir="${dist.dir}" />
+    </target>
+
+    <target name="compile" depends="check-config">
+        <mkdir dir="${classes.dir}" />
+        <javac srcdir="${src.dir}" destdir="${classes.dir}"
+               bootclasspath="${j2me.bootclasspath}"
+               source="${javac.source}" target="${javac.target}"
+               encoding="UTF-8" includeantruntime="false" debug="false" />
+    </target>
+
+    <target name="preverify" depends="compile">
+        <mkdir dir="${verified.dir}" />
+        <exec executable="${preverify.executable}" failonerror="true">
+            <arg value="-classpath" />
+            <arg value="${j2me.bootclasspath}" />
+            <arg value="-d" />
+            <arg value="${verified.dir}" />
+            <arg value="${classes.dir}" />
+        </exec>
+        <copy todir="${verified.dir}">
+            <fileset dir="${res.dir}" />
+        </copy>
+    </target>
+
+    <target name="package" depends="preverify">
+        <mkdir dir="${dist.dir}" />
+        <jar destfile="${dist.dir}/${app.name}.jar" basedir="${verified.dir}">
+            <manifest>
+                <attribute name="MIDlet-Name" value="${app.name}" />
+                <attribute name="MIDlet-Version" value="${app.version}" />
+                <attribute name="MIDlet-Vendor" value="${app.vendor}" />
+                <attribute name="MIDlet-1" value="CS Model Viewer,,CSViewer" />
+                <attribute name="MicroEdition-Profile" value="MIDP-2.0" />
+                <attribute name="MicroEdition-Configuration" value="CLDC-1.1" />
+            </manifest>
+        </jar>
+        <length file="${dist.dir}/${app.name}.jar" property="app.jar.size" />
+        <echo file="${dist.dir}/${app.name}.jad">MIDlet-Name: ${app.name}
+MIDlet-Version: ${app.version}
+MIDlet-Vendor: ${app.vendor}
+MIDlet-1: CS Model Viewer,,CSViewer
+MIDlet-Jar-URL: ${app.name}.jar
+MIDlet-Jar-Size: ${app.jar.size}
+MicroEdition-Profile: MIDP-2.0
+MicroEdition-Configuration: CLDC-1.1
+</echo>
+    </target>
+</project>
+
