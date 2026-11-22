@@ -21,7 +21,7 @@ Then from the repository root run:
 ant clean package
 ```
 
-The Ant build calls `tools/prepare.ps1`, which searches the project recursively for `CS.m3g` and copies the first match to `res/CS.m3g`. It then compiles, preverifies, and packages the model and MIDlet into `dist/CSViewer.jar` and `dist/CSViewer.jad`.
+The Ant build calls `tools/prepare.ps1`, which searches the project recursively for `CS.m3g`, copies it to `res/CS.m3g`, and converts the staged header from M3G 1.1 to 1.0. This model uses 1.0 object types, while J2ME-Loader rejects 1.1 headers. The original model is left untouched. Ant then compiles, preverifies, and packages the model and MIDlet into `dist/CSViewer.jar` and `dist/CSViewer.jad`.
 
 Install `dist/CSViewer.jad` in an emulator that supports MIDP 2.0, CLDC 1.1, and JSR-184/M3G.
 
@@ -31,4 +31,5 @@ Install `dist/CSViewer.jad` in an emulator that supports MIDP 2.0, CLDC 1.1, and
 - Up/down: move the camera closer or farther away.
 
 The viewer uses the scene's `World` when present. It places the camera at a default inspection distance and wraps a top-level node in a new scene if the file has no `World`.
+
 
