@@ -64,7 +64,7 @@
                 <attribute name="MIDlet-Name" value="${app.name}" />
                 <attribute name="MIDlet-Version" value="${app.version}" />
                 <attribute name="MIDlet-Vendor" value="${app.vendor}" />
-                <attribute name="MIDlet-1" value="CS Model Viewer,,CSViewer" />
+                <attribute name="MIDlet-1" value="CS Model Viewer,,gta3me.CSViewer" />
                 <attribute name="MicroEdition-Profile" value="MIDP-2.0" />
                 <attribute name="MicroEdition-Configuration" value="CLDC-1.1" />
             </manifest>
@@ -73,7 +73,7 @@
         <echo file="${dist.dir}/${app.name}.jad">MIDlet-Name: ${app.name}
 MIDlet-Version: ${app.version}
 MIDlet-Vendor: ${app.vendor}
-MIDlet-1: CS Model Viewer,,CSViewer
+MIDlet-1: CS Model Viewer,,gta3me.CSViewer
 MIDlet-Jar-URL: ${app.name}.jar
 MIDlet-Jar-Size: ${app.jar.size}
 MicroEdition-Profile: MIDP-2.0
@@ -81,4 +81,5 @@ MicroEdition-Configuration: CLDC-1.1
 </echo>
     </target>
 </project>
+
 

@@ -1,3 +1,5 @@
+package gta3me;
+
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.lcdui.Canvas;
@@ -207,5 +209,6 @@ public final class CSViewer extends MIDlet {
         }
     }
 }
+
 
 
