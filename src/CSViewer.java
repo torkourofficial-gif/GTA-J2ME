@@ -127,7 +127,7 @@ public final class CSViewer extends MIDlet {
         private void setCameraTransform() {
             Transform transform = new Transform();
             transform.setIdentity();
-            transform.setTranslation(0.0f, 0.0f, cameraDistance);
+            transform.postTranslate(0.0f, 0.0f, cameraDistance);
             camera.setTransform(transform);
         }
 
@@ -207,4 +207,5 @@ public final class CSViewer extends MIDlet {
         }
     }
 }
+
 
