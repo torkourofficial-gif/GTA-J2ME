@@ -38,7 +38,7 @@ final class PlayerController {
         actor.addChild(model);
         world.addChild(actor);
         chaseRotation.setIdentity();
-        chaseRotation.postRotate(18.0f, 1.0f, 0.0f, 0.0f);
+        chaseRotation.postRotate(10.0f, 1.0f, 0.0f, 0.0f);
         camera.setTransform(chaseRotation);
         updateTransforms();
     }
@@ -121,21 +121,29 @@ final class PlayerController {
 
         float bob;
         float lean;
+        float scaleY;
         if (state == WALK) {
-            bob = (float) Math.abs(Math.sin(animationTime)) * 0.045f;
-            lean = (float) Math.sin(animationTime) * 3.0f;
+            float step = (float) Math.sin(animationTime);
+            float bounce = (float) Math.abs(step);
+            bob = bounce * 0.11f;
+            lean = step * 9.0f;
+            scaleY = 1.0f + bounce * 0.06f;
         } else if (state == JUMP) {
             bob = 0.0f;
-            lean = -5.0f;
+            lean = -10.0f;
+            scaleY = verticalSpeed > 0.0f ? 1.08f : 0.94f;
         } else {
-            bob = (float) Math.sin(animationTime) * 0.012f;
-            lean = (float) Math.sin(animationTime * 0.5f) * 0.8f;
+            float breath = (float) Math.sin(animationTime);
+            bob = breath * 0.025f;
+            lean = (float) Math.sin(animationTime * 0.5f) * 1.5f;
+            scaleY = 1.0f + breath * 0.025f;
         }
         model.setTranslation(0.0f, bob, 0.0f);
         model.setOrientation(lean, 0.0f, 0.0f, 1.0f);
+        model.setScale(1.0f, scaleY, 1.0f);
 
-        // Fixed-pitch chase camera follows the character across the block.
-        camera.setTranslation(x, 2.55f + jumpHeight * 0.35f, z + 4.2f);
+        // Lower shoulder-height chase camera; it stays put vertically during jumps.
+        camera.setTranslation(x, 2.0f, z + 4.5f);
     }
 
     String getStateName() {
