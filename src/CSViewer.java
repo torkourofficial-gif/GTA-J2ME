@@ -11,9 +11,6 @@ import javax.microedition.lcdui.Image;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
-import javax.microedition.m3g.Light;
-import javax.microedition.m3g.Node;
-import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
 
 /** Minimal J2ME/M3G viewer for the generated Claude OBJ mesh. */
@@ -43,14 +40,13 @@ public final class CSViewer extends MIDlet {
     private static final class ViewerCanvas extends Canvas implements Runnable {
         private final Graphics3D graphics3D = Graphics3D.getInstance();
         private World world;
-        private Node model;
+        private PlayerController controller;
         private Camera camera;
         private Thread loop;
         private volatile boolean running;
         private String error;
         private int errorPage;
-        private float angle;
-        private float cameraDistance = 2.8f;
+        private long previousFrameTime;
 
         ViewerCanvas() {
             setFullScreenMode(true);
@@ -61,14 +57,13 @@ public final class CSViewer extends MIDlet {
             try {
                 Image diffuseTexture = Image.createImage("/gta3me/playa5nu.png");
                 world = new World();
-                model = ClaudeModel.create(diffuseTexture);
-                world.addChild(model);
+                CityMap.addTo(world);
 
                 camera = new Camera();
                 world.addChild(camera);
                 world.setActiveCamera(camera);
-                setCameraTransform();
                 camera.setPerspective(45.0f, 1.0f, 0.1f, 1000.0f);
+                controller = new PlayerController(world, ClaudeModel.create(diffuseTexture), camera);
 
                 if (world.getBackground() == null) {
                     Background background = new Background();
@@ -84,13 +79,6 @@ public final class CSViewer extends MIDlet {
             }
         }
 
-        private void setCameraTransform() {
-            Transform transform = new Transform();
-            transform.setIdentity();
-            transform.postTranslate(0.0f, 0.0f, cameraDistance);
-            camera.setTransform(transform);
-        }
-
         synchronized void start() {
             if (running) {
                 return;
@@ -103,6 +91,8 @@ public final class CSViewer extends MIDlet {
         synchronized void stop() {
             running = false;
             loop = null;
+            previousFrameTime = 0L;
+            if (controller != null) controller.clearInput();
         }
 
         public void run() {
@@ -123,6 +113,11 @@ public final class CSViewer extends MIDlet {
             }
 
             try {
+                long now = System.currentTimeMillis();
+                if (previousFrameTime == 0L) previousFrameTime = now;
+                float elapsed = (now - previousFrameTime) / 1000.0f;
+                previousFrameTime = now;
+                if (controller != null) controller.update(elapsed);
                 camera.setPerspective(45.0f, (float) getWidth() / (float) getHeight(), 0.1f, 1000.0f);
                 graphics3D.bindTarget(g);
                 graphics3D.render(world);
@@ -136,7 +131,8 @@ public final class CSViewer extends MIDlet {
             }
 
             g.setColor(0xffffff);
-            g.drawString("Claude  |  Left/Right rotate  Up/Down zoom", 3, 2, Graphics.TOP | Graphics.LEFT);
+            g.drawString("ARROWS MOVE   5 JUMP   " + controller.getStateName(),
+                    3, 2, Graphics.TOP | Graphics.LEFT);
         }
 
         private void paintError(Graphics g) {
@@ -242,25 +238,18 @@ public final class CSViewer extends MIDlet {
                 repaint();
                 return;
             }
-            if (model == null || camera == null) {
-                return;
-            }
-            if (action == LEFT) {
-                angle -= 10.0f;
-                model.setOrientation(angle, 0.0f, 1.0f, 0.0f);
-            } else if (action == RIGHT) {
-                angle += 10.0f;
-                model.setOrientation(angle, 0.0f, 1.0f, 0.0f);
-            } else if (action == UP) {
-                cameraDistance -= 0.5f;
-                if (cameraDistance < 1.0f) cameraDistance = 1.0f;
-                setCameraTransform();
-            } else if (action == DOWN) {
-                cameraDistance += 0.5f;
-                if (cameraDistance > 100.0f) cameraDistance = 100.0f;
-                setCameraTransform();
+            if (controller != null) {
+                controller.setDirection(action, true);
+                if (action == FIRE || keyCode == KEY_NUM5) {
+                    controller.requestJump();
+                }
             }
             repaint();
+        }
+
+        protected void keyReleased(int keyCode) {
+            if (error != null || controller == null) return;
+            controller.setDirection(getGameAction(keyCode), false);
         }
     }
 }
