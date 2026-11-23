@@ -26,30 +26,30 @@ public final class ClaudeModel {
 
     // Eight samples per loop (plus the matching end sample) give the gait
     // enough timing detail for heel strike, compression, push-off and flight.
-    private static final float[] WALK_HIP = new float[] {-0.30f, -0.24f, -0.02f, 0.20f, 0.30f, 0.24f, 0.02f, -0.20f, -0.30f};
-    private static final float[] RUN_HIP = new float[] {-0.62f, -0.48f, -0.10f, 0.38f, 0.62f, 0.48f, 0.10f, -0.38f, -0.62f};
-    private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.60f, -0.12f, 0.48f, 0.78f, 0.60f, 0.12f, -0.48f, -0.78f};
-    private static final float[] WALK_KNEE = new float[] {0.04f, 0.10f, 0.38f, 0.22f, 0.05f, 0.08f, 0.12f, 0.18f, 0.04f};
-    private static final float[] RUN_KNEE = new float[] {0.10f, 0.18f, 0.82f, 0.46f, 0.10f, 0.16f, 0.26f, 0.38f, 0.10f};
-    private static final float[] SPRINT_KNEE = new float[] {0.14f, 0.24f, 1.02f, 0.58f, 0.12f, 0.20f, 0.32f, 0.46f, 0.14f};
-    private static final float[] WALK_ARM = new float[] {0.22f, 0.18f, 0.02f, -0.16f, -0.22f, -0.18f, -0.02f, 0.16f, 0.22f};
-    private static final float[] RUN_ARM = new float[] {0.48f, 0.38f, 0.08f, -0.34f, -0.48f, -0.38f, -0.08f, 0.34f, 0.48f};
-    private static final float[] SPRINT_ARM = new float[] {0.60f, 0.48f, 0.10f, -0.44f, -0.60f, -0.48f, -0.10f, 0.44f, 0.60f};
-    private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.15f, -0.02f, 0.12f, 0.19f, 0.15f, 0.02f, -0.12f, -0.19f};
-    private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.16f, 0.24f, 0.18f, 0.10f, 0.14f, 0.20f, 0.18f, 0.12f};
-    private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.10f, -0.02f, 0.08f, 0.13f, 0.10f, 0.02f, -0.08f, -0.13f};
-    private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.16f, 0.30f, 0.22f, 0.10f, 0.14f, 0.24f, 0.18f, 0.10f};
-    private static final float[] RUN_ELBOW_KEYS = new float[] {0.42f, 0.50f, 0.62f, 0.54f, 0.40f, 0.48f, 0.58f, 0.50f, 0.42f};
-    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.52f, 0.60f, 0.72f, 0.64f, 0.48f, 0.56f, 0.68f, 0.60f, 0.52f};
-    private static final float[] WALK_SHOULDER = new float[] {0.04f, 0.07f, 0.02f, -0.05f, -0.04f, -0.07f, -0.02f, 0.05f, 0.04f};
-    private static final float[] RUN_SHOULDER = new float[] {0.12f, 0.16f, 0.08f, -0.12f, -0.12f, -0.16f, -0.08f, 0.12f, 0.12f};
-    private static final float[] SPRINT_SHOULDER = new float[] {0.18f, 0.22f, 0.12f, -0.18f, -0.18f, -0.22f, -0.12f, 0.18f, 0.18f};
-    private static final float[] WALK_WRIST = new float[] {0.02f, 0.04f, 0.08f, 0.04f, -0.02f, -0.04f, -0.08f, -0.04f, 0.02f};
-    private static final float[] RUN_WRIST = new float[] {0.08f, 0.12f, 0.18f, 0.10f, -0.08f, -0.12f, -0.18f, -0.10f, 0.08f};
-    private static final float[] SPRINT_WRIST = new float[] {0.12f, 0.16f, 0.22f, 0.12f, -0.12f, -0.16f, -0.22f, -0.12f, 0.12f};
-    private static final float[] WALK_ANKLE = new float[] {0.02f, -0.08f, -0.16f, 0.08f, 0.18f, 0.10f, -0.04f, -0.10f, 0.02f};
-    private static final float[] RUN_ANKLE = new float[] {0.10f, -0.12f, -0.30f, 0.18f, 0.34f, 0.18f, -0.08f, -0.18f, 0.10f};
-    private static final float[] SPRINT_ANKLE = new float[] {0.14f, -0.16f, -0.38f, 0.22f, 0.42f, 0.22f, -0.10f, -0.22f, 0.14f};
+    private static final float[] WALK_HIP = new float[] {-0.30f, -0.28f, -0.24f, -0.14f, -0.02f, 0.10f, 0.20f, 0.27f, 0.30f, 0.29f, 0.24f, 0.14f, 0.02f, -0.10f, -0.20f, -0.27f, -0.30f};
+    private static final float[] RUN_HIP = new float[] {-0.62f, -0.58f, -0.48f, -0.31f, -0.10f, 0.14f, 0.38f, 0.55f, 0.62f, 0.60f, 0.48f, 0.31f, 0.10f, -0.14f, -0.38f, -0.55f, -0.62f};
+    private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.73f, -0.60f, -0.39f, -0.12f, 0.18f, 0.48f, 0.69f, 0.78f, 0.75f, 0.60f, 0.39f, 0.12f, -0.18f, -0.48f, -0.69f, -0.78f};
+    private static final float[] WALK_KNEE = new float[] {0.04f, 0.06f, 0.10f, 0.25f, 0.38f, 0.34f, 0.22f, 0.10f, 0.05f, 0.05f, 0.08f, 0.12f, 0.12f, 0.14f, 0.18f, 0.12f, 0.04f};
+    private static final float[] RUN_KNEE = new float[] {0.10f, 0.12f, 0.18f, 0.52f, 0.82f, 0.72f, 0.46f, 0.20f, 0.10f, 0.10f, 0.14f, 0.20f, 0.26f, 0.30f, 0.38f, 0.22f, 0.10f};
+    private static final float[] SPRINT_KNEE = new float[] {0.14f, 0.17f, 0.24f, 0.66f, 1.02f, 0.88f, 0.58f, 0.26f, 0.12f, 0.12f, 0.17f, 0.25f, 0.32f, 0.38f, 0.46f, 0.27f, 0.14f};
+    private static final float[] WALK_ARM = new float[] {0.22f, 0.21f, 0.18f, 0.10f, 0.02f, -0.08f, -0.16f, -0.21f, -0.22f, -0.21f, -0.18f, -0.10f, -0.02f, 0.08f, 0.16f, 0.21f, 0.22f};
+    private static final float[] RUN_ARM = new float[] {0.48f, 0.45f, 0.38f, 0.23f, 0.08f, -0.13f, -0.34f, -0.45f, -0.48f, -0.46f, -0.38f, -0.23f, -0.08f, 0.13f, 0.34f, 0.45f, 0.48f};
+    private static final float[] SPRINT_ARM = new float[] {0.60f, 0.56f, 0.48f, 0.29f, 0.10f, -0.17f, -0.44f, -0.56f, -0.60f, -0.57f, -0.48f, -0.29f, -0.10f, 0.17f, 0.44f, 0.56f, 0.60f};
+    private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.18f, -0.15f, -0.09f, -0.02f, 0.06f, 0.12f, 0.17f, 0.19f, 0.18f, 0.15f, 0.09f, 0.02f, -0.06f, -0.12f, -0.17f, -0.19f};
+    private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.13f, 0.16f, 0.21f, 0.24f, 0.22f, 0.18f, 0.13f, 0.10f, 0.11f, 0.14f, 0.18f, 0.20f, 0.19f, 0.18f, 0.15f, 0.12f};
+    private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.12f, -0.10f, -0.06f, -0.02f, 0.04f, 0.08f, 0.12f, 0.13f, 0.12f, 0.10f, 0.06f, 0.02f, -0.04f, -0.08f, -0.12f, -0.13f};
+    private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.12f, 0.16f, 0.24f, 0.30f, 0.28f, 0.22f, 0.14f, 0.10f, 0.10f, 0.13f, 0.18f, 0.24f, 0.22f, 0.18f, 0.13f, 0.10f};
+    private static final float[] RUN_ELBOW_KEYS = new float[] {0.42f, 0.45f, 0.50f, 0.57f, 0.62f, 0.60f, 0.54f, 0.46f, 0.40f, 0.41f, 0.46f, 0.52f, 0.58f, 0.56f, 0.50f, 0.45f, 0.42f};
+    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.52f, 0.55f, 0.60f, 0.68f, 0.72f, 0.70f, 0.64f, 0.55f, 0.48f, 0.49f, 0.54f, 0.62f, 0.68f, 0.66f, 0.60f, 0.55f, 0.52f};
+    private static final float[] WALK_SHOULDER = new float[] {0.04f, 0.05f, 0.07f, 0.05f, 0.02f, -0.02f, -0.05f, -0.06f, -0.04f, -0.05f, -0.07f, -0.05f, -0.02f, 0.02f, 0.05f, 0.06f, 0.04f};
+    private static final float[] RUN_SHOULDER = new float[] {0.12f, 0.14f, 0.16f, 0.13f, 0.08f, -0.02f, -0.12f, -0.15f, -0.12f, -0.14f, -0.16f, -0.13f, -0.08f, 0.02f, 0.12f, 0.15f, 0.12f};
+    private static final float[] SPRINT_SHOULDER = new float[] {0.18f, 0.20f, 0.22f, 0.18f, 0.12f, -0.04f, -0.18f, -0.21f, -0.18f, -0.20f, -0.22f, -0.18f, -0.12f, 0.04f, 0.18f, 0.21f, 0.18f};
+    private static final float[] WALK_WRIST = new float[] {0.02f, 0.03f, 0.04f, 0.06f, 0.08f, 0.07f, 0.04f, 0.00f, -0.02f, -0.03f, -0.04f, -0.06f, -0.08f, -0.07f, -0.04f, 0.00f, 0.02f};
+    private static final float[] RUN_WRIST = new float[] {0.08f, 0.09f, 0.12f, 0.15f, 0.18f, 0.16f, 0.10f, 0.02f, -0.08f, -0.09f, -0.12f, -0.15f, -0.18f, -0.16f, -0.10f, -0.02f, 0.08f};
+    private static final float[] SPRINT_WRIST = new float[] {0.12f, 0.14f, 0.16f, 0.19f, 0.22f, 0.19f, 0.12f, 0.02f, -0.12f, -0.14f, -0.16f, -0.19f, -0.22f, -0.19f, -0.12f, -0.02f, 0.12f};
+    private static final float[] WALK_ANKLE = new float[] {0.02f, -0.02f, -0.08f, -0.13f, -0.16f, -0.04f, 0.08f, 0.16f, 0.18f, 0.15f, 0.10f, 0.02f, -0.04f, -0.08f, -0.10f, -0.04f, 0.02f};
+    private static final float[] RUN_ANKLE = new float[] {0.10f, 0.02f, -0.12f, -0.24f, -0.30f, -0.06f, 0.18f, 0.30f, 0.34f, 0.30f, 0.18f, 0.02f, -0.08f, -0.14f, -0.18f, -0.02f, 0.10f};
+    private static final float[] SPRINT_ANKLE = new float[] {0.14f, 0.04f, -0.16f, -0.30f, -0.38f, -0.08f, 0.22f, 0.38f, 0.42f, 0.37f, 0.22f, 0.04f, -0.10f, -0.17f, -0.22f, -0.04f, 0.14f};
     private static final float[] START_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
     private static final float[] START_HIP = new float[] {0.0f, -0.16f, -0.34f, -0.22f};
     private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
@@ -202,11 +202,18 @@ public final class ClaudeModel {
 
             float torsoLean = moving ? (pose == SPRINT ? 0.28f : (pose == RUN ? 0.22f
                     : (pose == BACKWARD ? -0.025f : 0.06f))) * movement : 0.0f;
-            float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.16f * movement : 0.0f;
-            float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.055f * movement : 0.0f;
+            // Counter-rotation follows the actual left/right leg separation,
+            // so the torso reacts more strongly to a running stride than a walk.
+            float strideDifference = leftHip - rightHip;
+            float torsoTwist = moving ? -strideDifference * 0.075f : 0.0f;
+            float pelvisRoll = moving ? strideDifference * 0.028f : 0.0f;
             float neckCounter = -torsoTwist * 0.55f;
             float chestLean = torsoLean * 0.58f;
             float chestTwist = torsoTwist * 0.62f;
+            float pelvisShift = moving ? (float) Math.sin(phase * 2.0f) * 0.014f * movement : 0.0f;
+            float bodyCompression = moving ? (pose == WALK
+                    ? (float) Math.sin(phase * 2.0f) * 0.004f
+                    : Math.max(0.0f, (float) Math.sin(phase * 2.0f)) * (pose == SPRINT ? 0.014f : 0.010f)) : 0.0f;
             float shoulderLift = moving ? (float) Math.sin(phase * 2.0f) * (pose == SPRINT ? 0.035f : 0.018f) * movement : 0.0f;
 
             // GTA III uses a short STARTWALK clip before the repeating walk/run cycles.
@@ -333,6 +340,10 @@ public final class ClaudeModel {
                         * clamp((0.20f - y) / 0.17f) * clamp((y + 0.16f) / 0.18f);
                 float headWeight = clamp((y - 0.58f) / 0.17f) * clamp((0.23f - absX) / 0.14f);
                 point[0] = x; point[1] = y; point[2] = z;
+                // Small side-to-side weight transfer and vertical compression
+                // keep the pelvis from behaving like a rigid pivot.
+                point[0] += pelvisShift * pelvisWeight;
+                point[1] += bodyCompression * (torsoWeight + pelvisWeight * 0.65f);
 
                 rotateX(-0.12f, -0.06f, 0.0f, sl, cl, lw);
                 rotateX(0.12f, -0.06f, 0.0f, sr, cr, rw);
