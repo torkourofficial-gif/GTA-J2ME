@@ -159,7 +159,7 @@ final class PlayerController {
 
             boolean movingBackward = inputZ < 0.0f;
             if (movingBackward) backwardMotion = true;
-            else if (inputZ > 0.0f) backwardMotion = false;
+            else if (inputZ > 0.0f || inputX != 0.0f) backwardMotion = false;
             float targetYaw = directionAngle(worldInputX, worldInputZ);
             if (movingBackward) targetYaw += 180.0f;
             yaw = turnTowards(yaw, targetYaw, TURN_RATE * elapsed);
