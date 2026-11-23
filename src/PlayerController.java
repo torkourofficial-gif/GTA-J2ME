@@ -147,7 +147,7 @@ final class PlayerController {
             float cameraSin = (float) Math.sin(cameraRadians);
             float cameraCos = (float) Math.cos(cameraRadians);
             float worldInputX = inputX * cameraCos + inputZ * cameraSin;
-            float worldInputZ = -inputX * cameraSin - inputZ * cameraCos;
+            float worldInputZ = -inputX * cameraSin + inputZ * cameraCos;
 
             float targetYaw = (float) Math.atan2(worldInputX, worldInputZ) * RAD_TO_DEG;
             yaw = turnTowards(yaw, targetYaw, TURN_RATE * elapsed);
@@ -170,7 +170,7 @@ final class PlayerController {
             float cameraSin = (float) Math.sin(cameraRadians);
             float cameraCos = (float) Math.cos(cameraRadians);
             targetVelocityX = (inputX * cameraCos + inputZ * cameraSin) * targetSpeed;
-            targetVelocityZ = (-inputX * cameraSin - inputZ * cameraCos) * targetSpeed;
+            targetVelocityZ = (-inputX * cameraSin + inputZ * cameraCos) * targetSpeed;
         }
 
         // Approach the requested velocity instead of snapping to full speed.
