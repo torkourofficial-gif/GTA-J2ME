@@ -43,7 +43,7 @@ final class CityMap {
         // continuous grid and keep every building reachable on foot.
         // Keep the terrain below every street surface so their depth buffers
         // never compete at the same height.
-        addTexturedBox(world, 0, -0.20f, 0, 120, 0.30f, 120, 0x687254, grassTexture, 2.5f);
+        addTexturedBox(world, 0, -0.155f, 0, 120, 0.30f, 120, 0x687254, grassTexture, 2.5f);
         for (int road = -60; road <= 60; road += 40) {
             // X-axis roads are continuous. Z-axis roads are split between
             // them, preventing coplanar overlap at every four-way junction.
