@@ -12,6 +12,8 @@ To regenerate the Java mesh after changing the OBJ, run:
 python tools/obj_to_java.py assets/claude.obj src/ClaudeModel.java
 ```
 
+The generator fills large mesh arrays in small helper methods to stay below Java's per-method bytecode limit.
+
 Keep the PNG beside the OBJ for Blender and in the NetBeans resource folder at `res/gta3me/playa5nu.png` so it is packaged at `/gta3me/playa5nu.png` in the JAR. The MTL's diffuse map points to `playa5nu.png`.
 
 ## Build

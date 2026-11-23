@@ -77,6 +77,33 @@ def arm_side_by_source_vertex(positions, faces):
     return arm_sides
 
 
+def append_chunked_array(source, name, java_type, values, chunk_size=96):
+    """Emit small fill methods so no Java initializer exceeds the 64 KB limit."""
+    method = "create" + name
+    source.extend((
+        "    private static final " + java_type + "[] " + name + " = " + method + "();",
+        "    private static " + java_type + "[] " + method + "() {",
+        "        " + java_type + "[] values = new " + java_type + "[" + str(len(values)) + "];",
+    ))
+    chunks = (len(values) + chunk_size - 1) // chunk_size
+    for chunk in range(chunks):
+        source.append("        fill" + name + str(chunk) + "(values);")
+    source.extend(("        return values;", "    }"))
+
+    cast = "(" + java_type + ") " if java_type in ("short", "byte") else ""
+    for chunk in range(chunks):
+        start = chunk * chunk_size
+        end = min(start + chunk_size, len(values))
+        source.extend((
+            "    private static void fill" + name + str(chunk) + "(" + java_type + "[] values) {",
+        ))
+        source.extend(
+            "        values[" + str(i) + "] = " + cast + str(values[i]) + ";"
+            for i in range(start, end)
+        )
+        source.append("    }")
+
+
 def generate(obj_path, java_path):
     positions, texcoords, normals, vertices, indices, faces = read_obj(obj_path)
     source_arm_sides = arm_side_by_source_vertex(positions, faces)
@@ -224,21 +251,12 @@ def generate(obj_path, java_path):
         "    }", ""
     ]
 
-    source.append("    private static final short[] POSITIONS = new short[] {")
-    source.extend("        " + ", ".join(map(str, pshort[i:i + 18])) + ("," if i + 18 < len(pshort) else "") for i in range(0, len(pshort), 18))
-    source.append("    };")
-    source.append("    private static final short[] TEXCOORDS = new short[] {")
-    source.extend("        " + ", ".join(map(str, uvshort[i:i + 18])) + ("," if i + 18 < len(uvshort) else "") for i in range(0, len(uvshort), 18))
-    source.append("    };")
-    source.append("    private static final short[] NORMALS = new short[] {")
-    source.extend("        " + ", ".join(map(str, nshort[i:i + 18])) + ("," if i + 18 < len(nshort) else "") for i in range(0, len(nshort), 18))
-    source.append("    };")
-    source.append("    private static final byte[] ARM_SIDE = new byte[] {")
-    source.extend("        " + ", ".join(map(str, arm_sides[i:i + 36])) + ("," if i + 36 < len(arm_sides) else "") for i in range(0, len(arm_sides), 36))
-    source.append("    };")
-    source.append("    private static final int[] INDICES = new int[] {")
-    source.extend("        " + ", ".join(map(str, indices[i:i + 18])) + ("," if i + 18 < len(indices) else "") for i in range(0, len(indices), 18))
-    source.extend(("    };", "}"))
+    append_chunked_array(source, "POSITIONS", "short", pshort)
+    append_chunked_array(source, "TEXCOORDS", "short", uvshort)
+    append_chunked_array(source, "NORMALS", "short", nshort)
+    append_chunked_array(source, "ARM_SIDE", "byte", arm_sides)
+    append_chunked_array(source, "INDICES", "int", indices)
+    source.append("}")
     java_path.parent.mkdir(parents=True, exist_ok=True)
     java_path.write_text("\n".join(source) + "\n", encoding="utf-8")
     print("Generated %s (%d vertices, %d triangles)" % (java_path, len(vertices), len(indices) // 3))
