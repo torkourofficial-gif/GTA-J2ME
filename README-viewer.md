@@ -23,7 +23,7 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 ## Controls
 
 - D-pad: rotate the camera continuously while held; movement stays aligned to the map axes.
-- Keypad 2: walk/run forward; keypad 8: walk backward without turning away from the facing direction; 4/6: strafe; 5 or the device's fire key: jump.
+- Keypad 2: walk/run forward; keypad 8: turn around and move in the opposite direction; 4/6: strafe; 5 or the device's fire key: jump.
 - Keypad 1/3: zoom the camera.
 - The HUD reports the current IDLE, WALK, RUN, SPRINT, BACKWARD, JUMP, or LAND state.
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
