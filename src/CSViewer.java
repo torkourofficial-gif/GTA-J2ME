@@ -141,7 +141,7 @@ public final class CSViewer extends MIDlet {
 
             g.setColor(0xffffff);
             Font hudFont = g.getFont();
-            g.drawString("DPAD CAM  2/4/6/8 MOVE",
+            g.drawString("DPAD CAM  2 FWD  8 BACK  4/6 STRAFE",
                     3, 2, Graphics.TOP | Graphics.LEFT);
             g.drawString("5 JUMP  7 SPRINT  1/3 ZOOM  " + controller.getStateName(), 3,
                     hudFont.getHeight() + 3, Graphics.TOP | Graphics.LEFT);
