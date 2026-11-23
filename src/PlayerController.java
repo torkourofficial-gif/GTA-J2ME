@@ -160,7 +160,7 @@ final class PlayerController {
             yaw = turnTowards(yaw, targetYaw, TURN_RATE * elapsed);
         }
 
-        boolean sprinting = sprint && hasInput && inputZ >= 0.0f && stamina > 0.0f;
+        boolean sprinting = sprint && hasInput && stamina > 0.0f;
         if (lastSprinting && !hasInput) {
             sprintStopPending = true;
         }
