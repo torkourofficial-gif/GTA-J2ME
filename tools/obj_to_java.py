@@ -7,7 +7,7 @@ import sys
 
 def read_obj(path):
     positions, texcoords, normals = [], [], []
-    vertices, indices, seen = [], [], {}
+    vertices, indices, faces, seen = [], [], [], {}
     for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         line = raw.strip()
         if not line or line.startswith("#"):
@@ -23,24 +23,64 @@ def read_obj(path):
         elif kind == "f":
             if len(values) != 3:
                 raise ValueError("line %d: faces must be triangulated" % line_no)
+            face = []
             for value in values:
                 parts = value.split("/")
                 if len(parts) != 3 or not all(parts):
                     raise ValueError("line %d: expected v/vt/vn indices" % line_no)
                 key = tuple(int(part) - 1 for part in parts)
+                face.append(key[0])
                 if key not in seen:
                     seen[key] = len(vertices)
                     vertices.append(key)
                 indices.append(seen[key])
+            faces.append(face)
     if not vertices:
         raise ValueError("OBJ contains no faces")
     if len(vertices) > 65535:
         raise ValueError("M3G VertexArray limit exceeded")
-    return positions, texcoords, normals, vertices, indices
+    return positions, texcoords, normals, vertices, indices, faces
+
+
+def arm_side_by_source_vertex(positions, faces):
+    """Classify disconnected arm shells by their OBJ connectivity and center."""
+    neighbors = [set() for _ in positions]
+    for face in faces:
+        for i, vertex in enumerate(face):
+            other = face[(i + 1) % len(face)]
+            neighbors[vertex].add(other)
+            neighbors[other].add(vertex)
+
+    arm_sides = [0] * len(positions)
+    visited = set()
+    for start in range(len(positions)):
+        if start in visited:
+            continue
+        stack = [start]
+        visited.add(start)
+        component = []
+        while stack:
+            vertex = stack.pop()
+            component.append(vertex)
+            for other in neighbors[vertex]:
+                if other not in visited:
+                    visited.add(other)
+                    stack.append(other)
+
+        center_x = sum(positions[i][0] for i in component) / float(len(component))
+        center_y = sum(positions[i][1] for i in component) / float(len(component))
+        # In this OBJ, each arm is a separate shell outside the torso.
+        if abs(center_x) > 0.24 and -0.18 < center_y < 0.50:
+            side = -1 if center_x < 0.0 else 1
+            for vertex in component:
+                arm_sides[vertex] = side
+    return arm_sides
 
 
 def generate(obj_path, java_path):
-    positions, texcoords, normals, vertices, indices = read_obj(obj_path)
+    positions, texcoords, normals, vertices, indices, faces = read_obj(obj_path)
+    source_arm_sides = arm_side_by_source_vertex(positions, faces)
+    arm_sides = [source_arm_sides[vi] for vi, ti, ni in vertices]
     xyz, uv, nrm = [], [], []
     for vi, ti, ni in vertices:
         x, y, z = positions[vi]
@@ -119,8 +159,8 @@ def generate(obj_path, java_path):
         "            float rightArm = -leftArm;",
         "            float leftKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 1.0f)) * 0.42f : (pose == JUMP ? 0.55f : 0.0f);",
         "            float rightKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 4.14f)) * 0.42f : (pose == JUMP ? 0.55f : 0.0f);",
-        "            float leftLift = pose == JUMP ? -2.4f : 0.0f;",
-        "            float rightLift = pose == JUMP ? 2.4f : 0.0f;",
+            "            float leftLift = pose == JUMP ? -1.3f : 0.0f;",
+            "            float rightLift = pose == JUMP ? 1.3f : 0.0f;",
         "            float sl = (float) Math.sin(leftLeg), cl = (float) Math.cos(leftLeg);",
         "            float sr = (float) Math.sin(rightLeg), cr = (float) Math.cos(rightLeg);",
         "            float sal = (float) Math.sin(leftArm), cal = (float) Math.cos(leftArm);",
@@ -143,11 +183,11 @@ def generate(obj_path, java_path):
         "                float kneeBase = clamp((-y - 0.47f) / 0.20f) * center;",
         "                float lkw = kneeBase * (1.0f - split);",
         "                float rkw = kneeBase * split;",
-        # Arm islands end around the hips in this OBJ. Stop their weights above
-        # the thigh and foot regions so arm swings cannot drag those vertices.
-        "                float armBand = clamp((absX - 0.13f) / 0.12f) * clamp((0.78f - y) / 0.20f) * clamp((y + 0.18f) / 0.12f);",
-        "                float law = armBand * (x < 0.0f ? 1.0f : 0.0f);",
-        "                float raw = armBand * (x > 0.0f ? 1.0f : 0.0f);",
+        # The connectivity mask keeps arm deformation out of the leg shells.
+            "                int armSide = ARM_SIDE[i / 3];",
+            "                float armWeight = armSide == 0 ? 0.0f : clamp((absX - 0.15f) / 0.14f);",
+            "                float law = armSide < 0 ? armWeight : 0.0f;",
+            "                float raw = armSide > 0 ? armWeight : 0.0f;",
         "                point[0] = x; point[1] = y; point[2] = z;",
         "                rotateX(-0.12f, -0.06f, 0.0f, sl, cl, lw);",
         "                rotateX(0.12f, -0.06f, 0.0f, sr, cr, rw);",
@@ -192,6 +232,9 @@ def generate(obj_path, java_path):
     source.append("    };")
     source.append("    private static final short[] NORMALS = new short[] {")
     source.extend("        " + ", ".join(map(str, nshort[i:i + 18])) + ("," if i + 18 < len(nshort) else "") for i in range(0, len(nshort), 18))
+    source.append("    };")
+    source.append("    private static final byte[] ARM_SIDE = new byte[] {")
+    source.extend("        " + ", ".join(map(str, arm_sides[i:i + 36])) + ("," if i + 36 < len(arm_sides) else "") for i in range(0, len(arm_sides), 36))
     source.append("    };")
     source.append("    private static final int[] INDICES = new int[] {")
     source.extend("        " + ", ".join(map(str, indices[i:i + 18])) + ("," if i + 18 < len(indices) else "") for i in range(0, len(indices), 18))

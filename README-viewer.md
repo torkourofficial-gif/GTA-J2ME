@@ -26,4 +26,4 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 - The HUD reports the current IDLE, WALK, or JUMP state.
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
 
-Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig assigns soft vertex weights to the legs and arms and deforms those regions for idle, walking, and jumping. This is a lightweight runtime rig rather than an authored Blender armature.
+Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig identifies the separate arm shells by OBJ connectivity, then deforms them independently from the leg and foot vertices. It animates idle, walking, and jumping as a lightweight runtime rig rather than an authored Blender armature.
