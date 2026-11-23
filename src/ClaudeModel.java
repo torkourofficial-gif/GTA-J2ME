@@ -205,6 +205,8 @@ public final class ClaudeModel {
             float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.16f * movement : 0.0f;
             float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.055f * movement : 0.0f;
             float neckCounter = -torsoTwist * 0.55f;
+            float chestLean = torsoLean * 0.58f;
+            float chestTwist = torsoTwist * 0.62f;
             float shoulderLift = moving ? (float) Math.sin(phase * 2.0f) * (pose == SPRINT ? 0.035f : 0.018f) * movement : 0.0f;
 
             // GTA III uses a short STARTWALK clip before the repeating walk/run cycles.
@@ -294,8 +296,10 @@ public final class ClaudeModel {
             float spr = (float) Math.sin(pelvisRoll), cpr = (float) Math.cos(pelvisRoll);
             float sh = (float) Math.sin(headCounter), ch = (float) Math.cos(headCounter);
             float sht = (float) Math.sin(headTurn), cht = (float) Math.cos(headTurn);
+            float scl = (float) Math.sin(chestLean), ccl = (float) Math.cos(chestLean);
+            float sct = (float) Math.sin(chestTwist), cct = (float) Math.cos(chestTwist);
             float ssl = (float) Math.sin(leftShoulder + shoulderLift), csl = (float) Math.cos(leftShoulder + shoulderLift);
-            float ssr = (float) Math.sin(rightShoulder + shoulderLift), csr = (float) Math.cos(rightShoulder + shoulderLift);
+            float ssr = (float) Math.sin(rightShoulder - shoulderLift), csr = (float) Math.cos(rightShoulder - shoulderLift);
             float swl = (float) Math.sin(leftWrist), cwl = (float) Math.cos(leftWrist);
             float swr = (float) Math.sin(rightWrist), cwr = (float) Math.cos(rightWrist);
             float jumpLeftArmSin = (float) Math.sin(-0.65f), jumpLeftArmCos = (float) Math.cos(-0.65f);
@@ -323,6 +327,8 @@ public final class ClaudeModel {
                 float shoulderRegion = clamp((0.48f - y) / 0.14f);
                 float torsoWeight = clamp((0.36f - absX) / 0.19f)
                         * clamp((y + 0.04f) / 0.20f) * clamp((0.72f - y) / 0.18f);
+                float chestWeight = clamp((0.34f - absX) / 0.20f)
+                        * clamp((y - 0.30f) / 0.12f) * clamp((0.68f - y) / 0.16f);
                 float pelvisWeight = clamp((0.27f - absX) / 0.16f)
                         * clamp((0.20f - y) / 0.17f) * clamp((y + 0.16f) / 0.18f);
                 float headWeight = clamp((y - 0.58f) / 0.17f) * clamp((0.23f - absX) / 0.14f);
@@ -336,6 +342,8 @@ public final class ClaudeModel {
                 rotateX(0.12f, -0.68f, 0.0f, sran, cran, rfw);
                 rotateX(0.0f, 0.16f, 0.0f, st, ct, torsoWeight);
                 rotateY(0.0f, 0.16f, 0.0f, stw, ctw, torsoWeight);
+                rotateX(0.0f, 0.42f, 0.0f, scl, ccl, chestWeight);
+                rotateY(0.0f, 0.42f, 0.0f, sct, cct, chestWeight);
                 rotateZ(0.0f, -0.02f, 0.0f, spr, cpr, pelvisWeight);
                 // Clavicle/shoulder, upper arm, elbow, forearm and wrist are
                 // separate deformation zones rather than one rigid arm swing.
