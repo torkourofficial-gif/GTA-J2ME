@@ -337,13 +337,20 @@ public final class ClaudeModel {
                 float elbowRegion = clamp((0.39f - y) / 0.20f);
                 float wristRegion = clamp((0.22f - y) / 0.12f);
                 float shoulderRegion = clamp((0.48f - y) / 0.14f);
+                // Stop torso/chest deformation below the jawline. Their old
+                // upper fade overlapped the lower head and pulled the face.
                 float torsoWeight = clamp((0.36f - absX) / 0.19f)
-                        * clamp((y + 0.04f) / 0.20f) * clamp((0.72f - y) / 0.18f);
+                        * clamp((y + 0.04f) / 0.20f) * (1.0f - smooth(clamp((y - 0.48f) / 0.10f)));
                 float chestWeight = clamp((0.34f - absX) / 0.20f)
-                        * clamp((y - 0.30f) / 0.12f) * clamp((0.68f - y) / 0.16f);
+                        * clamp((y - 0.30f) / 0.12f) * (1.0f - smooth(clamp((y - 0.53f) / 0.09f)));
                 float pelvisWeight = clamp((0.27f - absX) / 0.16f)
                         * clamp((0.20f - y) / 0.17f) * clamp((y + 0.16f) / 0.18f);
-                float headWeight = clamp((y - 0.58f) / 0.17f) * clamp((0.23f - absX) / 0.14f);
+                // The head is a single rigid influence from the neck upward.
+                // Only the narrow neck transition fades; facial and hair vertices
+                // no longer receive different rotation amounts.
+                float headHeight = smooth(clamp((y - 0.52f) / 0.12f));
+                float headWidth = 1.0f - smooth(clamp((absX - 0.27f) / 0.055f));
+                float headWeight = headHeight * headWidth;
                 point[0] = x; point[1] = y; point[2] = z;
                 // Small side-to-side weight transfer and vertical compression
                 // keep the pelvis from behaving like a rigid pivot.
