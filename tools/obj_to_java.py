@@ -256,11 +256,11 @@ def generate(obj_path, java_path):
 
     data_source.extend((
         '    private static final String BASE64_DIGITS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";',
-        "    private static final short[] POSITIONS = decodeShorts(" + position_data + ", " + str(len(pshort)) + ");",
-        "    private static final short[] TEXCOORDS = decodeShorts(" + texcoord_data + ", " + str(len(uvshort)) + ");",
-        "    private static final short[] NORMALS = decodeShorts(" + normal_data + ", " + str(len(nshort)) + ");",
-        "    private static final byte[] ARM_SIDE = decodeBytes(" + arm_data + ", " + str(len(arm_sides)) + ");",
-        "    private static final int[] INDICES = decodeUnsignedShorts(" + index_data + ", " + str(len(indices)) + ");",
+        "    static final short[] POSITIONS = decodeShorts(" + position_data + ", " + str(len(pshort)) + ");",
+        "    static final short[] TEXCOORDS = decodeShorts(" + texcoord_data + ", " + str(len(uvshort)) + ");",
+        "    static final short[] NORMALS = decodeShorts(" + normal_data + ", " + str(len(nshort)) + ");",
+        "    static final byte[] ARM_SIDE = decodeBytes(" + arm_data + ", " + str(len(arm_sides)) + ");",
+        "    static final int[] INDICES = decodeUnsignedShorts(" + index_data + ", " + str(len(indices)) + ");",
         "    static { " + position_data + " = null; " + texcoord_data + " = null; " + normal_data + " = null; " + arm_data + " = null; " + index_data + " = null; }",
         "    private static byte[] decodeBase64(String[] chunks, int length) {",
         "        byte[] result = new byte[length]; int out = 0; int buffer = 0; int bits = 0;",

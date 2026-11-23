@@ -44,11 +44,11 @@ final class ClaudeModelData {
         "AHUAMQG0AbQAEQHuARsBHQGAAFkBNwK3ATcBaQHyAfABGAHxATcB8gK3AWkB8AHyAfEBSQHyAAUAgwCFAfYCuAFpAKICNgBrAfgBmQK5ArkAvAH4ALwBpgGaAaYAbwGaAfkCugH6ARoAVABWANsAKwBWAFYA6wDbABIAFAEGAJIBkQEdAZECnAF/ApwA7AF/AR0BHAASARwAEwASAZEBfwEdABIBBgCSAdYBvwGzAf0BfgH+AX4CXQC7Af4BfgC7Af4CYwH8AaMCoQGkAMkAOgA8AJoCuwFXATUCfgH/AgUCBwICAgcCAAICACACvADvAQEAIAECAr0CtgK+ArYAqwK+ALIBDQIEAgkCvwIFAgUCAgIKAsACwQCcAsECTwCcAgkCBQIKAgoCwACcAJwB7QIKAsICwwINAsMCCwINAg8CxAIQAhACxQLGAsUCxwLGAsYCDgIQAsgCyQLKAsoCywLIAssCEgLIAsgCEgIUAhUCzAEBAQEBAwDzAVICzQFTAs0CFgFTApABYQIXAhcCzgIYAhkCkAIXAU0AJAAmAZQBlgFc"
     };
     private static final String BASE64_DIGITS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    private static final short[] POSITIONS = decodeShorts(POSITIONS_DATA, 2157);
-    private static final short[] TEXCOORDS = decodeShorts(TEXCOORDS_DATA, 1438);
-    private static final short[] NORMALS = decodeShorts(NORMALS_DATA, 2157);
-    private static final byte[] ARM_SIDE = decodeBytes(ARM_SIDE_DATA, 719);
-    private static final int[] INDICES = decodeUnsignedShorts(INDICES_DATA, 2310);
+    static final short[] POSITIONS = decodeShorts(POSITIONS_DATA, 2157);
+    static final short[] TEXCOORDS = decodeShorts(TEXCOORDS_DATA, 1438);
+    static final short[] NORMALS = decodeShorts(NORMALS_DATA, 2157);
+    static final byte[] ARM_SIDE = decodeBytes(ARM_SIDE_DATA, 719);
+    static final int[] INDICES = decodeUnsignedShorts(INDICES_DATA, 2310);
     static { POSITIONS_DATA = null; TEXCOORDS_DATA = null; NORMALS_DATA = null; ARM_SIDE_DATA = null; INDICES_DATA = null; }
     private static byte[] decodeBase64(String[] chunks, int length) {
         byte[] result = new byte[length]; int out = 0; int buffer = 0; int bits = 0;
