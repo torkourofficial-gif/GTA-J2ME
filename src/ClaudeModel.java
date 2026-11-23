@@ -309,9 +309,23 @@ public final class ClaudeModel {
             if (time >= times[last]) return values[last];
             for (int i = 0; i < last; i++) {
                 if (time <= times[i + 1]) {
-                    float amount = (time - times[i]) / (times[i + 1] - times[i]);
-                    amount = smooth(amount);
-                    return values[i] + (values[i + 1] - values[i]) * amount;
+                    float duration = times[i + 1] - times[i];
+                    float t = (time - times[i]) / duration;
+                    float p0 = values[i], p1 = values[i + 1];
+                    float tangent0 = 0.0f, tangent1 = 0.0f;
+                    if (i > 0) {
+                        tangent0 = (values[i + 1] - values[i - 1])
+                                / (times[i + 1] - times[i - 1]) * duration;
+                    }
+                    if (i + 2 <= last) {
+                        tangent1 = (values[i + 2] - values[i])
+                                / (times[i + 2] - times[i]) * duration;
+                    }
+                    float t2 = t * t, t3 = t2 * t;
+                    return (2.0f * t3 - 3.0f * t2 + 1.0f) * p0
+                            + (t3 - 2.0f * t2 + t) * tangent0
+                            + (-2.0f * t3 + 3.0f * t2) * p1
+                            + (t3 - t2) * tangent1;
                 }
             }
             return values[last];
