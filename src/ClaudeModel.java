@@ -71,56 +71,119 @@ public final class ClaudeModel {
         }
         public Mesh getMesh() { return mesh; }
 
-        public void animate(int pose, float phase) {
-            float cycle = (float) Math.sin(phase);
+        public void animate(int pose, float phase, float gaitBlend) {
+            float movement = clamp(gaitBlend);
+            boolean moving = pose == WALK || pose == RUN || pose == SPRINT;
             float idleSway = (float) Math.sin(phase * 0.55f);
-            boolean running = pose == WALK || pose == RUN || pose == SPRINT;
-            float stride = pose == SPRINT ? 0.58f : (pose == RUN ? 0.48f : 0.40f);
-            float armSwing = pose == SPRINT ? 0.40f : (pose == RUN ? 0.33f : 0.27f);
-            float leftLeg = running ? cycle * stride : (pose == JUMP ? 0.18f : (pose == LAND ? 0.03f : idleSway * 0.015f));
-            float rightLeg = -leftLeg;
-            float leftArm = running ? -cycle * armSwing : (pose == JUMP ? 0.0f : (pose == LAND ? 0.08f : idleSway * 0.035f));
-            float rightArm = -leftArm;
-            float kneeSwing = pose == SPRINT ? 0.52f : (pose == RUN ? 0.45f : 0.38f);
-            float leftKnee = running ? Math.max(0.0f, (float) Math.sin(phase + 0.9f)) * kneeSwing : (pose == JUMP ? 0.42f : (pose == LAND ? 0.48f : 0.0f));
-            float rightKnee = running ? Math.max(0.0f, (float) Math.sin(phase + 4.04f)) * kneeSwing : (pose == JUMP ? 0.30f : (pose == LAND ? 0.48f : 0.0f));
-            float leftLift = pose == JUMP ? -1.15f : 0.0f;
-            float rightLift = pose == JUMP ? 1.15f : 0.0f;
-            float sl = (float) Math.sin(leftLeg), cl = (float) Math.cos(leftLeg);
-            float sr = (float) Math.sin(rightLeg), cr = (float) Math.cos(rightLeg);
+            float gait = (float) Math.sin(phase);
+            float stride = pose == SPRINT ? 0.62f : (pose == RUN ? 0.51f : 0.39f);
+            float kneeStrength = pose == SPRINT ? 0.66f : (pose == RUN ? 0.54f : 0.40f);
+            float armStrength = pose == SPRINT ? 0.72f : (pose == RUN ? 0.62f : 0.52f);
+
+            // Alternating hip swing, with knee flex during the forward recovery phase.
+            float leftHip = moving ? gait * stride * movement : idleSway * 0.012f;
+            float rightHip = moving ? -leftHip : -leftHip;
+            float leftKnee = moving ? Math.max(0.0f, (float) Math.sin(phase + 0.72f)) * kneeStrength * movement
+                    : (pose == JUMP ? 0.58f : (pose == LAND ? 0.72f : 0.0f));
+            float rightKnee = moving ? Math.max(0.0f, (float) Math.sin(phase + 3.86f)) * kneeStrength * movement
+                    : (pose == JUMP ? 0.48f : (pose == LAND ? 0.72f : 0.0f));
+
+            // Arms counter-swing against the legs; elbows stay flexed instead of swinging as rigid sticks.
+            float leftArm = moving ? -leftHip * armStrength / stride - 0.06f * movement : idleSway * 0.025f;
+            float rightArm = moving ? -rightHip * armStrength / stride - 0.06f * movement : -idleSway * 0.025f;
+            float leftElbow = moving ? 0.12f + Math.max(0.0f, (float) Math.sin(phase + 1.2f)) * 0.24f * movement : 0.04f;
+            float rightElbow = moving ? 0.12f + Math.max(0.0f, (float) Math.sin(phase + 4.34f)) * 0.24f * movement : 0.04f;
+
+            float leftAnkle = moving ? -leftHip * 0.22f - leftKnee * 0.30f : (pose == LAND ? -0.16f : 0.0f);
+            float rightAnkle = moving ? -rightHip * 0.22f - rightKnee * 0.30f : (pose == LAND ? -0.16f : 0.0f);
+            float torsoLean = moving ? (pose == SPRINT ? 0.19f : (pose == RUN ? 0.13f : 0.07f)) * movement
+                    : (pose == JUMP ? -0.12f : (pose == LAND ? 0.10f : 0.0f));
+            float torsoTwist = moving ? -gait * 0.055f * movement : idleSway * 0.008f;
+            float pelvisRoll = moving ? gait * 0.025f * movement : idleSway * 0.006f;
+            float headCounter = -torsoLean * 0.28f;
+
+            if (pose == JUMP) {
+                leftHip = -0.22f;
+                rightHip = 0.30f;
+                leftArm = -0.78f;
+                rightArm = -0.78f;
+                leftElbow = 0.22f;
+                rightElbow = 0.22f;
+            }
+
+            float sl = (float) Math.sin(leftHip), cl = (float) Math.cos(leftHip);
+            float sr = (float) Math.sin(rightHip), cr = (float) Math.cos(rightHip);
             float sal = (float) Math.sin(leftArm), cal = (float) Math.cos(leftArm);
             float sar = (float) Math.sin(rightArm), car = (float) Math.cos(rightArm);
             float skl = (float) Math.sin(leftKnee), ckl = (float) Math.cos(leftKnee);
             float skr = (float) Math.sin(rightKnee), ckr = (float) Math.cos(rightKnee);
-            float szl = (float) Math.sin(leftLift), czl = (float) Math.cos(leftLift);
-            float szr = (float) Math.sin(rightLift), czr = (float) Math.cos(rightLift);
+            float sel = (float) Math.sin(leftElbow), cel = (float) Math.cos(leftElbow);
+            float ser = (float) Math.sin(rightElbow), cer = (float) Math.cos(rightElbow);
+            float saln = (float) Math.sin(leftAnkle), caln = (float) Math.cos(leftAnkle);
+            float sran = (float) Math.sin(rightAnkle), cran = (float) Math.cos(rightAnkle);
+            float st = (float) Math.sin(torsoLean), ct = (float) Math.cos(torsoLean);
+            float stw = (float) Math.sin(torsoTwist), ctw = (float) Math.cos(torsoTwist);
+            float spr = (float) Math.sin(pelvisRoll), cpr = (float) Math.cos(pelvisRoll);
+            float sh = (float) Math.sin(headCounter), ch = (float) Math.cos(headCounter);
+
             for (int i = 0; i < ClaudeModelData.POSITIONS.length; i += 3) {
                 float x = ClaudeModelData.POSITIONS[i] * POSITION_SCALE + BIAS_X;
                 float y = ClaudeModelData.POSITIONS[i + 1] * POSITION_SCALE + BIAS_Y;
                 float z = ClaudeModelData.POSITIONS[i + 2] * POSITION_SCALE + BIAS_Z;
                 float absX = Math.abs(x);
-                float lower = clamp((-y + 0.04f) / 0.25f);
                 float center = clamp((0.29f - absX) / 0.13f);
                 float split = clamp((x + 0.12f) / 0.24f);
-                float legBase = lower * center;
+
+                float legBase = clamp((-y + 0.04f) / 0.25f) * center;
                 float lw = legBase * (1.0f - split);
                 float rw = legBase * split;
                 float kneeBase = clamp((-y - 0.47f) / 0.20f) * center;
                 float lkw = kneeBase * (1.0f - split);
                 float rkw = kneeBase * split;
+                float footBase = clamp((-y - 0.66f) / 0.15f) * center;
+                float lfw = footBase * (1.0f - split);
+                float rfw = footBase * split;
+
                 int armSide = ClaudeModelData.ARM_SIDE[i / 3];
                 float armWeight = armSide == 0 ? 0.0f : clamp((absX - 0.15f) / 0.14f);
                 float law = armSide < 0 ? armWeight : 0.0f;
                 float raw = armSide > 0 ? armWeight : 0.0f;
+                float elbowRegion = clamp((0.39f - y) / 0.20f);
+                float torsoWeight = clamp((0.36f - absX) / 0.19f)
+                        * clamp((y + 0.04f) / 0.20f) * clamp((0.72f - y) / 0.18f);
+                float pelvisWeight = clamp((0.27f - absX) / 0.16f)
+                        * clamp((0.20f - y) / 0.17f) * clamp((y + 0.16f) / 0.18f);
+                float headWeight = clamp((y - 0.58f) / 0.17f)
+                        * clamp((0.23f - absX) / 0.14f);
+
                 point[0] = x; point[1] = y; point[2] = z;
+
+                // Lower body: hips, knees and ankle/foot articulation.
                 rotateX(-0.12f, -0.06f, 0.0f, sl, cl, lw);
                 rotateX(0.12f, -0.06f, 0.0f, sr, cr, rw);
                 rotateX(-0.12f, -0.48f, 0.0f, skl, ckl, lkw);
                 rotateX(0.12f, -0.48f, 0.0f, skr, ckr, rkw);
+                rotateX(-0.12f, -0.68f, 0.0f, saln, caln, lfw);
+                rotateX(0.12f, -0.68f, 0.0f, sran, cran, rfw);
+
+                // Upper body counter-rotates slightly to keep the run from looking mechanical.
+                rotateX(0.0f, 0.16f, 0.0f, st, ct, torsoWeight);
+                rotateY(0.0f, 0.16f, 0.0f, stw, ctw, torsoWeight);
+                rotateZ(0.0f, -0.02f, 0.0f, spr, cpr, pelvisWeight);
+
+                // Shoulder swing and a small elbow bend add a second joint to each arm.
                 rotateX(-0.19f, 0.42f, 0.04f, sal, cal, law);
                 rotateX(0.19f, 0.42f, 0.04f, sar, car, raw);
-                rotateZ(-0.19f, 0.42f, 0.04f, szl, czl, law * (pose == JUMP ? 1.0f : 0.0f));
-                rotateZ(0.19f, 0.42f, 0.04f, szr, czr, raw * (pose == JUMP ? 1.0f : 0.0f));
+                rotateX(-0.25f, 0.20f, 0.04f, sel, cel, law * elbowRegion);
+                rotateX(0.25f, 0.20f, 0.04f, ser, cer, raw * elbowRegion);
+                rotateZ(-0.19f, 0.42f, 0.04f, (float) Math.sin(pose == JUMP ? -0.65f : 0.0f),
+                        (float) Math.cos(pose == JUMP ? -0.65f : 0.0f), law * (pose == JUMP ? 1.0f : 0.0f));
+                rotateZ(0.19f, 0.42f, 0.04f, (float) Math.sin(pose == JUMP ? 0.65f : 0.0f),
+                        (float) Math.cos(pose == JUMP ? 0.65f : 0.0f), raw * (pose == JUMP ? 1.0f : 0.0f));
+
+                // The head compensates for the torso lean, keeping the gaze more level.
+                rotateX(0.0f, 0.68f, 0.0f, sh, ch, headWeight);
+
                 deformed[i] = quantize((point[0] - BIAS_X) / POSITION_SCALE);
                 deformed[i + 1] = quantize((point[1] - BIAS_Y) / POSITION_SCALE);
                 deformed[i + 2] = quantize((point[2] - BIAS_Z) / POSITION_SCALE);
@@ -142,6 +205,14 @@ public final class ClaudeModel {
             float rx = px + (x - px) * c - (y - py) * s;
             float ry = py + (x - px) * s + (y - py) * c;
             point[0] = x + (rx - x) * weight; point[1] = y + (ry - y) * weight;
+        }
+
+        private void rotateY(float px, float py, float pz, float s, float c, float weight) {
+            if (weight <= 0.0f) return;
+            float x = point[0], z = point[2];
+            float rx = px + (x - px) * c + (z - pz) * s;
+            float rz = pz - (x - px) * s + (z - pz) * c;
+            point[0] = x + (rx - x) * weight; point[2] = z + (rz - z) * weight;
         }
 
         private float clamp(float value) {
