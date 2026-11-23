@@ -25,20 +25,20 @@ public final class ClaudeModel {
     public static final int BACKWARD = 10;
 
     private static final float[] WALK_HIP = new float[] {-0.30f, -0.02f, 0.30f, 0.02f, -0.30f};
-    private static final float[] RUN_HIP = new float[] {-0.48f, -0.02f, 0.48f, 0.02f, -0.48f};
-    private static final float[] SPRINT_HIP = new float[] {-0.62f, -0.02f, 0.62f, 0.02f, -0.62f};
+    private static final float[] RUN_HIP = new float[] {-0.62f, -0.10f, 0.62f, 0.10f, -0.62f};
+    private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.12f, 0.78f, 0.12f, -0.78f};
     private static final float[] WALK_KNEE = new float[] {0.04f, 0.38f, 0.05f, 0.12f, 0.04f};
-    private static final float[] RUN_KNEE = new float[] {0.06f, 0.52f, 0.06f, 0.15f, 0.06f};
-    private static final float[] SPRINT_KNEE = new float[] {0.08f, 0.68f, 0.08f, 0.20f, 0.08f};
+    private static final float[] RUN_KNEE = new float[] {0.10f, 0.82f, 0.10f, 0.26f, 0.10f};
+    private static final float[] SPRINT_KNEE = new float[] {0.14f, 1.02f, 0.12f, 0.32f, 0.14f};
     private static final float[] WALK_ARM = new float[] {0.22f, 0.02f, -0.22f, -0.02f, 0.22f};
-    private static final float[] RUN_ARM = new float[] {0.36f, 0.02f, -0.36f, -0.02f, 0.36f};
-    private static final float[] SPRINT_ARM = new float[] {0.46f, 0.02f, -0.46f, -0.02f, 0.46f};
+    private static final float[] RUN_ARM = new float[] {0.48f, 0.08f, -0.48f, -0.08f, 0.48f};
+    private static final float[] SPRINT_ARM = new float[] {0.60f, 0.10f, -0.60f, -0.10f, 0.60f};
     private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.02f, 0.19f, 0.02f, -0.19f};
     private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.24f, 0.10f, 0.20f, 0.12f};
     private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.02f, 0.13f, 0.02f, -0.13f};
     private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.30f, 0.10f, 0.24f, 0.10f};
-    private static final float[] RUN_ELBOW_KEYS = new float[] {0.24f, 0.48f, 0.22f, 0.44f, 0.24f};
-    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.34f, 0.58f, 0.30f, 0.54f, 0.34f};
+    private static final float[] RUN_ELBOW_KEYS = new float[] {0.42f, 0.62f, 0.40f, 0.58f, 0.42f};
+    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.52f, 0.72f, 0.48f, 0.68f, 0.52f};
     private static final float[] START_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
     private static final float[] START_HIP = new float[] {0.0f, -0.16f, -0.34f, -0.22f};
     private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
@@ -167,7 +167,7 @@ public final class ClaudeModel {
                 rightElbow = 0.08f * movement;
             }
 
-            float torsoLean = moving ? (pose == SPRINT ? 0.20f : (pose == RUN ? 0.13f
+            float torsoLean = moving ? (pose == SPRINT ? 0.28f : (pose == RUN ? 0.22f
                     : (pose == BACKWARD ? -0.025f : 0.06f))) * movement : 0.0f;
             float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.10f * movement : 0.0f;
             float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.035f * movement : 0.0f;
