@@ -6,7 +6,7 @@ import javax.microedition.m3g.Image2D;
 import javax.microedition.m3g.Material;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.Texture2D;
-import javax.microedition.m3g.TriangleArray;
+import javax.microedition.m3g.TriangleStripArray;
 import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
 
@@ -41,7 +41,11 @@ public final class ClaudeModel {
             appearance.setTexture(0, texture);
         }
 
-        return new Mesh(vertices, new TriangleArray(INDICES), new Appearance[] { appearance });
+        int[] stripLengths = new int[770];
+        for (int i = 0; i < stripLengths.length; i++) {
+            stripLengths[i] = 3;
+        }
+        return new Mesh(vertices, new TriangleStripArray(INDICES, stripLengths), new Appearance[] { appearance });
     }
 
     private static final short[] POSITIONS = new short[] {

@@ -63,7 +63,7 @@ def generate(obj_path, java_path):
         "package gta3me;", "", "import javax.microedition.lcdui.Image;",
         "import javax.microedition.m3g.Appearance;", "import javax.microedition.m3g.Image2D;",
         "import javax.microedition.m3g.Material;", "import javax.microedition.m3g.Mesh;",
-        "import javax.microedition.m3g.Texture2D;", "import javax.microedition.m3g.TriangleArray;",
+        "import javax.microedition.m3g.Texture2D;", "import javax.microedition.m3g.TriangleStripArray;",
         "import javax.microedition.m3g.VertexArray;", "import javax.microedition.m3g.VertexBuffer;", "",
         "/** Generated from the Claude OBJ. Do not edit the mesh arrays by hand. */",
         "public final class ClaudeModel {", "    private ClaudeModel() {}", "",
@@ -91,7 +91,10 @@ def generate(obj_path, java_path):
         "            texture.setFiltering(Texture2D.FILTER_LINEAR, Texture2D.FILTER_LINEAR);",
         "            texture.setWrapping(Texture2D.WRAP_REPEAT, Texture2D.WRAP_REPEAT);",
         "            appearance.setTexture(0, texture);", "        }", "",
-        "        return new Mesh(vertices, new TriangleArray(INDICES), new Appearance[] { appearance });",
+        "        int[] stripLengths = new int[" + str(len(indices) // 3) + "];",
+        "        for (int i = 0; i < stripLengths.length; i++) {",
+        "            stripLengths[i] = 3;", "        }",
+        "        return new Mesh(vertices, new TriangleStripArray(INDICES, stripLengths), new Appearance[] { appearance });",
         "    }", ""
     ]
 
