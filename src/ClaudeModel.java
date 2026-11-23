@@ -38,10 +38,10 @@ public final class ClaudeModel {
     private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
     private static final float[] START_ARM = new float[] {0.0f, 0.12f, 0.28f, 0.12f};
     private static final float[] STOP_KEYS = new float[] {0.0f, 0.18f, 0.42f, 0.68f, 1.0f};
-    private static final float[] STOP_HIP = new float[] {0.0f, 0.20f, 0.38f, 0.20f, 0.0f};
-    private static final float[] STOP_KNEE = new float[] {0.08f, 0.18f, 0.64f, 0.30f, 0.0f};
-    private static final float[] STOP_ARM = new float[] {0.0f, -0.18f, -0.34f, -0.12f, 0.0f};
-    private static final float[] STOP_LEAN = new float[] {0.08f, 0.18f, 0.30f, 0.12f, 0.0f};
+    private static final float[] STOP_HIP = new float[] {0.0f, 0.32f, 0.55f, 0.22f, 0.0f};
+    private static final float[] STOP_KNEE = new float[] {0.08f, 0.30f, 0.85f, 0.35f, 0.0f};
+    private static final float[] STOP_ARM = new float[] {0.0f, -0.28f, -0.48f, -0.16f, 0.0f};
+    private static final float[] STOP_LEAN = new float[] {0.08f, 0.24f, 0.42f, 0.14f, 0.0f};
     private static final float[] LAND_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
     private static final float[] LAND_KNEE = new float[] {0.02f, 0.76f, 0.38f, 0.0f};
     private static final float[] LAND_ARM = new float[] {0.0f, -0.24f, -0.10f, 0.0f};
@@ -175,7 +175,7 @@ public final class ClaudeModel {
                 float stopLean = sampleClip(STOP_KEYS, STOP_LEAN, t);
                 float stopMix = smooth(t);
                 float side = transition == RUN_STOP_LEFT ? 1.0f : -1.0f;
-                leftHip = leftHip * (1.0f - stopMix) + stopHip * side * (1.0f - t) * stopMix;
+                leftHip = leftHip * (1.0f - stopMix) + stopHip * side * stopMix;
                 rightHip = rightHip * (1.0f - stopMix) - stopHip * side * (1.0f - t) * stopMix;
                 leftKnee = leftKnee * (1.0f - stopMix) + stopKnee * (side > 0.0f ? 1.0f : 0.55f) * stopMix;
                 rightKnee = rightKnee * (1.0f - stopMix) + stopKnee * (side < 0.0f ? 1.0f : 0.55f) * stopMix;
