@@ -58,6 +58,7 @@ final class PlayerController {
     private float verticalSpeed;
     private float landingTime;
     private float animationTime;
+    private float gaitBlend;
     private float stamina = MAX_STAMINA;
     private int state = IDLE;
 
@@ -250,6 +251,18 @@ final class PlayerController {
             state = IDLE;
         }
 
+        // Blend into and out of the gait instead of snapping from idle to a full stride.
+        float targetGaitBlend = isMovingState() ? 1.0f : 0.0f;
+        float blendRate = targetGaitBlend > gaitBlend ? 5.5f : 3.5f;
+        float blendStep = blendRate * elapsed;
+        if (targetGaitBlend > gaitBlend) {
+            gaitBlend += blendStep;
+            if (gaitBlend > targetGaitBlend) gaitBlend = targetGaitBlend;
+        } else {
+            gaitBlend -= blendStep;
+            if (gaitBlend < targetGaitBlend) gaitBlend = targetGaitBlend;
+        }
+
         float animationRate;
         if (state == SPRINT) {
             animationRate = 14.0f;
@@ -263,7 +276,7 @@ final class PlayerController {
             animationRate = 5.0f;
         }
         animationTime += elapsed * animationRate;
-        rig.animate(state, animationTime);
+        rig.animate(state, animationTime, gaitBlend);
         updateTransforms();
     }
 
