@@ -251,10 +251,12 @@ final class PlayerController {
 
         if (jumpHeight > 0.0f) {
             state = JUMP;
+            sprintStopPending = false;
             animationTransition = 0;
             transitionTime = 0.0f;
         } else if (landingTime > 0.0f) {
             state = LAND;
+            sprintStopPending = false;
             if (animationTransition != ClaudeModel.LANDING) {
                 animationTransition = ClaudeModel.LANDING;
                 transitionTime = 0.0f;
