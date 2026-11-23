@@ -55,7 +55,8 @@ def generate(obj_path, java_path):
     bias = [(mins[i] + maxs[i]) / 2.0 for i in range(3)]
     scale = max(maxs[i] - mins[i] for i in range(3)) / 65534.0
     pshort = [max(-32767, min(32767, round((xyz[i] - bias[i % 3]) / scale))) for i in range(len(xyz))]
-    uvshort = [max(-32767, min(32767, round(value * 32767.0))) for value in uv]
+    uv_scale = max(abs(value) for value in uv) / 32767.0
+    uvshort = [round(value / uv_scale) for value in uv]
     nshort = [max(-32767, min(32767, round(value * 32767.0))) for value in nrm]
 
     source = [
@@ -75,7 +76,7 @@ def generate(obj_path, java_path):
         "        normals.set(0, " + str(len(vertices)) + ", NORMALS);",
         "        VertexBuffer vertices = new VertexBuffer();",
         "        vertices.setPositions(positions, " + ("%.10g" % scale) + "f, new float[] {" + ", ".join("%.9gf" % x for x in bias) + "});",
-        "        vertices.setTexCoords(0, texCoords, " + ("%.10gf" % (1.0 / 32767.0)) + ", null);",
+        "        vertices.setTexCoords(0, texCoords, " + ("%.10gf" % uv_scale) + ", null);",
         "        vertices.setNormals(normals);", "",
         "        Appearance appearance = new Appearance();",
         "        Material material = new Material();",
