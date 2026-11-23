@@ -41,14 +41,24 @@ final class CityMap {
 
         // Nine connected districts, each 40 units wide. Streets form a
         // continuous grid and keep every building reachable on foot.
-        addTexturedBox(world, 0, -0.15f, 0, 120, 0.3f, 120, 0x687254, grassTexture, 2.5f);
+        // Keep the terrain below every street surface so their depth buffers
+        // never compete at the same height.
+        addTexturedBox(world, 0, -0.20f, 0, 120, 0.30f, 120, 0x687254, grassTexture, 2.5f);
         for (int road = -60; road <= 60; road += 40) {
+            // X-axis roads are continuous. Z-axis roads are split between
+            // them, preventing coplanar overlap at every four-way junction.
             addTexturedBox(world, 0, 0.015f, road, 120, 0.03f, 7.0f, ASPHALT, asphaltTexture, 1.5f);
-            addTexturedBox(world, road, 0.015f, 0, 7.0f, 0.03f, 120, ASPHALT, asphaltTexture, 1.5f);
+            for (int segment = -1; segment <= 1; segment++) {
+                float segmentCenter = segment * 40.0f;
+                addTexturedBox(world, road, 0.015f, segmentCenter, 7.0f, 0.03f, 33.0f,
+                        ASPHALT, asphaltTexture, 1.5f);
+            }
             for (int side = -1; side <= 1; side += 2) {
                 addTexturedBox(world, 0, 0.09f, road + side * 4.4f, 120, 0.18f, 1.5f,
                         SIDEWALK, concreteTexture, 1.4f);
-                addTexturedBox(world, road + side * 4.4f, 0.09f, 0, 1.5f, 0.18f, 120,
+                // A tiny height separation keeps sidewalk crossings deterministic
+                // on devices with limited depth-buffer precision.
+                addTexturedBox(world, road + side * 4.4f, 0.095f, 0, 1.5f, 0.18f, 120,
                         SIDEWALK, concreteTexture, 1.4f);
             }
         }
@@ -150,7 +160,9 @@ final class CityMap {
         }
         addTexturedBox(world, x, 0.85f, faceZ, 0.8f, 1.65f, 0.08f, 0x493d32,
                 ProceduralTextures.createTexture(ProceduralTextures.BARK, 0x493d32, (int) x + 211), 0.9f);
-        addBox(world, x, height + 0.12f, z, width + 0.12f, 0.24f, depth + 0.12f, 0x6b6962);
+        // Sink the roof trim slightly into the building to avoid a
+        // coplanar bottom face against the building's top face.
+        addBox(world, x, height + 0.11f, z, width + 0.12f, 0.24f, depth + 0.12f, 0x6b6962);
     }
 
     private static void addTree(World world, float x, float z, int variant) {
