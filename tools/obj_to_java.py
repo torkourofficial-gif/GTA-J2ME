@@ -2,6 +2,7 @@
 """Generate a compact J2ME M3G mesh class from a triangulated Wavefront OBJ."""
 
 from pathlib import Path
+import base64
 import sys
 
 
@@ -77,31 +78,23 @@ def arm_side_by_source_vertex(positions, faces):
     return arm_sides
 
 
-def append_chunked_array(source, name, java_type, values, chunk_size=96):
-    """Emit small fill methods so no Java initializer exceeds the 64 KB limit."""
-    method = "create" + name
-    source.extend((
-        "    private static final " + java_type + "[] " + name + " = " + method + "();",
-        "    private static " + java_type + "[] " + method + "() {",
-        "        " + java_type + "[] values = new " + java_type + "[" + str(len(values)) + "];",
-    ))
-    chunks = (len(values) + chunk_size - 1) // chunk_size
-    for chunk in range(chunks):
-        source.append("        fill" + name + str(chunk) + "(values);")
-    source.extend(("        return values;", "    }"))
-
-    cast = "(" + java_type + ") " if java_type in ("short", "byte") else ""
-    for chunk in range(chunks):
-        start = chunk * chunk_size
-        end = min(start + chunk_size, len(values))
-        source.extend((
-            "    private static void fill" + name + str(chunk) + "(" + java_type + "[] values) {",
-        ))
-        source.extend(
-            "        values[" + str(i) + "] = " + cast + str(values[i]) + ";"
-            for i in range(start, end)
-        )
-        source.append("    }")
+def append_packed_data(source, name, values, kind, chunk_size=800):
+    """Store compact packed arrays as short Base64 strings."""
+    raw = bytearray()
+    if kind == "byte":
+        raw.extend(value & 0xff for value in values)
+    else:
+        signed = kind == "short"
+        for value in values:
+            raw.extend(int(value).to_bytes(2, "big", signed=signed))
+    encoded = base64.b64encode(raw).decode("ascii")
+    data_name = name + "_DATA"
+    chunks = [encoded[i:i + chunk_size] for i in range(0, len(encoded), chunk_size)]
+    source.append("    private static String[] " + data_name + " = new String[] {")
+    for i, chunk in enumerate(chunks):
+        source.append("        \"" + chunk + "\"" + ("," if i + 1 < len(chunks) else ""))
+    source.append("    };")
+    return data_name
 
 
 def generate(obj_path, java_path):
@@ -251,15 +244,58 @@ def generate(obj_path, java_path):
         "    }", ""
     ]
 
-    append_chunked_array(source, "POSITIONS", "short", pshort)
-    append_chunked_array(source, "TEXCOORDS", "short", uvshort)
-    append_chunked_array(source, "NORMALS", "short", nshort)
-    append_chunked_array(source, "ARM_SIDE", "byte", arm_sides)
-    append_chunked_array(source, "INDICES", "int", indices)
-    source.append("}")
+    data_source = [
+        "package gta3me;", "", "/** Packed OBJ data. Generated; do not edit by hand. */",
+        "final class ClaudeModelData {"
+    ]
+    position_data = append_packed_data(data_source, "POSITIONS", pshort, "short")
+    texcoord_data = append_packed_data(data_source, "TEXCOORDS", uvshort, "short")
+    normal_data = append_packed_data(data_source, "NORMALS", nshort, "short")
+    arm_data = append_packed_data(data_source, "ARM_SIDE", arm_sides, "byte")
+    index_data = append_packed_data(data_source, "INDICES", indices, "ushort")
+
+    data_source.extend((
+        '    private static final String BASE64_DIGITS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";',
+        "    private static final short[] POSITIONS = decodeShorts(" + position_data + ", " + str(len(pshort)) + ");",
+        "    private static final short[] TEXCOORDS = decodeShorts(" + texcoord_data + ", " + str(len(uvshort)) + ");",
+        "    private static final short[] NORMALS = decodeShorts(" + normal_data + ", " + str(len(nshort)) + ");",
+        "    private static final byte[] ARM_SIDE = decodeBytes(" + arm_data + ", " + str(len(arm_sides)) + ");",
+        "    private static final int[] INDICES = decodeUnsignedShorts(" + index_data + ", " + str(len(indices)) + ");",
+        "    static { " + position_data + " = null; " + texcoord_data + " = null; " + normal_data + " = null; " + arm_data + " = null; " + index_data + " = null; }",
+        "    private static byte[] decodeBase64(String[] chunks, int length) {",
+        "        byte[] result = new byte[length]; int out = 0; int buffer = 0; int bits = 0;",
+        "        for (int c = 0; c < chunks.length; c++) { String text = chunks[c];",
+        "            for (int i = 0; i < text.length(); i++) { int value = BASE64_DIGITS.indexOf(text.charAt(i));",
+        "                if (value >= 0) { buffer = (buffer << 6) | value; bits += 6;",
+        "                    if (bits >= 8) { bits -= 8; result[out++] = (byte) ((buffer >> bits) & 255); buffer = bits == 0 ? 0 : buffer & ((1 << bits) - 1); }",
+        "                }",
+        "            }",
+        "        } return result;",
+        "    }",
+        "    private static short[] decodeShorts(String[] chunks, int length) {",
+        "        byte[] raw = decodeBase64(chunks, length * 2); short[] result = new short[length];",
+        "        for (int i = 0; i < length; i++) result[i] = (short) (((raw[i * 2] & 255) << 8) | (raw[i * 2 + 1] & 255));",
+        "        return result;",
+        "    }",
+        "    private static byte[] decodeBytes(String[] chunks, int length) {",
+        "        return decodeBase64(chunks, length);",
+        "    }",
+        "    private static int[] decodeUnsignedShorts(String[] chunks, int length) {",
+        "        byte[] raw = decodeBase64(chunks, length * 2); int[] result = new int[length];",
+        "        for (int i = 0; i < length; i++) result[i] = ((raw[i * 2] & 255) << 8) | (raw[i * 2 + 1] & 255);",
+        "        return result;",
+        "    }",
+        "}"
+    ))
     java_path.parent.mkdir(parents=True, exist_ok=True)
-    java_path.write_text("\n".join(source) + "\n", encoding="utf-8")
+    source_text = "\n".join(source)
+    for name in ("POSITIONS", "TEXCOORDS", "NORMALS", "ARM_SIDE", "INDICES"):
+        source_text = source_text.replace(name, "ClaudeModelData." + name)
+    java_path.write_text(source_text + "\n", encoding="utf-8")
+    data_path = java_path.with_name("ClaudeModelData.java")
+    data_path.write_text("\n".join(data_source) + "\n", encoding="utf-8")
     print("Generated %s (%d vertices, %d triangles)" % (java_path, len(vertices), len(indices) // 3))
+    print("Generated %s" % data_path)
 
 
 if __name__ == "__main__":

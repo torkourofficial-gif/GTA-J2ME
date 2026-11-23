@@ -6,13 +6,13 @@ A MIDP 2.0 / CLDC 1.1 prototype built with the JSR-184 (M3G) API. It combines Cl
 
 `assets/claude.obj`, `assets/claude.mtl`, and `assets/playa5nu.png` are the source model files. The OBJ contains 453 source vertices, 551 UV coordinates, 453 normals, and 770 triangles. `tools/obj_to_java.py` generates `src/ClaudeModel.java`, combining OBJ position/UV/normal indices into the 719 render vertices needed at UV seams. The generated class builds an M3G mesh and applies the UV-mapped texture.
 
-To regenerate the Java mesh after changing the OBJ, run:
+To regenerate the Java mesh and its packed data class after changing the OBJ, run:
 
 ```text
 python tools/obj_to_java.py assets/claude.obj src/ClaudeModel.java
 ```
 
-The generator fills large mesh arrays in small helper methods to stay below Java's per-method bytecode limit.
+The generator writes both `ClaudeModel.java` and `ClaudeModelData.java`. It packs mesh values into compact Base64 strings and decodes them during class initialization so the model data stays out of oversized Java initializer methods.
 
 Keep the PNG beside the OBJ for Blender and in the NetBeans resource folder at `res/gta3me/playa5nu.png` so it is packaged at `/gta3me/playa5nu.png` in the JAR. The MTL's diffuse map points to `playa5nu.png`.
 
