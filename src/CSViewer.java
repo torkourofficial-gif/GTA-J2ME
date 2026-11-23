@@ -1,24 +1,22 @@
 package gta3me;
 
 import java.util.Vector;
-import java.io.InputStream;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.Image;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.m3g.Light;
-import javax.microedition.m3g.Loader;
 import javax.microedition.m3g.Node;
-import javax.microedition.m3g.Object3D;
 import javax.microedition.m3g.Transform;
 import javax.microedition.m3g.World;
 
-/** Minimal J2ME/M3G viewer for the CS.m3g asset in this repository. */
+/** Minimal J2ME/M3G viewer for the generated Claude OBJ mesh. */
 public final class CSViewer extends MIDlet {
     private ViewerCanvas canvas;
 
@@ -52,7 +50,7 @@ public final class CSViewer extends MIDlet {
         private String error;
         private int errorPage;
         private float angle;
-        private float cameraDistance = 8.0f;
+        private float cameraDistance = 2.8f;
 
         ViewerCanvas() {
             setFullScreenMode(true);
@@ -61,62 +59,14 @@ public final class CSViewer extends MIDlet {
 
         private void loadModel() {
             try {
-                InputStream resource = getClass().getResourceAsStream("/CS.m3g");
-                if (resource == null) {
-                    error = "Missing /CS.m3g inside the JAR. Make sure res/CS.m3g is included, then rebuild in NetBeans.";
-                    return;
-                }
-                resource.close();
+                Image diffuseTexture = Image.createImage("/playa5nu.png");
+                world = new World();
+                model = ClaudeModel.create(diffuseTexture);
+                world.addChild(model);
 
-                Object3D[] roots = Loader.load("/CS.m3g");
-                if (roots == null || roots.length == 0) {
-                    error = "CS.m3g has no scene objects";
-                    return;
-                }
-
-                for (int i = 0; i < roots.length; i++) {
-                    if (roots[i] instanceof World) {
-                        world = (World) roots[i];
-                        break;
-                    }
-                }
-
-                if (world == null) {
-                    world = new World();
-                }
-
-                // Prefer a top-level node from the file. If it only contains a World,
-                // use its first child as the rotatable model root.
-                for (int i = 0; i < roots.length; i++) {
-                    if (roots[i] instanceof Node && !(roots[i] instanceof World)
-                            && !(roots[i] instanceof Camera) && !(roots[i] instanceof Light)) {
-                        model = (Node) roots[i];
-                        if (model.getParent() == null) {
-                            world.addChild(model);
-                        }
-                        break;
-                    }
-                }
-                if (model == null) {
-                    for (int i = 0; i < world.getChildCount(); i++) {
-                        Node child = world.getChild(i);
-                        if (!(child instanceof Camera) && !(child instanceof Light)) {
-                            model = child;
-                            break;
-                        }
-                    }
-                }
-                if (model == null) {
-                    error = "No renderable model node found in CS.m3g";
-                    return;
-                }
-
-                camera = world.getActiveCamera();
-                if (camera == null) {
-                    camera = new Camera();
-                    world.addChild(camera);
-                    world.setActiveCamera(camera);
-                }
+                camera = new Camera();
+                world.addChild(camera);
+                world.setActiveCamera(camera);
                 setCameraTransform();
                 camera.setPerspective(45.0f, 1.0f, 0.1f, 1000.0f);
 
@@ -125,14 +75,12 @@ public final class CSViewer extends MIDlet {
                     background.setColor(0x18202b);
                     world.setBackground(background);
                 }
-                if (world.getChildCount() < 2) {
-                    Light light = new Light();
-                    light.setMode(Light.AMBIENT);
-                    light.setIntensity(1.0f);
-                    world.addChild(light);
-                }
+                Light light = new Light();
+                light.setMode(Light.AMBIENT);
+                light.setIntensity(1.0f);
+                world.addChild(light);
             } catch (Exception e) {
-                error = "Could not load CS.m3g: " + e.toString();
+                error = "Could not load Claude model or playa5nu.png: " + e.toString();
             }
         }
 
@@ -188,7 +136,7 @@ public final class CSViewer extends MIDlet {
             }
 
             g.setColor(0xffffff);
-            g.drawString("CS.m3g  |  Left/Right rotate  Up/Down zoom", 3, 2, Graphics.TOP | Graphics.LEFT);
+            g.drawString("Claude  |  Left/Right rotate  Up/Down zoom", 3, 2, Graphics.TOP | Graphics.LEFT);
         }
 
         private void paintError(Graphics g) {
@@ -201,7 +149,7 @@ public final class CSViewer extends MIDlet {
             g.fillRect(0, 0, width, height);
             g.setFont(font);
             g.setColor(0xff7777);
-            g.drawString("CS.m3g viewer error", margin, 4, Graphics.TOP | Graphics.LEFT);
+            g.drawString("Claude model viewer error", margin, 4, Graphics.TOP | Graphics.LEFT);
 
             Vector lines = wrapError(error, font, width - margin * 2);
             int lineHeight = font.getHeight() + 1;
