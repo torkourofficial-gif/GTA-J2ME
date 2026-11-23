@@ -246,8 +246,10 @@ final class PlayerController {
             transitionTime = 0.0f;
         } else if (landingTime > 0.0f) {
             state = LAND;
-            animationTransition = 0;
-            transitionTime = 0.0f;
+            if (animationTransition != ClaudeModel.LANDING) {
+                animationTransition = ClaudeModel.LANDING;
+                transitionTime = 0.0f;
+            }
         } else if (horizontalSpeed > 2.45f) {
             state = SPRINT;
         } else if (horizontalSpeed > 0.85f) {
@@ -276,7 +278,8 @@ final class PlayerController {
         }
 
         if (animationTransition != 0) {
-            float clipDuration = animationTransition == ClaudeModel.START_WALK ? 0.34f : 0.48f;
+            float clipDuration = animationTransition == ClaudeModel.START_WALK ? 0.34f
+                    : (animationTransition == ClaudeModel.LANDING ? 0.22f : 0.48f);
             transitionTime += elapsed / clipDuration;
             if (transitionTime >= 1.0f) {
                 transitionTime = 1.0f;
