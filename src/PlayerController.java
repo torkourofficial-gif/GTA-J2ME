@@ -15,6 +15,8 @@ final class PlayerController {
     private static final int LAND = 3;
     private static final float WALK_SPEED = 2.3f;
     private static final float GRAVITY = 10.5f;
+    private static final float CAMERA_TURN_SPEED = 120.0f;
+    private static final float CAMERA_TILT_SPEED = 45.0f;
     // This OBJ faces opposite the controller's forward direction (+Z).
     private static final float MODEL_FORWARD_OFFSET = 180.0f;
 
@@ -27,6 +29,10 @@ final class PlayerController {
     private boolean down;
     private boolean left;
     private boolean right;
+    private boolean cameraUp;
+    private boolean cameraDown;
+    private boolean cameraLeft;
+    private boolean cameraRight;
     private boolean jumpRequested;
     private float x;
     private float z;
@@ -50,24 +56,8 @@ final class PlayerController {
         updateTransforms();
     }
 
-    boolean isCameraKey(int keyCode) {
-        return keyCode == Canvas.KEY_NUM1 || keyCode == Canvas.KEY_NUM2
-                || keyCode == Canvas.KEY_NUM3 || keyCode == Canvas.KEY_NUM4
-                || keyCode == Canvas.KEY_NUM6 || keyCode == Canvas.KEY_NUM8;
-    }
-
     boolean adjustCamera(int keyCode) {
-        if (keyCode == Canvas.KEY_NUM4) {
-            cameraYaw -= 15.0f;
-        } else if (keyCode == Canvas.KEY_NUM6) {
-            cameraYaw += 15.0f;
-        } else if (keyCode == Canvas.KEY_NUM2) {
-            cameraPitch -= 5.0f;
-            if (cameraPitch < 0.0f) cameraPitch = 0.0f;
-        } else if (keyCode == Canvas.KEY_NUM8) {
-            cameraPitch += 5.0f;
-            if (cameraPitch > 35.0f) cameraPitch = 35.0f;
-        } else if (keyCode == Canvas.KEY_NUM1) {
+        if (keyCode == Canvas.KEY_NUM1) {
             cameraDistance -= 0.5f;
             if (cameraDistance < 2.5f) cameraDistance = 2.5f;
         } else if (keyCode == Canvas.KEY_NUM3) {
@@ -79,6 +69,18 @@ final class PlayerController {
         updateCameraRotation();
         updateTransforms();
         return true;
+    }
+
+    void setCameraDirection(int gameAction, boolean pressed) {
+        if (gameAction == Canvas.UP) {
+            cameraUp = pressed;
+        } else if (gameAction == Canvas.DOWN) {
+            cameraDown = pressed;
+        } else if (gameAction == Canvas.LEFT) {
+            cameraLeft = pressed;
+        } else if (gameAction == Canvas.RIGHT) {
+            cameraRight = pressed;
+        }
     }
 
     private void updateCameraRotation() {
@@ -109,6 +111,8 @@ final class PlayerController {
     void update(float elapsed) {
         if (elapsed < 0.0f) elapsed = 0.0f;
         if (elapsed > 0.1f) elapsed = 0.1f;
+
+        updateCameraInput(elapsed);
 
         float moveX = (right ? 1.0f : 0.0f) - (left ? 1.0f : 0.0f);
         float moveZ = (down ? 1.0f : 0.0f) - (up ? 1.0f : 0.0f);
@@ -214,6 +218,19 @@ final class PlayerController {
         camera.setTranslation(cameraX, 1.9f, cameraZ);
     }
 
+    private void updateCameraInput(float elapsed) {
+        boolean changed = false;
+        float turn = CAMERA_TURN_SPEED * elapsed;
+        if (cameraLeft) { cameraYaw -= turn; changed = true; }
+        if (cameraRight) { cameraYaw += turn; changed = true; }
+        float tilt = CAMERA_TILT_SPEED * elapsed;
+        if (cameraUp) { cameraPitch -= tilt; changed = true; }
+        if (cameraDown) { cameraPitch += tilt; changed = true; }
+        if (cameraPitch < 0.0f) cameraPitch = 0.0f;
+        if (cameraPitch > 35.0f) cameraPitch = 35.0f;
+        if (changed) updateCameraRotation();
+    }
+
     String getStateName() {
         if (state == WALK) return "WALK";
         if (state == JUMP) return "JUMP";
@@ -223,5 +240,6 @@ final class PlayerController {
 
     void clearInput() {
         up = down = left = right = jumpRequested = false;
+        cameraUp = cameraDown = cameraLeft = cameraRight = false;
     }
 }

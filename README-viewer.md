@@ -22,9 +22,9 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 
 ## Controls
 
-- Arrow keys: move in four directions.
-- 5 or the device's fire key: jump.
-- Keypad 4/6: orbit the camera; 2/8: adjust its pitch; 1/3: zoom.
+- D-pad: rotate the camera continuously while held; movement stays aligned to the map axes.
+- Keypad 2/4/6/8: move on the map; 5 or the device's fire key: jump.
+- Keypad 1/3: zoom the camera.
 - The HUD reports the current IDLE, WALK, JUMP, or LAND state.
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
 

@@ -129,9 +129,9 @@ public final class CSViewer extends MIDlet {
 
             g.setColor(0xffffff);
             Font hudFont = g.getFont();
-            g.drawString("ARROWS MOVE  5 JUMP  " + controller.getStateName(),
+            g.drawString("DPAD CAM  2/4/6/8 MOVE",
                     3, 2, Graphics.TOP | Graphics.LEFT);
-            g.drawString("4/6 CAM  2/8 TILT  1/3 ZOOM", 3,
+            g.drawString("5 JUMP  1/3 ZOOM  " + controller.getStateName(), 3,
                     hudFont.getHeight() + 3, Graphics.TOP | Graphics.LEFT);
         }
 
@@ -239,12 +239,18 @@ public final class CSViewer extends MIDlet {
                 return;
             }
             if (controller != null) {
+                int moveAction = getNumberPadMove(keyCode);
+                if (moveAction != 0) {
+                    controller.setDirection(moveAction, true);
+                    repaint();
+                    return;
+                }
                 if (controller.adjustCamera(keyCode)) {
                     repaint();
                     return;
                 }
                 int action = getGameActionSafe(keyCode);
-                controller.setDirection(action, true);
+                controller.setCameraDirection(action, true);
                 if (action == FIRE || keyCode == KEY_NUM5) {
                     controller.requestJump();
                 }
@@ -254,8 +260,20 @@ public final class CSViewer extends MIDlet {
 
         protected void keyReleased(int keyCode) {
             if (error != null || controller == null) return;
-            if (controller.isCameraKey(keyCode)) return;
-            controller.setDirection(getGameActionSafe(keyCode), false);
+            int moveAction = getNumberPadMove(keyCode);
+            if (moveAction != 0) {
+                controller.setDirection(moveAction, false);
+                return;
+            }
+            controller.setCameraDirection(getGameActionSafe(keyCode), false);
+        }
+
+        private int getNumberPadMove(int keyCode) {
+            if (keyCode == KEY_NUM8) return UP;
+            if (keyCode == KEY_NUM2) return DOWN;
+            if (keyCode == KEY_NUM4) return LEFT;
+            if (keyCode == KEY_NUM6) return RIGHT;
+            return 0;
         }
 
         private int getGameActionSafe(int keyCode) {
