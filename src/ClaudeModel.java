@@ -21,8 +21,8 @@ public final class ClaudeModel {
     public static final int START_WALK = 6;
     public static final int RUN_STOP_LEFT = 7;
     public static final int RUN_STOP_RIGHT = 8;
+    public static final int LANDING = 9;
 
-    private static final float[] CYCLE_KEYS = new float[] {0.0f, 0.25f, 0.5f, 0.75f, 1.0f};
     private static final float[] WALK_HIP = new float[] {-0.30f, -0.02f, 0.30f, 0.02f, -0.30f};
     private static final float[] RUN_HIP = new float[] {-0.48f, -0.02f, 0.48f, 0.02f, -0.48f};
     private static final float[] SPRINT_HIP = new float[] {-0.62f, -0.02f, 0.62f, 0.02f, -0.62f};
@@ -42,6 +42,10 @@ public final class ClaudeModel {
     private static final float[] STOP_KNEE = new float[] {0.08f, 0.18f, 0.64f, 0.30f, 0.0f};
     private static final float[] STOP_ARM = new float[] {0.0f, -0.18f, -0.34f, -0.12f, 0.0f};
     private static final float[] STOP_LEAN = new float[] {0.08f, 0.18f, 0.30f, 0.12f, 0.0f};
+    private static final float[] LAND_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
+    private static final float[] LAND_KNEE = new float[] {0.02f, 0.76f, 0.38f, 0.0f};
+    private static final float[] LAND_ARM = new float[] {0.0f, -0.24f, -0.10f, 0.0f};
+    private static final float[] LAND_LEAN = new float[] {0.0f, 0.22f, 0.12f, 0.0f};
     private static final int VERTEX_COUNT = 719;
     private static final float POSITION_SCALE = 3.67573e-05f;
     private static final float BIAS_X = -0.00545f;
@@ -189,11 +193,16 @@ public final class ClaudeModel {
                 leftElbow = 0.22f; rightElbow = 0.22f;
                 torsoLean = -0.12f;
             } else if (pose == LAND) {
-                leftHip = -0.08f; rightHip = -0.08f;
-                leftKnee = 0.72f; rightKnee = 0.72f;
-                leftArm = -0.18f; rightArm = -0.18f;
-                leftElbow = 0.28f; rightElbow = 0.28f;
-                torsoLean = 0.10f;
+                float t = transition == LANDING ? clamp(transitionTime) : 1.0f;
+                float landKnee = sampleClip(LAND_KEYS, LAND_KNEE, t);
+                float landArm = sampleClip(LAND_KEYS, LAND_ARM, t);
+                leftHip = -0.08f * (1.0f - smooth(t));
+                rightHip = leftHip;
+                leftKnee = landKnee; rightKnee = landKnee;
+                leftArm = landArm; rightArm = landArm;
+                leftElbow = 0.16f + landKnee * 0.18f;
+                rightElbow = leftElbow;
+                torsoLean = sampleClip(LAND_KEYS, LAND_LEAN, t);
             }
 
             // Small breathing and balance motion replaces a perfectly frozen idle pose.
