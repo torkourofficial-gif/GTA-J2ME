@@ -373,7 +373,7 @@ final class PlayerController {
         if (isMovingState()) {
             float step = (float) Math.sin(animationTime);
             float bounce = (float) Math.abs(step);
-            scaleY = 1.0f + bounce * (state == SPRINT ? 0.025f : 0.018f);
+            scaleY = 1.0f + bounce * (state == SPRINT ? 0.045f : (state == RUN ? 0.035f : 0.018f));
         } else if (state == JUMP) {
             scaleY = verticalSpeed > 0.0f ? 1.04f : 0.96f;
         } else if (state == LAND) {
@@ -391,7 +391,7 @@ final class PlayerController {
         if (isMovingState()) {
             float step = (float) Math.sin(animationTime);
             float bounce = (float) Math.abs(step);
-            bob = bounce * (state == SPRINT ? 0.035f : 0.025f);
+            bob = bounce * (state == SPRINT ? 0.060f : (state == RUN ? 0.048f : 0.025f));
             // Forward lean is now part of the torso pose, not a rigid whole-model tilt.
             lean = 0.0f;
         } else if (state == JUMP) {
