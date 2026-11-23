@@ -238,6 +238,10 @@ final class PlayerController {
         return "IDLE";
     }
 
+    float getCameraYaw() {
+        return cameraYaw;
+    }
+
     void clearInput() {
         up = down = left = right = jumpRequested = false;
         cameraUp = cameraDown = cameraLeft = cameraRight = false;

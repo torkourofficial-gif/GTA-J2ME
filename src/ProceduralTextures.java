@@ -31,7 +31,7 @@ final class ProceduralTextures {
         int baseB = baseColor & 255;
         for (int y = 0; y < TILE_SIZE; y++) {
             for (int x = 0; x < TILE_SIZE; x++) {
-                int noise = hash(x, y, seed) & 31;
+                int noise = randomValue(x, y, seed) & 31;
                 int delta = noise - 15;
                 int r = baseR + delta;
                 int g = baseG + delta;
@@ -43,28 +43,28 @@ final class ProceduralTextures {
                     if (mortar) {
                         r -= 34; g -= 32; b -= 28;
                     } else {
-                        int variation = (hash(x / 4, y / 4, seed + 91) & 15) - 7;
+                        int variation = (randomValue(x / 4, y / 4, seed + 91) & 15) - 7;
                         r += variation; g += variation; b += variation;
                     }
                 } else if (style == ASPHALT) {
-                    int grain = hash(x, y, seed + 17) & 15;
+                    int grain = randomValue(x, y, seed + 17) & 15;
                     r += grain - 7; g += grain - 7; b += grain - 6;
                     if ((x * 13 + y * 7 + seed) % 83 == 0) { r -= 28; g -= 27; b -= 25; }
                 } else if (style == CONCRETE) {
-                    if ((hash(x, y, seed + 23) & 31) == 0) { r -= 30; g -= 29; b -= 27; }
+                    if ((randomValue(x, y, seed + 23) & 31) == 0) { r -= 30; g -= 29; b -= 27; }
                 } else if (style == GRASS) {
-                    int green = (hash(x, y, seed + 31) & 31) - 15;
+                    int green = (randomValue(x, y, seed + 31) & 31) - 15;
                     r += green / 3; g += green; b += green / 4;
                 } else if (style == GLASS) {
                     int shine = ((x + seed) % 13 < 2) ? 52 : 0;
                     r += shine / 3; g += shine; b += shine;
                     if ((y + seed) % 16 == 0) { r -= 20; g -= 20; b -= 15; }
                 } else if (style == BARK) {
-                    int grain = (hash(x / 2, y, seed + 41) & 31) - 16;
+                    int grain = (randomValue(x / 2, y, seed + 41) & 31) - 16;
                     if ((x + seed) % 7 == 0) grain -= 24;
                     r += grain; g += grain / 2; b += grain / 3;
                 } else if (style == LEAVES) {
-                    int leaf = (hash(x / 2, y / 2, seed + 53) & 63) - 31;
+                    int leaf = (randomValue(x / 2, y / 2, seed + 53) & 63) - 31;
                     r += leaf / 2; g += leaf; b += leaf / 3;
                 } else if (style == METAL) {
                     int stripe = (y % 8 == 0) ? 22 : 0;
