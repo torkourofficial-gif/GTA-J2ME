@@ -1,6 +1,6 @@
 # Claude 3D street prototype
 
-A MIDP 2.0 / CLDC 1.1 prototype built with the JSR-184 (M3G) API. It combines Claude's textured mesh, a small low-poly city block, a movable third-person camera, keyboard movement, jumping, and a procedural CPU rig for idle/walk/jump motion.
+A MIDP 2.0 / CLDC 1.1 prototype built with the JSR-184 (M3G) API. It combines Claude's textured mesh, a detailed low-poly city block with generated surface textures, a scrolling procedural cloud sky, a movable third-person camera, keyboard movement, jumping, and a procedural CPU rig.
 
 ## Model and texture
 
@@ -29,3 +29,5 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
 
 Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig identifies the separate arm shells by OBJ connectivity, then deforms them independently from the leg and foot vertices. It animates breathing and weight shifts while idle, an alternating gait while walking, bent legs and raised arms in the air, and a short compressed landing pose.
+
+The city surface, building walls, windows, sidewalks, foliage, tree bark, and street furniture use small deterministic textures generated at startup. The sky is a generated blue panorama with layered noise clouds that scroll as the camera turns.

@@ -42,6 +42,7 @@ public final class CSViewer extends MIDlet {
         private World world;
         private PlayerController controller;
         private Camera camera;
+        private Background skyBackground;
         private Thread loop;
         private volatile boolean running;
         private String error;
@@ -59,6 +60,14 @@ public final class CSViewer extends MIDlet {
                 world = new World();
                 CityMap.addTo(world);
 
+                skyBackground = new Background();
+                skyBackground.setColor(0xff4f86bd);
+                skyBackground.setImage(ProceduralTextures.createCloudSky());
+                skyBackground.setImageMode(Background.REPEAT, Background.BORDER);
+                skyBackground.setCrop(0, 0, ProceduralTextures.SKY_VIEW_WIDTH,
+                        ProceduralTextures.SKY_VIEW_HEIGHT);
+                world.setBackground(skyBackground);
+
                 camera = new Camera();
                 world.addChild(camera);
                 world.setActiveCamera(camera);
@@ -66,11 +75,6 @@ public final class CSViewer extends MIDlet {
                 ClaudeModel.Rig claudeRig = ClaudeModel.create(diffuseTexture);
                 controller = new PlayerController(world, claudeRig, camera);
 
-                if (world.getBackground() == null) {
-                    Background background = new Background();
-                    background.setColor(0x18202b);
-                    world.setBackground(background);
-                }
             } catch (Exception e) {
                 error = "Could not load Claude model or gta3me/playa5nu.png: " + e.toString();
             }
@@ -115,6 +119,14 @@ public final class CSViewer extends MIDlet {
                 float elapsed = (now - previousFrameTime) / 1000.0f;
                 previousFrameTime = now;
                 if (controller != null) controller.update(elapsed);
+                if (skyBackground != null && controller != null) {
+                    float angle = controller.getCameraYaw() % 360.0f;
+                    if (angle < 0.0f) angle += 360.0f;
+                    int cropX = (int) (angle * (ProceduralTextures.SKY_WIDTH
+                            - ProceduralTextures.SKY_VIEW_WIDTH) / 360.0f);
+                    skyBackground.setCrop(cropX, 0, ProceduralTextures.SKY_VIEW_WIDTH,
+                            ProceduralTextures.SKY_VIEW_HEIGHT);
+                }
                 camera.setPerspective(45.0f, (float) getWidth() / (float) getHeight(), 0.1f, 1000.0f);
                 graphics3D.bindTarget(g);
                 graphics3D.render(world);
