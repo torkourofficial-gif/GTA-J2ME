@@ -1,6 +1,7 @@
 package gta3me;
 
 import java.util.Vector;
+import java.io.InputStream;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.lcdui.Canvas;
@@ -60,7 +61,13 @@ public final class CSViewer extends MIDlet {
 
         private void loadModel() {
             try {
-                // prepare.ps1 copies the project's CS.m3g to the JAR resource root.
+                InputStream resource = getClass().getResourceAsStream("/CS.m3g");
+                if (resource == null) {
+                    error = "Missing /CS.m3g inside the JAR. Make sure res/CS.m3g is included, then rebuild in NetBeans.";
+                    return;
+                }
+                resource.close();
+
                 Object3D[] roots = Loader.load("/CS.m3g");
                 if (roots == null || roots.length == 0) {
                     error = "CS.m3g has no scene objects";
@@ -309,6 +316,7 @@ public final class CSViewer extends MIDlet {
         }
     }
 }
+
 
 
 
