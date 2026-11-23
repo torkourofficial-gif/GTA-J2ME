@@ -15,7 +15,7 @@ final class PlayerController {
     private static final int LAND = 3;
     private static final int RUN = 4;
     private static final int SPRINT = 5;
-    private static final int BACKWARD = 6;
+    private static final int BACKWARD = ClaudeModel.BACKWARD;
 
     private static final float RUN_SPEED = 2.3f;
     private static final float SPRINT_SPEED = 3.4f;
@@ -282,7 +282,7 @@ final class PlayerController {
 
         // Use a short one-shot start/stop clip, like GTA III's STARTWALK and RUNSTOP associations.
         if (jumpHeight <= 0.0f && landingTime <= 0.0f) {
-            if (hasInput && lastHorizontalSpeed < 0.18f && horizontalSpeed > 0.12f) {
+            if (hasInput && !backwardMotion && lastHorizontalSpeed < 0.18f && horizontalSpeed > 0.12f) {
                 animationTransition = ClaudeModel.START_WALK;
                 transitionTime = 0.0f;
             } else if (!hasInput && sprintStopPending && horizontalSpeed < 0.4f) {
