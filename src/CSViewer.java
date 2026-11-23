@@ -59,7 +59,7 @@ public final class CSViewer extends MIDlet {
 
         private void loadModel() {
             try {
-                Image diffuseTexture = Image.createImage("/playa5nu.png");
+                Image diffuseTexture = Image.createImage("/gta3me/playa5nu.png");
                 world = new World();
                 model = ClaudeModel.create(diffuseTexture);
                 world.addChild(model);
@@ -80,7 +80,7 @@ public final class CSViewer extends MIDlet {
                 light.setIntensity(1.0f);
                 world.addChild(light);
             } catch (Exception e) {
-                error = "Could not load Claude model or playa5nu.png: " + e.toString();
+                error = "Could not load Claude model or gta3me/playa5nu.png: " + e.toString();
             }
         }
 

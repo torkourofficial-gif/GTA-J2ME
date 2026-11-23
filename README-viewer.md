@@ -12,11 +12,11 @@ To regenerate the Java mesh after changing the OBJ, run:
 python tools/obj_to_java.py assets/claude.obj src/ClaudeModel.java
 ```
 
-Keep the PNG beside the OBJ for Blender and in the NetBeans resource folder at `res/playa5nu.png` so it is packaged at the JAR root. The MTL's diffuse map points to `playa5nu.png`.
+Keep the PNG beside the OBJ for Blender and in the NetBeans resource folder at `res/gta3me/playa5nu.png` so it is packaged at `/gta3me/playa5nu.png` in the JAR. The MTL's diffuse map points to `playa5nu.png`.
 
 ## Build
 
-Build the project once in NetBeans. Make sure `res` is configured as the project's resource folder and that `res/playa5nu.png` is included in the packaged JAR.
+Build the project once in NetBeans. Make sure `res` is configured as the project's resource folder and that `res/gta3me/playa5nu.png` is included in the packaged JAR.
 
 ## Controls
 

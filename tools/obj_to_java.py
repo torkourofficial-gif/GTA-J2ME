@@ -47,7 +47,8 @@ def generate(obj_path, java_path):
         u, v = texcoords[ti]
         nx, ny, nz = normals[ni]
         xyz.extend((x, y, z))
-        uv.extend((u, v))
+        # OBJ/Blender uses a bottom-left texture origin; M3G uses top-left.
+        uv.extend((u, 1.0 - v))
         nrm.extend((nx, ny, nz))
 
     mins = [min(xyz[i::3]) for i in range(3)]
