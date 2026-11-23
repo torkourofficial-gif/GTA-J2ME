@@ -94,7 +94,7 @@ def generate(obj_path, java_path):
         "        int[] stripLengths = new int[" + str(len(indices) // 3) + "];",
         "        for (int i = 0; i < stripLengths.length; i++) {",
         "            stripLengths[i] = 3;", "        }",
-        "        return new Mesh(vertices, new TriangleStripArray(INDICES, stripLengths), new Appearance[] { appearance });",
+        "        return new Mesh(vertices, new TriangleStripArray(INDICES, stripLengths), appearance);",
         "    }", ""
     ]
 
