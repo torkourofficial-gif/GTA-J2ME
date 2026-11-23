@@ -82,7 +82,7 @@ public final class ClaudeModel {
 
             // Alternating hip swing, with knee flex during the forward recovery phase.
             float leftHip = moving ? gait * stride * movement : idleSway * 0.012f;
-            float rightHip = moving ? -leftHip : -leftHip;
+            float rightHip = -leftHip;
             float leftKnee = moving ? Math.max(0.0f, (float) Math.sin(phase + 0.72f)) * kneeStrength * movement
                     : (pose == JUMP ? 0.58f : (pose == LAND ? 0.72f : 0.0f));
             float rightKnee = moving ? Math.max(0.0f, (float) Math.sin(phase + 3.86f)) * kneeStrength * movement
@@ -125,6 +125,8 @@ public final class ClaudeModel {
             float stw = (float) Math.sin(torsoTwist), ctw = (float) Math.cos(torsoTwist);
             float spr = (float) Math.sin(pelvisRoll), cpr = (float) Math.cos(pelvisRoll);
             float sh = (float) Math.sin(headCounter), ch = (float) Math.cos(headCounter);
+            float jumpLeftArmSin = (float) Math.sin(-0.65f), jumpLeftArmCos = (float) Math.cos(-0.65f);
+            float jumpRightArmSin = (float) Math.sin(0.65f), jumpRightArmCos = (float) Math.cos(0.65f);
 
             for (int i = 0; i < ClaudeModelData.POSITIONS.length; i += 3) {
                 float x = ClaudeModelData.POSITIONS[i] * POSITION_SCALE + BIAS_X;
@@ -176,10 +178,8 @@ public final class ClaudeModel {
                 rotateX(0.19f, 0.42f, 0.04f, sar, car, raw);
                 rotateX(-0.25f, 0.20f, 0.04f, sel, cel, law * elbowRegion);
                 rotateX(0.25f, 0.20f, 0.04f, ser, cer, raw * elbowRegion);
-                rotateZ(-0.19f, 0.42f, 0.04f, (float) Math.sin(pose == JUMP ? -0.65f : 0.0f),
-                        (float) Math.cos(pose == JUMP ? -0.65f : 0.0f), law * (pose == JUMP ? 1.0f : 0.0f));
-                rotateZ(0.19f, 0.42f, 0.04f, (float) Math.sin(pose == JUMP ? 0.65f : 0.0f),
-                        (float) Math.cos(pose == JUMP ? 0.65f : 0.0f), raw * (pose == JUMP ? 1.0f : 0.0f));
+                rotateZ(-0.19f, 0.42f, 0.04f, jumpLeftArmSin, jumpLeftArmCos, law * (pose == JUMP ? 1.0f : 0.0f));
+                rotateZ(0.19f, 0.42f, 0.04f, jumpRightArmSin, jumpRightArmCos, raw * (pose == JUMP ? 1.0f : 0.0f));
 
                 // The head compensates for the torso lean, keeping the gaze more level.
                 rotateX(0.0f, 0.68f, 0.0f, sh, ch, headWeight);
