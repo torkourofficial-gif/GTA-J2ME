@@ -143,7 +143,7 @@ public final class CSViewer extends MIDlet {
             Font hudFont = g.getFont();
             g.drawString("DPAD CAM  2/4/6/8 MOVE",
                     3, 2, Graphics.TOP | Graphics.LEFT);
-            g.drawString("5 JUMP  1/3 ZOOM  " + controller.getStateName(), 3,
+            g.drawString("5 JUMP  7 SPRINT  1/3 ZOOM  " + controller.getStateName(), 3,
                     hudFont.getHeight() + 3, Graphics.TOP | Graphics.LEFT);
         }
 
@@ -251,6 +251,11 @@ public final class CSViewer extends MIDlet {
                 return;
             }
             if (controller != null) {
+                if (keyCode == KEY_NUM7) {
+                    controller.setSprint(true);
+                    repaint();
+                    return;
+                }
                 int moveAction = getNumberPadMove(keyCode);
                 if (moveAction != 0) {
                     controller.setDirection(moveAction, true);
@@ -272,6 +277,10 @@ public final class CSViewer extends MIDlet {
 
         protected void keyReleased(int keyCode) {
             if (error != null || controller == null) return;
+            if (keyCode == KEY_NUM7) {
+                controller.setSprint(false);
+                return;
+            }
             int moveAction = getNumberPadMove(keyCode);
             if (moveAction != 0) {
                 controller.setDirection(moveAction, false);
@@ -297,8 +306,3 @@ public final class CSViewer extends MIDlet {
         }
     }
 }
-
-
-
-
-
