@@ -22,6 +22,7 @@ public final class ClaudeModel {
     public static final int RUN_STOP_LEFT = 7;
     public static final int RUN_STOP_RIGHT = 8;
     public static final int LANDING = 9;
+    public static final int BACKWARD = 10;
 
     private static final float[] WALK_HIP = new float[] {-0.30f, -0.02f, 0.30f, 0.02f, -0.30f};
     private static final float[] RUN_HIP = new float[] {-0.48f, -0.02f, 0.48f, 0.02f, -0.48f};
@@ -32,7 +33,12 @@ public final class ClaudeModel {
     private static final float[] WALK_ARM = new float[] {0.22f, 0.02f, -0.22f, -0.02f, 0.22f};
     private static final float[] RUN_ARM = new float[] {0.36f, 0.02f, -0.36f, -0.02f, 0.36f};
     private static final float[] SPRINT_ARM = new float[] {0.46f, 0.02f, -0.46f, -0.02f, 0.46f};
+    private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.02f, 0.19f, 0.02f, -0.19f};
+    private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.24f, 0.10f, 0.20f, 0.12f};
+    private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.02f, 0.13f, 0.02f, -0.13f};
     private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.30f, 0.10f, 0.24f, 0.10f};
+    private static final float[] RUN_ELBOW_KEYS = new float[] {0.24f, 0.48f, 0.22f, 0.44f, 0.24f};
+    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.34f, 0.58f, 0.30f, 0.54f, 0.34f};
     private static final float[] START_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
     private static final float[] START_HIP = new float[] {0.0f, -0.16f, -0.34f, -0.22f};
     private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
@@ -101,7 +107,7 @@ public final class ClaudeModel {
 
         public void animate(int pose, float phase, float gaitBlend, float speed, int transition, float transitionTime) {
             float movement = clamp(gaitBlend);
-            boolean moving = pose == WALK || pose == RUN || pose == SPRINT;
+            boolean moving = pose == WALK || pose == RUN || pose == SPRINT || pose == BACKWARD;
             float cycle = phase / 6.2831853f;
             while (cycle >= 1.0f) cycle -= 1.0f;
             while (cycle < 0.0f) cycle += 1.0f;
@@ -127,6 +133,16 @@ public final class ClaudeModel {
             float rightRunArm = sampleCycle(RUN_ARM, cycle + 0.5f);
             float leftSprintArm = sampleCycle(SPRINT_ARM, cycle);
             float rightSprintArm = sampleCycle(SPRINT_ARM, cycle + 0.5f);
+            if (pose == BACKWARD) {
+                leftWalkHip = sampleCycle(BACKWARD_HIP, cycle);
+                rightWalkHip = sampleCycle(BACKWARD_HIP, cycle + 0.5f);
+                leftWalkKnee = sampleCycle(BACKWARD_KNEE, cycle);
+                rightWalkKnee = sampleCycle(BACKWARD_KNEE, cycle + 0.5f);
+                leftWalkArm = sampleCycle(BACKWARD_ARM, cycle);
+                rightWalkArm = sampleCycle(BACKWARD_ARM, cycle + 0.5f);
+                runMix = 0.0f;
+                sprintMix = 0.0f;
+            }
 
             float leftHip = moving ? (leftWalkHip + (leftRunHip - leftWalkHip) * runMix
                     + (leftSprintHip - leftRunHip) * sprintMix) * movement : 0.0f;
@@ -140,12 +156,21 @@ public final class ClaudeModel {
                     + (leftSprintArm - leftRunArm) * sprintMix) * movement - 0.05f * movement : 0.0f;
             float rightArm = moving ? -(rightWalkArm + (rightRunArm - rightWalkArm) * runMix
                     + (rightSprintArm - rightRunArm) * sprintMix) * movement - 0.05f * movement : 0.0f;
-            float leftElbow = moving ? sampleCycle(ELBOW_KEYS, cycle) * movement : 0.04f;
-            float rightElbow = moving ? sampleCycle(ELBOW_KEYS, cycle + 0.5f) * movement : 0.04f;
+            float leftElbow = moving ? (sampleCycle(ELBOW_KEYS, cycle)
+                    + (sampleCycle(RUN_ELBOW_KEYS, cycle) - sampleCycle(ELBOW_KEYS, cycle)) * runMix
+                    + (sampleCycle(SPRINT_ELBOW_KEYS, cycle) - sampleCycle(RUN_ELBOW_KEYS, cycle)) * sprintMix) * movement : 0.04f;
+            float rightElbow = moving ? (sampleCycle(ELBOW_KEYS, cycle + 0.5f)
+                    + (sampleCycle(RUN_ELBOW_KEYS, cycle + 0.5f) - sampleCycle(ELBOW_KEYS, cycle + 0.5f)) * runMix
+                    + (sampleCycle(SPRINT_ELBOW_KEYS, cycle + 0.5f) - sampleCycle(RUN_ELBOW_KEYS, cycle + 0.5f)) * sprintMix) * movement : 0.04f;
+            if (pose == BACKWARD) {
+                leftElbow = 0.08f * movement;
+                rightElbow = 0.08f * movement;
+            }
 
-            float torsoLean = moving ? (pose == SPRINT ? 0.20f : (pose == RUN ? 0.13f : 0.06f)) * movement : 0.0f;
-            float torsoTwist = moving ? -sampleCycle(WALK_HIP, cycle) * 0.10f * movement : 0.0f;
-            float pelvisRoll = moving ? sampleCycle(WALK_HIP, cycle) * 0.035f * movement : 0.0f;
+            float torsoLean = moving ? (pose == SPRINT ? 0.20f : (pose == RUN ? 0.13f
+                    : (pose == BACKWARD ? -0.025f : 0.06f))) * movement : 0.0f;
+            float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.10f * movement : 0.0f;
+            float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.035f * movement : 0.0f;
 
             // GTA III uses a short STARTWALK clip before the repeating walk/run cycles.
             if (transition == START_WALK) {
