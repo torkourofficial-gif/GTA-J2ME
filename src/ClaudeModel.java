@@ -24,21 +24,32 @@ public final class ClaudeModel {
     public static final int LANDING = 9;
     public static final int BACKWARD = 10;
 
-    private static final float[] WALK_HIP = new float[] {-0.30f, -0.02f, 0.30f, 0.02f, -0.30f};
-    private static final float[] RUN_HIP = new float[] {-0.62f, -0.10f, 0.62f, 0.10f, -0.62f};
-    private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.12f, 0.78f, 0.12f, -0.78f};
-    private static final float[] WALK_KNEE = new float[] {0.04f, 0.38f, 0.05f, 0.12f, 0.04f};
-    private static final float[] RUN_KNEE = new float[] {0.10f, 0.82f, 0.10f, 0.26f, 0.10f};
-    private static final float[] SPRINT_KNEE = new float[] {0.14f, 1.02f, 0.12f, 0.32f, 0.14f};
-    private static final float[] WALK_ARM = new float[] {0.22f, 0.02f, -0.22f, -0.02f, 0.22f};
-    private static final float[] RUN_ARM = new float[] {0.48f, 0.08f, -0.48f, -0.08f, 0.48f};
-    private static final float[] SPRINT_ARM = new float[] {0.60f, 0.10f, -0.60f, -0.10f, 0.60f};
-    private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.02f, 0.19f, 0.02f, -0.19f};
-    private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.24f, 0.10f, 0.20f, 0.12f};
-    private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.02f, 0.13f, 0.02f, -0.13f};
-    private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.30f, 0.10f, 0.24f, 0.10f};
-    private static final float[] RUN_ELBOW_KEYS = new float[] {0.42f, 0.62f, 0.40f, 0.58f, 0.42f};
-    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.52f, 0.72f, 0.48f, 0.68f, 0.52f};
+    // Eight samples per loop (plus the matching end sample) give the gait
+    // enough timing detail for heel strike, compression, push-off and flight.
+    private static final float[] WALK_HIP = new float[] {-0.30f, -0.24f, -0.02f, 0.20f, 0.30f, 0.24f, 0.02f, -0.20f, -0.30f};
+    private static final float[] RUN_HIP = new float[] {-0.62f, -0.48f, -0.10f, 0.38f, 0.62f, 0.48f, 0.10f, -0.38f, -0.62f};
+    private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.60f, -0.12f, 0.48f, 0.78f, 0.60f, 0.12f, -0.48f, -0.78f};
+    private static final float[] WALK_KNEE = new float[] {0.04f, 0.10f, 0.38f, 0.22f, 0.05f, 0.08f, 0.12f, 0.18f, 0.04f};
+    private static final float[] RUN_KNEE = new float[] {0.10f, 0.18f, 0.82f, 0.46f, 0.10f, 0.16f, 0.26f, 0.38f, 0.10f};
+    private static final float[] SPRINT_KNEE = new float[] {0.14f, 0.24f, 1.02f, 0.58f, 0.12f, 0.20f, 0.32f, 0.46f, 0.14f};
+    private static final float[] WALK_ARM = new float[] {0.22f, 0.18f, 0.02f, -0.16f, -0.22f, -0.18f, -0.02f, 0.16f, 0.22f};
+    private static final float[] RUN_ARM = new float[] {0.48f, 0.38f, 0.08f, -0.34f, -0.48f, -0.38f, -0.08f, 0.34f, 0.48f};
+    private static final float[] SPRINT_ARM = new float[] {0.60f, 0.48f, 0.10f, -0.44f, -0.60f, -0.48f, -0.10f, 0.44f, 0.60f};
+    private static final float[] BACKWARD_HIP = new float[] {-0.19f, -0.15f, -0.02f, 0.12f, 0.19f, 0.15f, 0.02f, -0.12f, -0.19f};
+    private static final float[] BACKWARD_KNEE = new float[] {0.12f, 0.16f, 0.24f, 0.18f, 0.10f, 0.14f, 0.20f, 0.18f, 0.12f};
+    private static final float[] BACKWARD_ARM = new float[] {-0.13f, -0.10f, -0.02f, 0.08f, 0.13f, 0.10f, 0.02f, -0.08f, -0.13f};
+    private static final float[] ELBOW_KEYS = new float[] {0.10f, 0.16f, 0.30f, 0.22f, 0.10f, 0.14f, 0.24f, 0.18f, 0.10f};
+    private static final float[] RUN_ELBOW_KEYS = new float[] {0.42f, 0.50f, 0.62f, 0.54f, 0.40f, 0.48f, 0.58f, 0.50f, 0.42f};
+    private static final float[] SPRINT_ELBOW_KEYS = new float[] {0.52f, 0.60f, 0.72f, 0.64f, 0.48f, 0.56f, 0.68f, 0.60f, 0.52f};
+    private static final float[] WALK_SHOULDER = new float[] {0.04f, 0.07f, 0.02f, -0.05f, -0.04f, -0.07f, -0.02f, 0.05f, 0.04f};
+    private static final float[] RUN_SHOULDER = new float[] {0.12f, 0.16f, 0.08f, -0.12f, -0.12f, -0.16f, -0.08f, 0.12f, 0.12f};
+    private static final float[] SPRINT_SHOULDER = new float[] {0.18f, 0.22f, 0.12f, -0.18f, -0.18f, -0.22f, -0.12f, 0.18f, 0.18f};
+    private static final float[] WALK_WRIST = new float[] {0.02f, 0.04f, 0.08f, 0.04f, -0.02f, -0.04f, -0.08f, -0.04f, 0.02f};
+    private static final float[] RUN_WRIST = new float[] {0.08f, 0.12f, 0.18f, 0.10f, -0.08f, -0.12f, -0.18f, -0.10f, 0.08f};
+    private static final float[] SPRINT_WRIST = new float[] {0.12f, 0.16f, 0.22f, 0.12f, -0.12f, -0.16f, -0.22f, -0.12f, 0.12f};
+    private static final float[] WALK_ANKLE = new float[] {0.02f, -0.08f, -0.16f, 0.08f, 0.18f, 0.10f, -0.04f, -0.10f, 0.02f};
+    private static final float[] RUN_ANKLE = new float[] {0.10f, -0.12f, -0.30f, 0.18f, 0.34f, 0.18f, -0.08f, -0.18f, 0.10f};
+    private static final float[] SPRINT_ANKLE = new float[] {0.14f, -0.16f, -0.38f, 0.22f, 0.42f, 0.22f, -0.10f, -0.22f, 0.14f};
     private static final float[] START_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
     private static final float[] START_HIP = new float[] {0.0f, -0.16f, -0.34f, -0.22f};
     private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
@@ -162,15 +173,39 @@ public final class ClaudeModel {
             float rightElbow = moving ? (sampleCycle(ELBOW_KEYS, cycle + 0.5f)
                     + (sampleCycle(RUN_ELBOW_KEYS, cycle + 0.5f) - sampleCycle(ELBOW_KEYS, cycle + 0.5f)) * runMix
                     + (sampleCycle(SPRINT_ELBOW_KEYS, cycle + 0.5f) - sampleCycle(RUN_ELBOW_KEYS, cycle + 0.5f)) * sprintMix) * movement : 0.04f;
+            float leftShoulder = moving ? (sampleCycle(WALK_SHOULDER, cycle)
+                    + (sampleCycle(RUN_SHOULDER, cycle) - sampleCycle(WALK_SHOULDER, cycle)) * runMix
+                    + (sampleCycle(SPRINT_SHOULDER, cycle) - sampleCycle(RUN_SHOULDER, cycle)) * sprintMix) * movement : 0.0f;
+            float rightShoulder = moving ? (sampleCycle(WALK_SHOULDER, cycle + 0.5f)
+                    + (sampleCycle(RUN_SHOULDER, cycle + 0.5f) - sampleCycle(WALK_SHOULDER, cycle + 0.5f)) * runMix
+                    + (sampleCycle(SPRINT_SHOULDER, cycle + 0.5f) - sampleCycle(RUN_SHOULDER, cycle + 0.5f)) * sprintMix) * movement : 0.0f;
+            float leftWrist = moving ? (sampleCycle(WALK_WRIST, cycle)
+                    + (sampleCycle(RUN_WRIST, cycle) - sampleCycle(WALK_WRIST, cycle)) * runMix
+                    + (sampleCycle(SPRINT_WRIST, cycle) - sampleCycle(RUN_WRIST, cycle)) * sprintMix) * movement : 0.0f;
+            float rightWrist = moving ? (sampleCycle(WALK_WRIST, cycle + 0.5f)
+                    + (sampleCycle(RUN_WRIST, cycle + 0.5f) - sampleCycle(WALK_WRIST, cycle + 0.5f)) * runMix
+                    + (sampleCycle(SPRINT_WRIST, cycle + 0.5f) - sampleCycle(RUN_WRIST, cycle + 0.5f)) * sprintMix) * movement : 0.0f;
+            float leftFoot = moving ? (sampleCycle(WALK_ANKLE, cycle)
+                    + (sampleCycle(RUN_ANKLE, cycle) - sampleCycle(WALK_ANKLE, cycle)) * runMix
+                    + (sampleCycle(SPRINT_ANKLE, cycle) - sampleCycle(RUN_ANKLE, cycle)) * sprintMix) * movement : 0.0f;
+            float rightFoot = moving ? (sampleCycle(WALK_ANKLE, cycle + 0.5f)
+                    + (sampleCycle(RUN_ANKLE, cycle + 0.5f) - sampleCycle(WALK_ANKLE, cycle + 0.5f)) * runMix
+                    + (sampleCycle(SPRINT_ANKLE, cycle + 0.5f) - sampleCycle(RUN_ANKLE, cycle + 0.5f)) * sprintMix) * movement : 0.0f;
             if (pose == BACKWARD) {
                 leftElbow = 0.08f * movement;
                 rightElbow = 0.08f * movement;
+                leftShoulder = 0.0f;
+                rightShoulder = 0.0f;
+                leftWrist = 0.0f;
+                rightWrist = 0.0f;
             }
 
             float torsoLean = moving ? (pose == SPRINT ? 0.28f : (pose == RUN ? 0.22f
                     : (pose == BACKWARD ? -0.025f : 0.06f))) * movement : 0.0f;
-            float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.10f * movement : 0.0f;
-            float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.035f * movement : 0.0f;
+            float torsoTwist = moving ? -sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.16f * movement : 0.0f;
+            float pelvisRoll = moving ? sampleCycle(pose == BACKWARD ? BACKWARD_HIP : WALK_HIP, cycle) * 0.055f * movement : 0.0f;
+            float neckCounter = -torsoTwist * 0.55f;
+            float shoulderLift = moving ? (float) Math.sin(phase * 2.0f) * (pose == SPRINT ? 0.035f : 0.018f) * movement : 0.0f;
 
             // GTA III uses a short STARTWALK clip before the repeating walk/run cycles.
             if (transition == START_WALK) {
@@ -235,11 +270,14 @@ public final class ClaudeModel {
                 rightArm = -breath * 0.018f;
             }
 
-            float leftAnkle = (moving || transition != 0) ? -leftHip * 0.18f - leftKnee * 0.34f
-                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f));
-            float rightAnkle = (moving || transition != 0) ? -rightHip * 0.18f - rightKnee * 0.34f
-                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f));
+            float leftAnkle = moving ? leftFoot - leftHip * 0.10f - leftKnee * 0.22f
+                    : (transition != 0 ? -leftHip * 0.18f - leftKnee * 0.34f
+                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f)));
+            float rightAnkle = moving ? rightFoot - rightHip * 0.10f - rightKnee * 0.22f
+                    : (transition != 0 ? -rightHip * 0.18f - rightKnee * 0.34f
+                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f)));
             float headCounter = -torsoLean * 0.30f;
+            float headTurn = neckCounter + (moving ? sampleCycle(WALK_HIP, cycle) * 0.035f : 0.0f);
 
             float sl = (float) Math.sin(leftHip), cl = (float) Math.cos(leftHip);
             float sr = (float) Math.sin(rightHip), cr = (float) Math.cos(rightHip);
@@ -255,6 +293,11 @@ public final class ClaudeModel {
             float stw = (float) Math.sin(torsoTwist), ctw = (float) Math.cos(torsoTwist);
             float spr = (float) Math.sin(pelvisRoll), cpr = (float) Math.cos(pelvisRoll);
             float sh = (float) Math.sin(headCounter), ch = (float) Math.cos(headCounter);
+            float sht = (float) Math.sin(headTurn), cht = (float) Math.cos(headTurn);
+            float ssl = (float) Math.sin(leftShoulder + shoulderLift), csl = (float) Math.cos(leftShoulder + shoulderLift);
+            float ssr = (float) Math.sin(rightShoulder + shoulderLift), csr = (float) Math.cos(rightShoulder + shoulderLift);
+            float swl = (float) Math.sin(leftWrist), cwl = (float) Math.cos(leftWrist);
+            float swr = (float) Math.sin(rightWrist), cwr = (float) Math.cos(rightWrist);
             float jumpLeftArmSin = (float) Math.sin(-0.65f), jumpLeftArmCos = (float) Math.cos(-0.65f);
             float jumpRightArmSin = (float) Math.sin(0.65f), jumpRightArmCos = (float) Math.cos(0.65f);
 
@@ -276,6 +319,8 @@ public final class ClaudeModel {
                 float law = armSide < 0 ? armWeight : 0.0f;
                 float raw = armSide > 0 ? armWeight : 0.0f;
                 float elbowRegion = clamp((0.39f - y) / 0.20f);
+                float wristRegion = clamp((0.22f - y) / 0.12f);
+                float shoulderRegion = clamp((0.48f - y) / 0.14f);
                 float torsoWeight = clamp((0.36f - absX) / 0.19f)
                         * clamp((y + 0.04f) / 0.20f) * clamp((0.72f - y) / 0.18f);
                 float pelvisWeight = clamp((0.27f - absX) / 0.16f)
@@ -292,13 +337,20 @@ public final class ClaudeModel {
                 rotateX(0.0f, 0.16f, 0.0f, st, ct, torsoWeight);
                 rotateY(0.0f, 0.16f, 0.0f, stw, ctw, torsoWeight);
                 rotateZ(0.0f, -0.02f, 0.0f, spr, cpr, pelvisWeight);
+                // Clavicle/shoulder, upper arm, elbow, forearm and wrist are
+                // separate deformation zones rather than one rigid arm swing.
+                rotateZ(-0.19f, 0.42f, 0.04f, ssl, csl, law * shoulderRegion);
+                rotateZ(0.19f, 0.42f, 0.04f, ssr, csr, raw * shoulderRegion);
                 rotateX(-0.19f, 0.42f, 0.04f, sal, cal, law);
                 rotateX(0.19f, 0.42f, 0.04f, sar, car, raw);
                 rotateX(-0.25f, 0.20f, 0.04f, sel, cel, law * elbowRegion);
                 rotateX(0.25f, 0.20f, 0.04f, ser, cer, raw * elbowRegion);
+                rotateX(-0.25f, 0.055f, 0.04f, swl, cwl, law * wristRegion);
+                rotateX(0.25f, 0.055f, 0.04f, swr, cwr, raw * wristRegion);
                 rotateZ(-0.19f, 0.42f, 0.04f, jumpLeftArmSin, jumpLeftArmCos, law * (pose == JUMP ? 1.0f : 0.0f));
                 rotateZ(0.19f, 0.42f, 0.04f, jumpRightArmSin, jumpRightArmCos, raw * (pose == JUMP ? 1.0f : 0.0f));
                 rotateX(0.0f, 0.68f, 0.0f, sh, ch, headWeight);
+                rotateY(0.0f, 0.61f, 0.0f, sht, cht, headWeight);
 
                 deformed[i] = quantize((point[0] - BIAS_X) / POSITION_SCALE);
                 deformed[i + 1] = quantize((point[1] - BIAS_Y) / POSITION_SCALE);
@@ -310,12 +362,13 @@ public final class ClaudeModel {
         private float sampleCycle(float[] values, float phase) {
             while (phase >= 1.0f) phase -= 1.0f;
             while (phase < 0.0f) phase += 1.0f;
-            float scaled = phase * 4.0f;
+            int segments = values.length - 1;
+            float scaled = phase * segments;
             int index = (int) scaled;
-            if (index > 3) index = 3;
+            if (index >= segments) index = segments - 1;
             float t = scaled - index;
-            int previous = index == 0 ? 3 : index - 1;
-            int next = index + 2 > 4 ? 1 : index + 2;
+            int previous = index == 0 ? segments - 1 : index - 1;
+            int next = index + 2 > segments ? 1 : index + 2;
             float p0 = values[index];
             float p1 = values[index + 1];
             float tangent0 = (p1 - values[previous]) * 0.5f;
