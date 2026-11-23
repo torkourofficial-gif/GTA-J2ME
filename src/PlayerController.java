@@ -202,18 +202,19 @@ final class PlayerController {
 
         float nextX = x + velocityX * elapsed;
         float nextZ = z + velocityZ * elapsed;
-        if (nextX < -18.5f) {
-            nextX = -18.5f;
+        // The expanded city spans 120 x 120 world units.
+        if (nextX < -58.5f) {
+            nextX = -58.5f;
             velocityX = 0.0f;
-        } else if (nextX > 18.5f) {
-            nextX = 18.5f;
+        } else if (nextX > 58.5f) {
+            nextX = 58.5f;
             velocityX = 0.0f;
         }
-        if (nextZ < -18.5f) {
-            nextZ = -18.5f;
+        if (nextZ < -58.5f) {
+            nextZ = -58.5f;
             velocityZ = 0.0f;
-        } else if (nextZ > 18.5f) {
-            nextZ = 18.5f;
+        } else if (nextZ > 58.5f) {
+            nextZ = 58.5f;
             velocityZ = 0.0f;
         }
         if (!CityMap.blocks(nextX, z)) {
