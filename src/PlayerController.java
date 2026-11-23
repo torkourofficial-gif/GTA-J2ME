@@ -59,6 +59,9 @@ final class PlayerController {
     private float landingTime;
     private float animationTime;
     private float gaitBlend;
+    private int animationTransition;
+    private float transitionTime;
+    private float lastHorizontalSpeed;
     private float stamina = MAX_STAMINA;
     private int state = IDLE;
 
@@ -239,8 +242,12 @@ final class PlayerController {
 
         if (jumpHeight > 0.0f) {
             state = JUMP;
+            animationTransition = 0;
+            transitionTime = 0.0f;
         } else if (landingTime > 0.0f) {
             state = LAND;
+            animationTransition = 0;
+            transitionTime = 0.0f;
         } else if (horizontalSpeed > 2.45f) {
             state = SPRINT;
         } else if (horizontalSpeed > 0.85f) {
@@ -250,6 +257,34 @@ final class PlayerController {
         } else {
             state = IDLE;
         }
+
+        // Use a short one-shot start/stop clip, like GTA III's STARTWALK and RUNSTOP associations.
+        if (jumpHeight <= 0.0f && landingTime <= 0.0f) {
+            if (hasInput && lastHorizontalSpeed < 0.18f && horizontalSpeed > 0.12f) {
+                animationTransition = ClaudeModel.START_WALK;
+                transitionTime = 0.0f;
+            } else if (!hasInput && lastHorizontalSpeed > 1.2f && horizontalSpeed > 0.12f) {
+                int stopClip = (((int) (animationTime / 3.1415926f)) & 1) == 0
+                        ? ClaudeModel.RUN_STOP_LEFT : ClaudeModel.RUN_STOP_RIGHT;
+                animationTransition = stopClip;
+                transitionTime = 0.0f;
+            } else if (hasInput && (animationTransition == ClaudeModel.RUN_STOP_LEFT
+                    || animationTransition == ClaudeModel.RUN_STOP_RIGHT)) {
+                animationTransition = 0;
+                transitionTime = 0.0f;
+            }
+        }
+
+        if (animationTransition != 0) {
+            float clipDuration = animationTransition == ClaudeModel.START_WALK ? 0.34f : 0.48f;
+            transitionTime += elapsed / clipDuration;
+            if (transitionTime >= 1.0f) {
+                transitionTime = 1.0f;
+                animationTransition = 0;
+                transitionTime = 0.0f;
+            }
+        }
+        lastHorizontalSpeed = horizontalSpeed;
 
         // Blend into and out of the gait instead of snapping from idle to a full stride.
         float targetGaitBlend = isMovingState() ? 1.0f : 0.0f;
@@ -276,7 +311,7 @@ final class PlayerController {
             animationRate = 5.0f;
         }
         animationTime += elapsed * animationRate;
-        rig.animate(state, animationTime, gaitBlend);
+        rig.animate(state, animationTime, gaitBlend, animationTransition, transitionTime);
         updateTransforms();
     }
 
@@ -298,7 +333,7 @@ final class PlayerController {
         if (isMovingState()) {
             float step = (float) Math.sin(animationTime);
             float bounce = (float) Math.abs(step);
-            scaleY = 1.0f + bounce * (state == SPRINT ? 0.035f : 0.025f);
+            scaleY = 1.0f + bounce * (state == SPRINT ? 0.025f : 0.018f);
         } else if (state == JUMP) {
             scaleY = verticalSpeed > 0.0f ? 1.04f : 0.96f;
         } else if (state == LAND) {
@@ -316,8 +351,9 @@ final class PlayerController {
         if (isMovingState()) {
             float step = (float) Math.sin(animationTime);
             float bounce = (float) Math.abs(step);
-            bob = bounce * (state == SPRINT ? 0.06f : 0.045f);
-            lean = step * (state == SPRINT ? 6.0f : (state == RUN ? 4.5f : 3.0f));
+            bob = bounce * (state == SPRINT ? 0.035f : 0.025f);
+            // Forward lean is now part of the torso pose, not a rigid whole-model tilt.
+            lean = 0.0f;
         } else if (state == JUMP) {
             bob = 0.0f;
             lean = -10.0f;
