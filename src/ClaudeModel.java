@@ -176,7 +176,7 @@ public final class ClaudeModel {
                 float stopMix = smooth(t);
                 float side = transition == RUN_STOP_LEFT ? 1.0f : -1.0f;
                 leftHip = leftHip * (1.0f - stopMix) + stopHip * side * stopMix;
-                rightHip = rightHip * (1.0f - stopMix) - stopHip * side * (1.0f - t) * stopMix;
+                rightHip = rightHip * (1.0f - stopMix) - stopHip * side * stopMix;
                 leftKnee = leftKnee * (1.0f - stopMix) + stopKnee * (side > 0.0f ? 1.0f : 0.55f) * stopMix;
                 rightKnee = rightKnee * (1.0f - stopMix) + stopKnee * (side < 0.0f ? 1.0f : 0.55f) * stopMix;
                 leftArm = leftArm * (1.0f - stopMix) + stopArm * stopMix;
