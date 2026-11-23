@@ -299,19 +299,16 @@ final class PlayerController {
         }
 
         float animationRate;
-        if (state == SPRINT) {
-            animationRate = 14.0f;
-        } else if (state == RUN) {
-            animationRate = 11.5f;
-        } else if (state == WALK) {
-            animationRate = 8.0f;
+        if (isMovingState()) {
+            // Keep cadence continuous as GTA-style walk/run/sprint blends change.
+            animationRate = 6.4f + horizontalSpeed * 2.25f;
         } else if (state == IDLE) {
             animationRate = 1.8f;
         } else {
             animationRate = 5.0f;
         }
         animationTime += elapsed * animationRate;
-        rig.animate(state, animationTime, gaitBlend, animationTransition, transitionTime);
+        rig.animate(state, animationTime, gaitBlend, horizontalSpeed, animationTransition, transitionTime);
         updateTransforms();
     }
 
