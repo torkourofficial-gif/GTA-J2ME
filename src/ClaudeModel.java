@@ -16,6 +16,8 @@ public final class ClaudeModel {
     public static final int WALK = 1;
     public static final int JUMP = 2;
     public static final int LAND = 3;
+    public static final int RUN = 4;
+    public static final int SPRINT = 5;
     private static final int VERTEX_COUNT = 719;
     private static final float POSITION_SCALE = 3.67573e-05f;
     private static final float BIAS_X = -0.00545f;
@@ -72,12 +74,16 @@ public final class ClaudeModel {
         public void animate(int pose, float phase) {
             float cycle = (float) Math.sin(phase);
             float idleSway = (float) Math.sin(phase * 0.55f);
-            float leftLeg = pose == WALK ? cycle * 0.40f : (pose == JUMP ? 0.18f : (pose == LAND ? 0.03f : idleSway * 0.015f));
+            boolean running = pose == WALK || pose == RUN || pose == SPRINT;
+            float stride = pose == SPRINT ? 0.58f : (pose == RUN ? 0.48f : 0.40f);
+            float armSwing = pose == SPRINT ? 0.40f : (pose == RUN ? 0.33f : 0.27f);
+            float leftLeg = running ? cycle * stride : (pose == JUMP ? 0.18f : (pose == LAND ? 0.03f : idleSway * 0.015f));
             float rightLeg = -leftLeg;
-            float leftArm = pose == WALK ? -cycle * 0.27f : (pose == JUMP ? 0.0f : (pose == LAND ? 0.08f : idleSway * 0.035f));
+            float leftArm = running ? -cycle * armSwing : (pose == JUMP ? 0.0f : (pose == LAND ? 0.08f : idleSway * 0.035f));
             float rightArm = -leftArm;
-            float leftKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 0.9f)) * 0.38f : (pose == JUMP ? 0.42f : (pose == LAND ? 0.48f : 0.0f));
-            float rightKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 4.04f)) * 0.38f : (pose == JUMP ? 0.30f : (pose == LAND ? 0.48f : 0.0f));
+            float kneeSwing = pose == SPRINT ? 0.52f : (pose == RUN ? 0.45f : 0.38f);
+            float leftKnee = running ? Math.max(0.0f, (float) Math.sin(phase + 0.9f)) * kneeSwing : (pose == JUMP ? 0.42f : (pose == LAND ? 0.48f : 0.0f));
+            float rightKnee = running ? Math.max(0.0f, (float) Math.sin(phase + 4.04f)) * kneeSwing : (pose == JUMP ? 0.30f : (pose == LAND ? 0.48f : 0.0f));
             float leftLift = pose == JUMP ? -1.15f : 0.0f;
             float rightLift = pose == JUMP ? 1.15f : 0.0f;
             float sl = (float) Math.sin(leftLeg), cl = (float) Math.cos(leftLeg);
