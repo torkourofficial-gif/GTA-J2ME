@@ -9,6 +9,7 @@ import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
 import javax.microedition.m3g.World;
 import javax.microedition.m3g.Texture2D;
+import javax.microedition.m3g.Sphere;
 
 /** Small low-poly city block built from reusable M3G primitives. */
 final class CityMap {
@@ -25,12 +26,7 @@ final class CityMap {
     private static Texture2D barkTexture;
     private static Texture2D leavesTexture;
     private static Texture2D metalTexture;
-    private static final float[][] BUILDINGS = {
-        {-14,-10,4.3f,5.0f}, {-7,-10,5.2f,5.0f}, {1,-10,4.8f,5.0f},
-        {9,-10,5.0f,5.0f}, {16,-10,4.0f,5.0f},
-        {-14,10,4.6f,5.0f}, {-6,10,5.0f,5.0f}, {2,10,4.5f,5.0f},
-        {10,10,5.0f,5.0f}, {17,10,3.5f,5.0f}
-    };
+    private static float[][] CITY_BUILDINGS;
 
     private CityMap() {
     }
@@ -44,52 +40,69 @@ final class CityMap {
         leavesTexture = ProceduralTextures.createTexture(ProceduralTextures.LEAVES, TREE, 149);
         metalTexture = ProceduralTextures.createTexture(ProceduralTextures.METAL, 0x41464a, 163);
 
-        addTexturedBox(world, 0, -0.15f, 0, 40, 0.3f, 40, 0x687254, grassTexture, 2.5f);
-        addTexturedBox(world, 0, 0.015f, 0, 40, 0.03f, 6, ASPHALT, asphaltTexture, 1.5f);
-        addTexturedBox(world, 0, 0.015f, -7.1f, 40, 0.03f, 7.8f, 0x77765f, concreteTexture, 1.4f);
-        addTexturedBox(world, 0, 0.015f, 7.1f, 40, 0.03f, 7.8f, 0x77765f, concreteTexture, 1.4f);
-        addTexturedBox(world, 0, 0.09f, -3.75f, 40, 0.18f, 1.2f, SIDEWALK, concreteTexture, 1.6f);
-        addTexturedBox(world, 0, 0.09f, 3.75f, 40, 0.18f, 1.2f, SIDEWALK, concreteTexture, 1.6f);
-
-        // Dashed road markings.
-        for (int x = -18; x <= 18; x += 4) {
-            addBox(world, x, 0.035f, 0, 1.8f, 0.01f, 0.09f, WHITE);
-        }
-        for (int stripe = -2; stripe <= 2; stripe++) {
-            addBox(world, stripe * 0.72f, 0.04f, -2.25f, 0.42f, 0.012f, 1.15f, WHITE);
-            addBox(world, stripe * 0.72f, 0.04f, 2.25f, 0.42f, 0.012f, 1.15f, WHITE);
-        }
-        for (int x = -19; x <= 19; x += 2) {
-            addTexturedBox(world, x, 0.18f, -4.45f, 1.8f, 0.18f, 0.22f, 0x777b78, concreteTexture, 0.8f);
-            addTexturedBox(world, x, 0.18f, 4.45f, 1.8f, 0.18f, 0.22f, 0x777b78, concreteTexture, 0.8f);
+        // Nine connected districts, each 40 units wide. Streets form a
+        // continuous grid and keep every building reachable on foot.
+        addTexturedBox(world, 0, -0.15f, 0, 120, 0.3f, 120, 0x687254, grassTexture, 2.5f);
+        for (int road = -60; road <= 60; road += 40) {
+            addTexturedBox(world, 0, 0.015f, road, 120, 0.03f, 7.0f, ASPHALT, asphaltTexture, 1.5f);
+            addTexturedBox(world, road, 0.015f, 0, 7.0f, 0.03f, 120, ASPHALT, asphaltTexture, 1.5f);
+            for (int side = -1; side <= 1; side += 2) {
+                addTexturedBox(world, 0, 0.09f, road + side * 4.4f, 120, 0.18f, 1.5f,
+                        SIDEWALK, concreteTexture, 1.4f);
+                addTexturedBox(world, road + side * 4.4f, 0.09f, 0, 1.5f, 0.18f, 120,
+                        SIDEWALK, concreteTexture, 1.4f);
+            }
         }
 
-        addBuilding(world, -14, -10, 4.3f, 5.5f, 5.0f, 0x77756f);
-        addBuilding(world, -7, -10, 5.2f, 7.0f, 5.0f, 0x8b735c);
-        addBuilding(world, 1, -10, 4.8f, 4.2f, 5.0f, 0x777d7a);
-        addBuilding(world, 9, -10, 5.0f, 6.1f, 5.0f, 0x786d61);
-        addBuilding(world, 16, -10, 4.0f, 5.0f, 5.0f, 0x747a78);
+        CITY_BUILDINGS = new float[36][5];
+        int buildingIndex = 0;
+        int district = 0;
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                float centerX = dx * 40.0f;
+                float centerZ = dz * 40.0f;
+                for (int sz = -1; sz <= 1; sz += 2) {
+                    for (int sx = -1; sx <= 1; sx += 2) {
+                        float bx = centerX + sx * 10.5f;
+                        float bz = centerZ + sz * 10.5f;
+                        float width = 7.0f + ((district + buildingIndex) % 3) * 0.8f;
+                        float depth = 7.2f + ((district * 2 + buildingIndex) % 3) * 0.7f;
+                        float height = 5.0f + ((district * 3 + buildingIndex * 5) % 8) * 1.05f;
+                        int color = buildingColor(buildingIndex + district * 3);
+                        CITY_BUILDINGS[buildingIndex][0] = bx;
+                        CITY_BUILDINGS[buildingIndex][1] = bz;
+                        CITY_BUILDINGS[buildingIndex][2] = width;
+                        CITY_BUILDINGS[buildingIndex][3] = depth;
+                        CITY_BUILDINGS[buildingIndex][4] = height;
+                        addBuilding(world, bx, bz, width, height, depth, color);
+                        buildingIndex++;
+                    }
+                }
+                district++;
+            }
+        }
 
-        addBuilding(world, -14, 10, 4.6f, 5.2f, 5.0f, 0x81715f);
-        addBuilding(world, -6, 10, 5.0f, 6.4f, 5.0f, 0x727a7b);
-        addBuilding(world, 2, 10, 4.5f, 4.6f, 5.0f, 0x8b785e);
-        addBuilding(world, 10, 10, 5.0f, 7.2f, 5.0f, 0x77736c);
-        addBuilding(world, 17, 10, 3.5f, 4.5f, 5.0f, 0x7a7e77);
+        // Trees are placed along sidewalks rather than in the middle of roads.
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                float cx = dx * 40.0f;
+                float cz = dz * 40.0f;
+                addTree(world, cx - 4.9f, cz - 10.0f, 0);
+                addTree(world, cx + 4.9f, cz + 10.0f, 1);
+            }
+        }
 
-        addTree(world, -18, -5.0f);
-        addTree(world, -10, -5.0f);
-        addTree(world, 10, -5.0f);
-        addTree(world, 18, -5.0f);
-        addTree(world, -18, 5.0f);
-        addTree(world, -10, 5.0f);
-        addTree(world, 10, 5.0f);
-        addTree(world, 18, 5.0f);
+        for (int road = -60; road <= 60; road += 40) {
+            for (int dash = -13; dash <= 13; dash += 4) {
+                addBox(world, dash, 0.035f, road, 1.8f, 0.01f, 0.09f, WHITE);
+                addBox(world, road, 0.035f, dash, 0.09f, 0.01f, 1.8f, WHITE);
+            }
+            for (int side = -1; side <= 1; side += 2) {
+                addLamp(world, road + side * 5.2f, road + side * 5.2f);
+            }
+        }
 
-        addLamp(world, -15, -3.4f);
-        addLamp(world, -5, -3.4f);
-        addLamp(world, 5, 3.4f);
-        addLamp(world, 15, 3.4f);
-
+        // A few recognizable street props around the starting district.
         addCar(world, -3.4f, -1.9f, 0x6b2925);
         addCar(world, 8.0f, 1.9f, 0x485c70);
         addBench(world, -3.0f, -6.0f);
@@ -98,14 +111,20 @@ final class CityMap {
         addTrashBin(world, -6.0f, 5.7f);
         addHydrant(world, 12.2f, -4.9f);
         addHydrant(world, -12.2f, 4.9f);
+    }
 
+    private static int buildingColor(int index) {
+        int[] colors = {0x77756f, 0x8b735c, 0x777d7a, 0x786d61, 0x747a78,
+                0x81715f, 0x727a7b, 0x8b785e, 0x77736c, 0x7a7e77};
+        return colors[index % colors.length];
     }
 
     static boolean blocks(float x, float z) {
-        for (int i = 0; i < BUILDINGS.length; i++) {
-            float[] building = BUILDINGS[i];
-            if (Math.abs(x - building[0]) < building[2] / 2.0f + 0.45f
-                    && Math.abs(z - building[1]) < building[3] / 2.0f + 0.45f) {
+        if (CITY_BUILDINGS == null) return false;
+        for (int i = 0; i < CITY_BUILDINGS.length; i++) {
+            float[] building = CITY_BUILDINGS[i];
+            if (Math.abs(x - building[0]) < building[2] / 2.0f + 0.55f
+                    && Math.abs(z - building[1]) < building[3] / 2.0f + 0.55f) {
                 return true;
             }
         }
@@ -132,10 +151,46 @@ final class CityMap {
         addBox(world, x, height + 0.12f, z, width + 0.12f, 0.24f, depth + 0.12f, 0x6b6962);
     }
 
-    private static void addTree(World world, float x, float z) {
-        addTexturedBox(world, x, 0.85f, z, 0.28f, 1.7f, 0.28f, TRUNK, barkTexture, 0.7f);
-        addTexturedBox(world, x, 2.0f, z, 1.65f, 1.65f, 1.65f, TREE, leavesTexture, 0.9f);
-        addTexturedBox(world, x, 2.8f, z, 1.0f, 1.0f, 1.0f, 0x376d3c, leavesTexture, 0.7f);
+    private static void addTree(World world, float x, float z, int variant) {
+        float height = 2.6f + variant * 0.35f;
+        addTexturedBox(world, x, height * 0.48f, z, 0.22f, height, 0.22f,
+                TRUNK, barkTexture, 0.55f);
+        // Visible branch structure breaks the old single-cube silhouette.
+        addBranch(world, x, height * 0.66f, z, -0.52f, 0.58f, -0.08f);
+        addBranch(world, x, height * 0.72f, z, 0.48f, 0.62f, 0.10f);
+        addBranch(world, x, height * 0.78f, z, 0.08f, 0.58f, 0.48f);
+        addBranch(world, x, height * 0.70f, z, -0.10f, 0.52f, -0.45f);
+        // Overlapping low-poly ellipsoids create an irregular leafy crown.
+        addLeafCluster(world, x, height * 0.88f, z, 0.72f, 0.72f, 0.68f, TREE);
+        addLeafCluster(world, x - 0.48f, height * 0.80f, z + 0.10f, 0.56f, 0.62f, 0.58f, 0x356b3c);
+        addLeafCluster(world, x + 0.45f, height * 0.82f, z - 0.08f, 0.58f, 0.64f, 0.56f, 0x477944);
+        addLeafCluster(world, x + 0.04f, height * 1.08f, z + 0.34f, 0.48f, 0.52f, 0.48f, 0x3b713d);
+    }
+
+    private static void addBranch(World world, float x, float y, float z,
+                                  float offsetX, float rise, float offsetZ) {
+        float length = (float) Math.sqrt(offsetX * offsetX + rise * rise + offsetZ * offsetZ);
+        Mesh branch = createUnitBox(TRUNK, barkTexture, 0.10f, length, 0.10f, 0.55f);
+        branch.setScale(0.10f, length, 0.10f);
+        branch.setTranslation(x + offsetX * 0.48f, y + rise * 0.48f, z + offsetZ * 0.48f);
+        branch.setOrientation(offsetX * 28.0f, 0.0f, 0.0f, 1.0f);
+        world.addChild(branch);
+    }
+
+    private static void addLeafCluster(World world, float x, float y, float z,
+                                       float sx, float sy, float sz, int color) {
+        Material material = new Material();
+        material.setColor(Material.EMISSIVE, 0xFFFFFFFF);
+        Appearance appearance = new Appearance();
+        appearance.setMaterial(material);
+        appearance.setTexture(0, leavesTexture);
+        PolygonMode mode = new PolygonMode();
+        mode.setCulling(PolygonMode.CULL_NONE);
+        appearance.setPolygonMode(mode);
+        Sphere leaves = new Sphere(0.5f, appearance);
+        leaves.setScale(sx, sy, sz);
+        leaves.setTranslation(x, y, z);
+        world.addChild(leaves);
     }
 
     private static void addLamp(World world, float x, float z) {
