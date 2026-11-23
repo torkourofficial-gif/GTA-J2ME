@@ -24,8 +24,8 @@ public final class ClaudeModel {
     public static final int LANDING = 9;
     public static final int BACKWARD = 10;
 
-    // Eight samples per loop (plus the matching end sample) give the gait
-    // enough timing detail for heel strike, compression, push-off and flight.
+    // Sixteen samples per loop (plus the matching end sample) give the gait
+    // detailed timing for heel strike, loading, toe-off, flight and recovery.
     private static final float[] WALK_HIP = new float[] {-0.30f, -0.28f, -0.24f, -0.14f, -0.02f, 0.10f, 0.20f, 0.27f, 0.30f, 0.29f, 0.24f, 0.14f, 0.02f, -0.10f, -0.20f, -0.27f, -0.30f};
     private static final float[] RUN_HIP = new float[] {-0.62f, -0.58f, -0.48f, -0.31f, -0.10f, 0.14f, 0.38f, 0.55f, 0.62f, 0.60f, 0.48f, 0.31f, 0.10f, -0.14f, -0.38f, -0.55f, -0.62f};
     private static final float[] SPRINT_HIP = new float[] {-0.78f, -0.73f, -0.60f, -0.39f, -0.12f, 0.18f, 0.48f, 0.69f, 0.78f, 0.75f, 0.60f, 0.39f, 0.12f, -0.18f, -0.48f, -0.69f, -0.78f};
@@ -50,19 +50,19 @@ public final class ClaudeModel {
     private static final float[] WALK_ANKLE = new float[] {0.02f, -0.02f, -0.08f, -0.13f, -0.16f, -0.04f, 0.08f, 0.16f, 0.18f, 0.15f, 0.10f, 0.02f, -0.04f, -0.08f, -0.10f, -0.04f, 0.02f};
     private static final float[] RUN_ANKLE = new float[] {0.10f, 0.02f, -0.12f, -0.24f, -0.30f, -0.06f, 0.18f, 0.30f, 0.34f, 0.30f, 0.18f, 0.02f, -0.08f, -0.14f, -0.18f, -0.02f, 0.10f};
     private static final float[] SPRINT_ANKLE = new float[] {0.14f, 0.04f, -0.16f, -0.30f, -0.38f, -0.08f, 0.22f, 0.38f, 0.42f, 0.37f, 0.22f, 0.04f, -0.10f, -0.17f, -0.22f, -0.04f, 0.14f};
-    private static final float[] START_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
-    private static final float[] START_HIP = new float[] {0.0f, -0.16f, -0.34f, -0.22f};
-    private static final float[] START_KNEE = new float[] {0.0f, 0.10f, 0.44f, 0.08f};
-    private static final float[] START_ARM = new float[] {0.0f, 0.12f, 0.28f, 0.12f};
-    private static final float[] STOP_KEYS = new float[] {0.0f, 0.18f, 0.42f, 0.68f, 1.0f};
-    private static final float[] STOP_HIP = new float[] {0.0f, 0.32f, 0.55f, 0.22f, 0.0f};
-    private static final float[] STOP_KNEE = new float[] {0.08f, 0.30f, 0.85f, 0.35f, 0.0f};
-    private static final float[] STOP_ARM = new float[] {0.0f, -0.28f, -0.48f, -0.16f, 0.0f};
-    private static final float[] STOP_LEAN = new float[] {0.08f, 0.24f, 0.42f, 0.14f, 0.0f};
-    private static final float[] LAND_KEYS = new float[] {0.0f, 0.22f, 0.58f, 1.0f};
-    private static final float[] LAND_KNEE = new float[] {0.02f, 0.76f, 0.38f, 0.0f};
-    private static final float[] LAND_ARM = new float[] {0.0f, -0.24f, -0.10f, 0.0f};
-    private static final float[] LAND_LEAN = new float[] {0.0f, 0.22f, 0.12f, 0.0f};
+    private static final float[] START_KEYS = new float[] {0.0f, 0.10f, 0.24f, 0.40f, 0.60f, 0.82f, 1.0f};
+    private static final float[] START_HIP = new float[] {0.0f, -0.06f, -0.18f, -0.32f, -0.38f, -0.28f, -0.20f};
+    private static final float[] START_KNEE = new float[] {0.0f, 0.04f, 0.16f, 0.38f, 0.52f, 0.24f, 0.06f};
+    private static final float[] START_ARM = new float[] {0.0f, 0.06f, 0.16f, 0.28f, 0.34f, 0.22f, 0.10f};
+    private static final float[] STOP_KEYS = new float[] {0.0f, 0.10f, 0.22f, 0.36f, 0.50f, 0.64f, 0.78f, 0.90f, 1.0f};
+    private static final float[] STOP_HIP = new float[] {0.0f, 0.16f, 0.36f, 0.54f, 0.60f, 0.42f, 0.22f, 0.06f, 0.0f};
+    private static final float[] STOP_KNEE = new float[] {0.08f, 0.16f, 0.34f, 0.62f, 0.88f, 0.70f, 0.42f, 0.16f, 0.0f};
+    private static final float[] STOP_ARM = new float[] {0.0f, -0.10f, -0.24f, -0.40f, -0.52f, -0.38f, -0.20f, -0.06f, 0.0f};
+    private static final float[] STOP_LEAN = new float[] {0.08f, 0.14f, 0.24f, 0.36f, 0.44f, 0.34f, 0.20f, 0.06f, 0.0f};
+    private static final float[] LAND_KEYS = new float[] {0.0f, 0.12f, 0.28f, 0.48f, 0.68f, 0.86f, 1.0f};
+    private static final float[] LAND_KNEE = new float[] {0.02f, 0.26f, 0.72f, 0.82f, 0.54f, 0.20f, 0.0f};
+    private static final float[] LAND_ARM = new float[] {0.0f, -0.10f, -0.24f, -0.28f, -0.18f, -0.06f, 0.0f};
+    private static final float[] LAND_LEAN = new float[] {0.0f, 0.08f, 0.20f, 0.24f, 0.16f, 0.06f, 0.0f};
     private static final int VERTEX_COUNT = 719;
     private static final float POSITION_SCALE = 3.67573e-05f;
     private static final float BIAS_X = -0.00545f;
