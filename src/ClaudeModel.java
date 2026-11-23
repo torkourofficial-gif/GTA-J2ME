@@ -317,13 +317,18 @@ public final class ClaudeModel {
                 float y = ClaudeModelData.POSITIONS[i + 1] * POSITION_SCALE + BIAS_Y;
                 float z = ClaudeModelData.POSITIONS[i + 2] * POSITION_SCALE + BIAS_Z;
                 float absX = Math.abs(x);
-                float center = clamp((0.29f - absX) / 0.13f);
-                float split = clamp((x + 0.12f) / 0.24f);
-                float legBase = clamp((-y + 0.04f) / 0.25f) * center;
+                // Keep each leg's influence centered on its own side of the
+                // pelvis. A narrow smooth seam prevents the two leg weights
+                // from bleeding across the crotch and inner thighs.
+                float legEnvelope = smooth(clamp((0.27f - absX) / 0.13f));
+                float split = smooth(clamp((x + 0.045f) / 0.09f));
+                float legBase = smooth(clamp((-y - 0.02f) / 0.22f)) * legEnvelope;
                 float lw = legBase * (1.0f - split), rw = legBase * split;
-                float kneeBase = clamp((-y - 0.47f) / 0.20f) * center;
+                // Lower-leg and shoe weights are nested lower down, so knee
+                // and ankle rotations cannot pull the upper trouser mesh.
+                float kneeBase = smooth(clamp((-y - 0.42f) / 0.20f)) * legEnvelope;
                 float lkw = kneeBase * (1.0f - split), rkw = kneeBase * split;
-                float footBase = clamp((-y - 0.66f) / 0.15f) * center;
+                float footBase = smooth(clamp((-y - 0.64f) / 0.12f)) * legEnvelope;
                 float lfw = footBase * (1.0f - split), rfw = footBase * split;
                 int armSide = ClaudeModelData.ARM_SIDE[i / 3];
                 float armWeight = armSide == 0 ? 0.0f : clamp((absX - 0.15f) / 0.14f);
