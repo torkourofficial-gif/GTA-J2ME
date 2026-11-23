@@ -15,6 +15,7 @@ final class PlayerController {
     private static final int LAND = 3;
     private static final int RUN = 4;
     private static final int SPRINT = 5;
+    private static final int BACKWARD = 6;
 
     private static final float RUN_SPEED = 2.3f;
     private static final float SPRINT_SPEED = 3.4f;
@@ -41,6 +42,7 @@ final class PlayerController {
     private boolean left;
     private boolean right;
     private boolean sprint;
+    private boolean backwardMotion;
     private boolean lastSprinting;
     private boolean sprintStopPending;
     private boolean cameraUp;
@@ -155,11 +157,15 @@ final class PlayerController {
             float worldInputX = inputX * cameraCos + inputZ * cameraSin;
             float worldInputZ = -inputX * cameraSin + inputZ * cameraCos;
 
+            boolean movingBackward = inputZ < 0.0f;
+            if (movingBackward) backwardMotion = true;
+            else if (inputZ > 0.0f) backwardMotion = false;
             float targetYaw = directionAngle(worldInputX, worldInputZ);
+            if (movingBackward) targetYaw += 180.0f;
             yaw = turnTowards(yaw, targetYaw, TURN_RATE * elapsed);
         }
 
-        boolean sprinting = sprint && hasInput && stamina > 0.0f;
+        boolean sprinting = sprint && hasInput && inputZ >= 0.0f && stamina > 0.0f;
         if (lastSprinting && !hasInput) {
             sprintStopPending = true;
         }
@@ -175,7 +181,7 @@ final class PlayerController {
             if (stamina > MAX_STAMINA) stamina = MAX_STAMINA;
         }
 
-        float targetSpeed = sprinting ? SPRINT_SPEED : RUN_SPEED;
+        float targetSpeed = inputZ < 0.0f ? 1.15f : (sprinting ? SPRINT_SPEED : RUN_SPEED);
         float targetVelocityX = 0.0f;
         float targetVelocityZ = 0.0f;
         if (hasInput) {
@@ -229,6 +235,7 @@ final class PlayerController {
         float horizontalSpeed = (float) Math.sqrt(velocityX * velocityX + velocityZ * velocityZ);
         if (!hasInput && horizontalSpeed > 0.15f) {
             float driftYaw = directionAngle(velocityX, velocityZ);
+            if (backwardMotion) driftYaw += 180.0f;
             yaw = turnTowards(yaw, driftYaw, TURN_RATE * elapsed);
         }
 
@@ -261,6 +268,8 @@ final class PlayerController {
                 animationTransition = ClaudeModel.LANDING;
                 transitionTime = 0.0f;
             }
+        } else if (backwardMotion && horizontalSpeed > 0.12f) {
+            state = BACKWARD;
         } else if (horizontalSpeed > 2.45f) {
             state = SPRINT;
         } else if (horizontalSpeed > 0.85f) {
@@ -314,7 +323,9 @@ final class PlayerController {
         }
 
         float animationRate;
-        if (isMovingState()) {
+        if (state == BACKWARD) {
+            animationRate = 5.2f + horizontalSpeed * 1.15f;
+        } else if (isMovingState()) {
             // Keep cadence continuous as GTA-style walk/run/sprint blends change.
             animationRate = 6.4f + horizontalSpeed * 2.25f;
         } else if (state == IDLE) {
@@ -364,7 +375,7 @@ final class PlayerController {
     }
 
     private boolean isMovingState() {
-        return state == WALK || state == RUN || state == SPRINT;
+        return state == WALK || state == RUN || state == SPRINT || state == BACKWARD;
     }
 
     private void updateTransforms() {
@@ -432,6 +443,7 @@ final class PlayerController {
         if (state == WALK) return "WALK";
         if (state == RUN) return "RUN";
         if (state == SPRINT) return "SPRINT";
+        if (state == BACKWARD) return "BACKWARD";
         if (state == JUMP) return "JUMP";
         if (state == LAND) return "LAND";
         return "IDLE";
@@ -444,6 +456,7 @@ final class PlayerController {
     void clearInput() {
         up = down = left = right = sprint = jumpRequested = false;
         lastSprinting = false;
+        backwardMotion = false;
         sprintStopPending = false;
         cameraUp = cameraDown = cameraLeft = cameraRight = false;
     }
