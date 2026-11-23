@@ -155,7 +155,7 @@ final class PlayerController {
             float worldInputX = inputX * cameraCos + inputZ * cameraSin;
             float worldInputZ = -inputX * cameraSin + inputZ * cameraCos;
 
-            float targetYaw = (float) Math.atan2(worldInputX, worldInputZ) * RAD_TO_DEG;
+            float targetYaw = directionAngle(worldInputX, worldInputZ);
             yaw = turnTowards(yaw, targetYaw, TURN_RATE * elapsed);
         }
 
@@ -228,7 +228,7 @@ final class PlayerController {
 
         float horizontalSpeed = (float) Math.sqrt(velocityX * velocityX + velocityZ * velocityZ);
         if (!hasInput && horizontalSpeed > 0.15f) {
-            float driftYaw = (float) Math.atan2(velocityX, velocityZ) * RAD_TO_DEG;
+            float driftYaw = directionAngle(velocityX, velocityZ);
             yaw = turnTowards(yaw, driftYaw, TURN_RATE * elapsed);
         }
 
@@ -325,6 +325,33 @@ final class PlayerController {
         animationTime += elapsed * animationRate;
         rig.animate(state, animationTime, gaitBlend, horizontalSpeed, animationTransition, transitionTime);
         updateTransforms();
+    }
+
+    // Java ME friendly direction angle approximation. No inverse-trigonometric APIs.
+    // Returns the yaw of a vector measured from +Z, in degrees.
+    private float directionAngle(float x, float z) {
+        if (x == 0.0f && z == 0.0f) return yaw;
+
+        float ax = x < 0.0f ? -x : x;
+        float az = z < 0.0f ? -z : z;
+        float ratio;
+        float angle;
+
+        if (ax <= az) {
+            ratio = ax / az;
+            angle = ratio * (45.0f - 14.0f * (1.0f - ratio));
+        } else {
+            ratio = az / ax;
+            angle = 90.0f - ratio * (45.0f - 14.0f * (1.0f - ratio));
+        }
+
+        if (x >= 0.0f) {
+            if (z < 0.0f) angle = 180.0f - angle;
+        } else {
+            if (z < 0.0f) angle = angle - 180.0f;
+            else angle = -angle;
+        }
+        return angle;
     }
 
     private float turnTowards(float current, float target, float maxTurn) {
