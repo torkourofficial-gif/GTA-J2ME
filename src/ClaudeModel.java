@@ -28,8 +28,7 @@ public final class ClaudeModel {
 
         Appearance appearance = new Appearance();
         Material material = new Material();
-        material.setColor(Material.AMBIENT, 0xFFFFFFFF);
-        material.setColor(Material.DIFFUSE, 0xFFFFFFFF);
+        material.setColor(Material.EMISSIVE, 0xFFFFFFFF);
         material.setColor(Material.SPECULAR, 0xFFFFFFFF);
         material.setShininess(0.0f);
         appearance.setMaterial(material);

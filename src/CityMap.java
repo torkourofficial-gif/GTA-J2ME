@@ -1,7 +1,6 @@
 package gta3me;
 
 import javax.microedition.m3g.Appearance;
-import javax.microedition.m3g.Light;
 import javax.microedition.m3g.Material;
 import javax.microedition.m3g.Mesh;
 import javax.microedition.m3g.PolygonMode;
@@ -67,10 +66,6 @@ final class CityMap {
         addLamp(world, 5, 3.4f);
         addLamp(world, 15, 3.4f);
 
-        Light light = new Light();
-        light.setMode(Light.AMBIENT);
-        light.setIntensity(0.9f);
-        world.addChild(light);
     }
 
     static boolean blocks(float x, float z) {
@@ -144,8 +139,7 @@ final class CityMap {
         vertices.setNormals(normalArray);
 
         Material material = new Material();
-        material.setColor(Material.AMBIENT, 0xFF000000 | color);
-        material.setColor(Material.DIFFUSE, 0xFF000000 | color);
+        material.setColor(Material.EMISSIVE, 0xFF000000 | color);
         Appearance appearance = new Appearance();
         appearance.setMaterial(material);
         PolygonMode polygonMode = new PolygonMode();

@@ -70,10 +70,6 @@ public final class CSViewer extends MIDlet {
                     background.setColor(0x18202b);
                     world.setBackground(background);
                 }
-                Light light = new Light();
-                light.setMode(Light.AMBIENT);
-                light.setIntensity(1.0f);
-                world.addChild(light);
             } catch (Exception e) {
                 error = "Could not load Claude model or gta3me/playa5nu.png: " + e.toString();
             }
