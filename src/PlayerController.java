@@ -80,7 +80,15 @@ final class PlayerController {
             if (nextZ > 18.5f) nextZ = 18.5f;
             if (!CityMap.blocks(nextX, z)) x = nextX;
             if (!CityMap.blocks(x, nextZ)) z = nextZ;
-            yaw = (float) (Math.atan2(moveX, moveZ) * 57.2957795);
+            if (moveX > 0.0f) {
+                yaw = moveZ < 0.0f ? 135.0f : (moveZ > 0.0f ? 45.0f : 90.0f);
+            } else if (moveX < 0.0f) {
+                yaw = moveZ < 0.0f ? -135.0f : (moveZ > 0.0f ? -45.0f : -90.0f);
+            } else if (moveZ < 0.0f) {
+                yaw = 180.0f;
+            } else if (moveZ > 0.0f) {
+                yaw = 0.0f;
+            }
         }
 
         if (jumpRequested && jumpHeight <= 0.0f) {
