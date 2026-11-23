@@ -1,9 +1,11 @@
 package gta3me;
 
+import java.util.Vector;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.m3g.Background;
 import javax.microedition.m3g.Camera;
@@ -47,6 +49,7 @@ public final class CSViewer extends MIDlet {
         private Thread loop;
         private volatile boolean running;
         private String error;
+        private int errorPage;
         private float angle;
         private float cameraDistance = 8.0f;
 
@@ -160,11 +163,7 @@ public final class CSViewer extends MIDlet {
 
         protected void paint(Graphics g) {
             if (error != null) {
-                g.setColor(0x10151c);
-                g.fillRect(0, 0, getWidth(), getHeight());
-                g.setColor(0xffffff);
-                g.drawString("CS.m3g viewer", 6, 6, Graphics.TOP | Graphics.LEFT);
-                g.drawString(error, 6, 28, Graphics.TOP | Graphics.LEFT);
+                paintError(g);
                 return;
             }
 
@@ -185,8 +184,109 @@ public final class CSViewer extends MIDlet {
             g.drawString("CS.m3g  |  Left/Right rotate  Up/Down zoom", 3, 2, Graphics.TOP | Graphics.LEFT);
         }
 
+        private void paintError(Graphics g) {
+            int width = getWidth();
+            int height = getHeight();
+            int margin = 6;
+            Font previousFont = g.getFont();
+            Font font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
+            g.setColor(0x10151c);
+            g.fillRect(0, 0, width, height);
+            g.setFont(font);
+            g.setColor(0xff7777);
+            g.drawString("CS.m3g viewer error", margin, 4, Graphics.TOP | Graphics.LEFT);
+
+            Vector lines = wrapError(error, font, width - margin * 2);
+            int lineHeight = font.getHeight() + 1;
+            int linesPerPage = (height - 38) / lineHeight;
+            if (linesPerPage < 1) {
+                linesPerPage = 1;
+            }
+            int pageCount = (lines.size() + linesPerPage - 1) / linesPerPage;
+            if (errorPage < 0) {
+                errorPage = 0;
+            } else if (errorPage >= pageCount) {
+                errorPage = pageCount - 1;
+            }
+
+            g.setColor(0xffffff);
+            int firstLine = errorPage * linesPerPage;
+            int lastLine = firstLine + linesPerPage;
+            if (lastLine > lines.size()) {
+                lastLine = lines.size();
+            }
+            int y = 22;
+            for (int i = firstLine; i < lastLine; i++) {
+                g.drawString((String) lines.elementAt(i), margin, y, Graphics.TOP | Graphics.LEFT);
+                y += lineHeight;
+            }
+
+            g.setColor(0xaab4c0);
+            if (pageCount > 1) {
+                g.drawString("Up/Down: page " + (errorPage + 1) + "/" + pageCount,
+                        margin, height - font.getHeight() - 2, Graphics.TOP | Graphics.LEFT);
+            }
+            g.setFont(previousFont);
+        }
+
+        private Vector wrapError(String message, Font font, int maxWidth) {
+            Vector lines = new Vector();
+            if (message == null) {
+                message = "Unknown error";
+            }
+            message = message.replace('\r', ' ').replace('\n', ' ');
+            int start = 0;
+            while (start < message.length()) {
+                while (start < message.length() && message.charAt(start) == ' ') {
+                    start++;
+                }
+                if (start >= message.length()) {
+                    break;
+                }
+
+                int end = start;
+                int lastSpace = -1;
+                while (end < message.length()) {
+                    if (message.charAt(end) == ' ') {
+                        lastSpace = end;
+                    }
+                    if (font.stringWidth(message.substring(start, end + 1)) > maxWidth) {
+                        break;
+                    }
+                    end++;
+                }
+
+                if (end == message.length()) {
+                    lines.addElement(message.substring(start, end));
+                    break;
+                } else if (end == start) {
+                    lines.addElement(message.substring(start, start + 1));
+                    start++;
+                } else if (lastSpace >= start) {
+                    lines.addElement(message.substring(start, lastSpace));
+                    start = lastSpace + 1;
+                } else {
+                    lines.addElement(message.substring(start, end));
+                    start = end;
+                }
+            }
+            if (lines.size() == 0) {
+                lines.addElement(" ");
+            }
+            return lines;
+        }
+
         protected void keyPressed(int keyCode) {
             int action = getGameAction(keyCode);
+            if (error != null) {
+                if (action == UP) {
+                    errorPage--;
+                } else if (action == DOWN) {
+                    errorPage++;
+                }
+                repaint();
+                return;
+            }
             if (model == null || camera == null) {
                 return;
             }
@@ -209,6 +309,7 @@ public final class CSViewer extends MIDlet {
         }
     }
 }
+
 
 
 

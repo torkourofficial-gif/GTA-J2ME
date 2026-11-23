@@ -18,4 +18,6 @@ Keep `tools/prepare.ps1` in the project and run it as a pre-build step before Ne
 
 - Left/right: rotate the model.
 - Up/down: move the camera closer or farther away.
+- On the error screen, up/down scroll through pages of the complete wrapped error message.
+
 
