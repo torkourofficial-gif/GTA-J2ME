@@ -315,9 +315,15 @@ final class PlayerController {
         }
 
         float animationRate;
-        if (isMovingState()) {
-            // Keep cadence continuous as GTA-style walk/run/sprint blends change.
-            animationRate = 6.4f + horizontalSpeed * 2.25f;
+        if (state == WALK) {
+            // A relaxed walking cadence: roughly 95-120 steps per minute.
+            animationRate = 4.9f + horizontalSpeed * 1.5f;
+        } else if (state == RUN) {
+            // One complete gait loop contains two steps.
+            animationRate = 7.0f + horizontalSpeed * 0.65f;
+        } else if (state == SPRINT) {
+            // Sprint cadence rises, but stride length also increases.
+            animationRate = 8.0f + horizontalSpeed * 0.65f;
         } else if (state == IDLE) {
             animationRate = 1.8f;
         } else {
