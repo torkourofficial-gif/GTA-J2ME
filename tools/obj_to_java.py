@@ -288,6 +288,7 @@ def generate(obj_path, java_path):
         "}"
     ))
     java_path.parent.mkdir(parents=True, exist_ok=True)
+    source.append("}")
     source_text = "\n".join(source)
     for name in ("POSITIONS", "TEXCOORDS", "NORMALS", "ARM_SIDE", "INDICES"):
         source_text = source_text.replace(name, "ClaudeModelData." + name)
