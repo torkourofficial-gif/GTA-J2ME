@@ -138,6 +138,7 @@ final class CityMap {
         addTexturedBox(world, x, height / 2.0f, z, width, height, depth, color, facade, 0.85f);
         float faceZ = z < 0 ? z + depth / 2.0f + 0.035f : z - depth / 2.0f - 0.035f;
         int floors = (int) (height / 1.7f);
+        if (floors > 4) floors = 4;
         for (int floor = 0; floor < floors; floor++) {
             float level = 1.25f + floor * 1.7f;
             if (level < height - 0.35f) {
@@ -146,10 +147,6 @@ final class CityMap {
                         windowWidth, 0.88f, 0.06f, GLASS, glassTexture, 0.7f);
                 addTexturedBox(world, x + width * 0.25f, level, faceZ,
                         windowWidth, 0.88f, 0.06f, GLASS, glassTexture, 0.7f);
-                addBox(world, x - width * 0.25f, level - 0.49f,
-                        faceZ + (z < 0 ? 0.025f : -0.025f), windowWidth + 0.06f, 0.06f, 0.10f, 0x5b5145);
-                addBox(world, x + width * 0.25f, level - 0.49f,
-                        faceZ + (z < 0 ? 0.025f : -0.025f), windowWidth + 0.06f, 0.06f, 0.10f, 0x5b5145);
             }
         }
         addTexturedBox(world, x, 0.85f, faceZ, 0.8f, 1.65f, 0.08f, 0x493d32,
