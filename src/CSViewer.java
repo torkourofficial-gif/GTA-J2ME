@@ -141,7 +141,7 @@ public final class CSViewer extends MIDlet {
 
             g.setColor(0xffffff);
             Font hudFont = g.getFont();
-            g.drawString("DPAD CAM  2 FWD  8 BACK  4/6 STRAFE",
+            g.drawString("DPAD CAM  8 FWD  2 BACK  4/6 STRAFE",
                     3, 2, Graphics.TOP | Graphics.LEFT);
             g.drawString("5 JUMP  7 SPRINT  1/3 ZOOM  " + controller.getStateName(), 3,
                     hudFont.getHeight() + 3, Graphics.TOP | Graphics.LEFT);
@@ -290,8 +290,8 @@ public final class CSViewer extends MIDlet {
         }
 
         private int getNumberPadMove(int keyCode) {
-            if (keyCode == KEY_NUM8) return UP;
-            if (keyCode == KEY_NUM2) return DOWN;
+            if (keyCode == KEY_NUM8) return DOWN;
+            if (keyCode == KEY_NUM2) return UP;
             if (keyCode == KEY_NUM4) return LEFT;
             if (keyCode == KEY_NUM6) return RIGHT;
             return 0;
