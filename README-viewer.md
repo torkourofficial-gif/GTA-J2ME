@@ -25,9 +25,9 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 - D-pad: rotate the camera continuously while held; movement stays aligned to the map axes.
 - Keypad 2/4/6/8: move on the map; 5 or the device's fire key: jump.
 - Keypad 1/3: zoom the camera.
-- The HUD reports the current IDLE, WALK, JUMP, or LAND state.
+- The HUD reports the current IDLE, WALK, RUN, SPRINT, JUMP, or LAND state.
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
 
-Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig identifies the separate arm shells by OBJ connectivity, then deforms them independently from the leg and foot vertices. It animates breathing and weight shifts while idle, an alternating gait while walking, bent legs and raised arms in the air, and a short compressed landing pose.
+Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig identifies the separate arm shells by OBJ connectivity, then deforms them independently from the leg and foot vertices. The procedural CPU rig uses keyframed, speed-blended WALK, RUN, and RUNFAST cycles with smooth cyclic interpolation, plus one-shot STARTWALK, mirrored RUNSTOP, jump, and landing poses. The arm swing counterbalances the legs, with separate elbow, knee, ankle, pelvis, torso, and head compensation; transitions are blended rather than snapped.
 
 The city surface, building walls, windows, sidewalks, foliage, tree bark, and street furniture use small deterministic textures generated at startup. The sky is a generated blue panorama with layered noise clouds that scroll as the camera turns.
