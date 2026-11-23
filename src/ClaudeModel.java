@@ -143,12 +143,9 @@ public final class ClaudeModel {
             float leftElbow = moving ? sampleCycle(ELBOW_KEYS, cycle) * movement : 0.04f;
             float rightElbow = moving ? sampleCycle(ELBOW_KEYS, cycle + 0.5f) * movement : 0.04f;
 
-            float leftAnkle = moving ? -leftHip * 0.18f - leftKnee * 0.34f : 0.0f;
-            float rightAnkle = moving ? -rightHip * 0.18f - rightKnee * 0.34f : 0.0f;
             float torsoLean = moving ? (pose == SPRINT ? 0.20f : (pose == RUN ? 0.13f : 0.06f)) * movement : 0.0f;
             float torsoTwist = moving ? -sampleCycle(WALK_HIP, cycle) * 0.10f * movement : 0.0f;
             float pelvisRoll = moving ? sampleCycle(WALK_HIP, cycle) * 0.035f * movement : 0.0f;
-            float headCounter = -torsoLean * 0.30f;
 
             // GTA III uses a short STARTWALK clip before the repeating walk/run cycles.
             if (transition == START_WALK) {
@@ -212,6 +209,12 @@ public final class ClaudeModel {
                 leftArm = breath * 0.018f;
                 rightArm = -breath * 0.018f;
             }
+
+            float leftAnkle = (moving || transition != 0) ? -leftHip * 0.18f - leftKnee * 0.34f
+                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f));
+            float rightAnkle = (moving || transition != 0) ? -rightHip * 0.18f - rightKnee * 0.34f
+                    : (pose == LAND ? -0.12f : (pose == JUMP ? 0.12f : 0.0f));
+            float headCounter = -torsoLean * 0.30f;
 
             float sl = (float) Math.sin(leftHip), cl = (float) Math.cos(leftHip);
             float sr = (float) Math.sin(rightHip), cr = (float) Math.cos(rightHip);
