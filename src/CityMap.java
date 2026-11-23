@@ -9,7 +9,6 @@ import javax.microedition.m3g.VertexArray;
 import javax.microedition.m3g.VertexBuffer;
 import javax.microedition.m3g.World;
 import javax.microedition.m3g.Texture2D;
-import javax.microedition.m3g.Sphere;
 
 /** Small low-poly city block built from reusable M3G primitives. */
 final class CityMap {
@@ -190,10 +189,36 @@ final class CityMap {
         PolygonMode mode = new PolygonMode();
         mode.setCulling(PolygonMode.CULL_NONE);
         appearance.setPolygonMode(mode);
-        Sphere leaves = new Sphere(0.5f, appearance);
+        Mesh leaves = createLeafMesh(appearance);
         leaves.setScale(sx, sy, sz);
         leaves.setTranslation(x, y, z);
         world.addChild(leaves);
+    }
+
+    /**
+     * Compact octahedral leaf volume built only from standard JSR-184
+     * VertexArray and TriangleStripArray classes. Several overlapping,
+     * differently scaled volumes give the crown a rounded, irregular shape.
+     */
+    private static Mesh createLeafMesh(Appearance appearance) {
+        short[] positions = {
+             0, 1000,    0,
+             0,-1000,    0,
+         -1000,    0,    0,
+          1000,    0,    0,
+             0,    0, 1000,
+             0,    0,-1000
+        };
+        int[] indices = {
+            0, 4, 3, 0, 3, 5, 0, 5, 2, 0, 2, 4,
+            1, 3, 4, 1, 5, 3, 1, 2, 5, 1, 4, 2
+        };
+        int[] stripLengths = {3,3,3,3,3,3,3,3};
+        VertexArray positionArray = new VertexArray(6, 3, 2);
+        positionArray.set(0, 6, positions);
+        VertexBuffer vertices = new VertexBuffer();
+        vertices.setPositions(positionArray, 0.0005f, null);
+        return new Mesh(vertices, new TriangleStripArray(indices, stripLengths), appearance);
     }
 
     private static void addLamp(World world, float x, float z) {
