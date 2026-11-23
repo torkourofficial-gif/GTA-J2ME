@@ -1,6 +1,6 @@
 # Claude 3D street prototype
 
-A MIDP 2.0 / CLDC 1.1 prototype built with the JSR-184 (M3G) API. It combines Claude's textured mesh, a small low-poly city block, a third-person camera, keyboard movement, jumping, and idle/walk/jump motion.
+A MIDP 2.0 / CLDC 1.1 prototype built with the JSR-184 (M3G) API. It combines Claude's textured mesh, a small low-poly city block, a movable third-person camera, keyboard movement, jumping, and a procedural CPU rig for idle/walk/jump motion.
 
 ## Model and texture
 
@@ -22,7 +22,8 @@ Build the project once in NetBeans. Make sure `res` is configured as the project
 
 - Arrow keys: move in four directions.
 - 5 or the device's fire key: jump.
+- Keypad 4/6: orbit the camera; 2/8: adjust its pitch; 1/3: zoom.
 - The HUD reports the current IDLE, WALK, or JUMP state.
 - On the error screen, up/down scroll through pages of the complete wrapped error message.
 
-Claude's OBJ is a single unrigged mesh. The prototype animates the whole mesh with a small procedural idle/walk sway and bob; jumping moves the character through the scene. It does not yet have independently animated limbs.
+Claude's OBJ is a single static mesh with no imported skeleton or animation clips. The generated Java rig assigns soft vertex weights to the legs and arms and deforms those regions for idle, walking, and jumping. This is a lightweight runtime rig rather than an authored Blender armature.

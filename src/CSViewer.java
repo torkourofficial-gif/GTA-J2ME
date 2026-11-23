@@ -63,7 +63,8 @@ public final class CSViewer extends MIDlet {
                 world.addChild(camera);
                 world.setActiveCamera(camera);
                 camera.setPerspective(45.0f, 1.0f, 0.1f, 1000.0f);
-                controller = new PlayerController(world, ClaudeModel.create(diffuseTexture), camera);
+                ClaudeModel.Rig claudeRig = ClaudeModel.create(diffuseTexture);
+                controller = new PlayerController(world, claudeRig, camera);
 
                 if (world.getBackground() == null) {
                     Background background = new Background();
@@ -127,8 +128,11 @@ public final class CSViewer extends MIDlet {
             }
 
             g.setColor(0xffffff);
-            g.drawString("ARROWS MOVE   5 JUMP   " + controller.getStateName(),
+            Font hudFont = g.getFont();
+            g.drawString("ARROWS MOVE  5 JUMP  " + controller.getStateName(),
                     3, 2, Graphics.TOP | Graphics.LEFT);
+            g.drawString("4/6 CAM  2/8 TILT  1/3 ZOOM", 3,
+                    hudFont.getHeight() + 3, Graphics.TOP | Graphics.LEFT);
         }
 
         private void paintError(Graphics g) {
@@ -224,8 +228,8 @@ public final class CSViewer extends MIDlet {
         }
 
         protected void keyPressed(int keyCode) {
-            int action = getGameAction(keyCode);
             if (error != null) {
+                int action = getGameActionSafe(keyCode);
                 if (action == UP) {
                     errorPage--;
                 } else if (action == DOWN) {
@@ -235,6 +239,11 @@ public final class CSViewer extends MIDlet {
                 return;
             }
             if (controller != null) {
+                if (controller.adjustCamera(keyCode)) {
+                    repaint();
+                    return;
+                }
+                int action = getGameActionSafe(keyCode);
                 controller.setDirection(action, true);
                 if (action == FIRE || keyCode == KEY_NUM5) {
                     controller.requestJump();
@@ -245,7 +254,16 @@ public final class CSViewer extends MIDlet {
 
         protected void keyReleased(int keyCode) {
             if (error != null || controller == null) return;
-            controller.setDirection(getGameAction(keyCode), false);
+            if (controller.isCameraKey(keyCode)) return;
+            controller.setDirection(getGameActionSafe(keyCode), false);
+        }
+
+        private int getGameActionSafe(int keyCode) {
+            try {
+                return getGameAction(keyCode);
+            } catch (IllegalArgumentException e) {
+                return 0;
+            }
         }
     }
 }

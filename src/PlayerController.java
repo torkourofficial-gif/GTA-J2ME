@@ -16,6 +16,7 @@ final class PlayerController {
     private static final float GRAVITY = 10.5f;
 
     private final Group actor = new Group();
+    private final ClaudeModel.Rig rig;
     private final Node model;
     private final Camera camera;
     private final Transform chaseRotation = new Transform();
@@ -27,20 +28,60 @@ final class PlayerController {
     private float x;
     private float z;
     private float yaw;
+    private float cameraYaw;
+    private float cameraPitch = 5.0f;
+    private float cameraDistance = 4.5f;
     private float jumpHeight;
     private float verticalSpeed;
     private float animationTime;
     private int state = IDLE;
 
-    PlayerController(World world, Node model, Camera camera) {
-        this.model = model;
+    PlayerController(World world, ClaudeModel.Rig rig, Camera camera) {
+        this.rig = rig;
+        this.model = rig.getMesh();
         this.camera = camera;
         actor.addChild(model);
         world.addChild(actor);
-        chaseRotation.setIdentity();
-        chaseRotation.postRotate(10.0f, 1.0f, 0.0f, 0.0f);
-        camera.setTransform(chaseRotation);
+        updateCameraRotation();
         updateTransforms();
+    }
+
+    boolean isCameraKey(int keyCode) {
+        return keyCode == Canvas.KEY_NUM1 || keyCode == Canvas.KEY_NUM2
+                || keyCode == Canvas.KEY_NUM3 || keyCode == Canvas.KEY_NUM4
+                || keyCode == Canvas.KEY_NUM6 || keyCode == Canvas.KEY_NUM8;
+    }
+
+    boolean adjustCamera(int keyCode) {
+        if (keyCode == Canvas.KEY_NUM4) {
+            cameraYaw -= 15.0f;
+        } else if (keyCode == Canvas.KEY_NUM6) {
+            cameraYaw += 15.0f;
+        } else if (keyCode == Canvas.KEY_NUM2) {
+            cameraPitch -= 5.0f;
+            if (cameraPitch < 0.0f) cameraPitch = 0.0f;
+        } else if (keyCode == Canvas.KEY_NUM8) {
+            cameraPitch += 5.0f;
+            if (cameraPitch > 35.0f) cameraPitch = 35.0f;
+        } else if (keyCode == Canvas.KEY_NUM1) {
+            cameraDistance -= 0.5f;
+            if (cameraDistance < 2.5f) cameraDistance = 2.5f;
+        } else if (keyCode == Canvas.KEY_NUM3) {
+            cameraDistance += 0.5f;
+            if (cameraDistance > 8.0f) cameraDistance = 8.0f;
+        } else {
+            return false;
+        }
+        updateCameraRotation();
+        updateTransforms();
+        return true;
+    }
+
+    private void updateCameraRotation() {
+        chaseRotation.setIdentity();
+        chaseRotation.postRotate(cameraYaw, 0.0f, 1.0f, 0.0f);
+        chaseRotation.postRotate(-cameraPitch, 1.0f, 0.0f, 0.0f);
+        camera.setTransform(chaseRotation);
     }
 
     void setDirection(int gameAction, boolean pressed) {
@@ -112,6 +153,7 @@ final class PlayerController {
             state = IDLE;
         }
         animationTime += elapsed * (state == WALK ? 11.0f : 2.5f);
+        rig.animate(state, animationTime);
         updateTransforms();
     }
 
@@ -143,7 +185,10 @@ final class PlayerController {
         model.setScale(1.0f, scaleY, 1.0f);
 
         // Lower shoulder-height chase camera; it stays put vertically during jumps.
-        camera.setTranslation(x, 2.0f, z + 4.5f);
+        float orbitRadians = cameraYaw * 0.017453292f;
+        float cameraX = x + (float) Math.sin(orbitRadians) * cameraDistance;
+        float cameraZ = z + (float) Math.cos(orbitRadians) * cameraDistance;
+        camera.setTranslation(cameraX, 1.9f, cameraZ);
     }
 
     String getStateName() {
