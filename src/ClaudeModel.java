@@ -95,28 +95,47 @@ public final class ClaudeModel {
         }
         public Mesh getMesh() { return mesh; }
 
-        public void animate(int pose, float phase, float gaitBlend, int transition, float transitionTime) {
+        public void animate(int pose, float phase, float gaitBlend, float speed, int transition, float transitionTime) {
             float movement = clamp(gaitBlend);
             boolean moving = pose == WALK || pose == RUN || pose == SPRINT;
             float cycle = phase / 6.2831853f;
             while (cycle >= 1.0f) cycle -= 1.0f;
             while (cycle < 0.0f) cycle += 1.0f;
 
-            float[] hipKeys = WALK_HIP;
-            float[] kneeKeys = WALK_KNEE;
-            float[] armKeys = WALK_ARM;
-            if (pose == SPRINT) {
-                hipKeys = SPRINT_HIP; kneeKeys = SPRINT_KNEE; armKeys = SPRINT_ARM;
-            } else if (pose == RUN) {
-                hipKeys = RUN_HIP; kneeKeys = RUN_KNEE; armKeys = RUN_ARM;
-            }
+            // GTA III blends WALK into RUN by movement speed, then layers RUNFAST on top.
+            float runMix = clamp((speed - 0.85f) / 1.15f);
+            float sprintMix = clamp((speed - 2.25f) / 1.05f);
+            float leftWalkHip = sampleCycle(WALK_HIP, cycle);
+            float rightWalkHip = sampleCycle(WALK_HIP, cycle + 0.5f);
+            float leftRunHip = sampleCycle(RUN_HIP, cycle);
+            float rightRunHip = sampleCycle(RUN_HIP, cycle + 0.5f);
+            float leftSprintHip = sampleCycle(SPRINT_HIP, cycle);
+            float rightSprintHip = sampleCycle(SPRINT_HIP, cycle + 0.5f);
+            float leftWalkKnee = sampleCycle(WALK_KNEE, cycle);
+            float rightWalkKnee = sampleCycle(WALK_KNEE, cycle + 0.5f);
+            float leftRunKnee = sampleCycle(RUN_KNEE, cycle);
+            float rightRunKnee = sampleCycle(RUN_KNEE, cycle + 0.5f);
+            float leftSprintKnee = sampleCycle(SPRINT_KNEE, cycle);
+            float rightSprintKnee = sampleCycle(SPRINT_KNEE, cycle + 0.5f);
+            float leftWalkArm = sampleCycle(WALK_ARM, cycle);
+            float rightWalkArm = sampleCycle(WALK_ARM, cycle + 0.5f);
+            float leftRunArm = sampleCycle(RUN_ARM, cycle);
+            float rightRunArm = sampleCycle(RUN_ARM, cycle + 0.5f);
+            float leftSprintArm = sampleCycle(SPRINT_ARM, cycle);
+            float rightSprintArm = sampleCycle(SPRINT_ARM, cycle + 0.5f);
 
-            float leftHip = moving ? sampleCycle(hipKeys, cycle) * movement : 0.0f;
-            float rightHip = moving ? sampleCycle(hipKeys, cycle + 0.5f) * movement : 0.0f;
-            float leftKnee = moving ? sampleCycle(kneeKeys, cycle) * movement : 0.0f;
-            float rightKnee = moving ? sampleCycle(kneeKeys, cycle + 0.5f) * movement : 0.0f;
-            float leftArm = moving ? -sampleCycle(armKeys, cycle) * movement - 0.05f * movement : 0.0f;
-            float rightArm = moving ? -sampleCycle(armKeys, cycle + 0.5f) * movement - 0.05f * movement : 0.0f;
+            float leftHip = moving ? (leftWalkHip + (leftRunHip - leftWalkHip) * runMix
+                    + (leftSprintHip - leftRunHip) * sprintMix) * movement : 0.0f;
+            float rightHip = moving ? (rightWalkHip + (rightRunHip - rightWalkHip) * runMix
+                    + (rightSprintHip - rightRunHip) * sprintMix) * movement : 0.0f;
+            float leftKnee = moving ? (leftWalkKnee + (leftRunKnee - leftWalkKnee) * runMix
+                    + (leftSprintKnee - leftRunKnee) * sprintMix) * movement : 0.0f;
+            float rightKnee = moving ? (rightWalkKnee + (rightRunKnee - rightWalkKnee) * runMix
+                    + (rightSprintKnee - rightRunKnee) * sprintMix) * movement : 0.0f;
+            float leftArm = moving ? -(leftWalkArm + (leftRunArm - leftWalkArm) * runMix
+                    + (leftSprintArm - leftRunArm) * sprintMix) * movement - 0.05f * movement : 0.0f;
+            float rightArm = moving ? -(rightWalkArm + (rightRunArm - rightWalkArm) * runMix
+                    + (rightSprintArm - rightRunArm) * sprintMix) * movement - 0.05f * movement : 0.0f;
             float leftElbow = moving ? sampleCycle(ELBOW_KEYS, cycle) * movement : 0.04f;
             float rightElbow = moving ? sampleCycle(ELBOW_KEYS, cycle + 0.5f) * movement : 0.04f;
 
@@ -257,8 +276,19 @@ public final class ClaudeModel {
             float scaled = phase * 4.0f;
             int index = (int) scaled;
             if (index > 3) index = 3;
-            float amount = smooth(scaled - index);
-            return values[index] + (values[index + 1] - values[index]) * amount;
+            float t = scaled - index;
+            int previous = index == 0 ? 3 : index - 1;
+            int next = index + 2 > 4 ? 1 : index + 2;
+            float p0 = values[index];
+            float p1 = values[index + 1];
+            float tangent0 = (p1 - values[previous]) * 0.5f;
+            float tangent1 = (values[next] - p0) * 0.5f;
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return (2.0f * t3 - 3.0f * t2 + 1.0f) * p0
+                    + (t3 - 2.0f * t2 + t) * tangent0
+                    + (-2.0f * t3 + 3.0f * t2) * p1
+                    + (t3 - t2) * tangent1;
         }
 
         private float sampleClip(float[] times, float[] values, float time) {
