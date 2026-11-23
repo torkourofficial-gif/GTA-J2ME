@@ -12,6 +12,7 @@ final class PlayerController {
     private static final int IDLE = 0;
     private static final int WALK = 1;
     private static final int JUMP = 2;
+    private static final int LAND = 3;
     private static final float WALK_SPEED = 2.3f;
     private static final float GRAVITY = 10.5f;
     // This OBJ faces opposite the controller's forward direction (+Z).
@@ -35,6 +36,7 @@ final class PlayerController {
     private float cameraDistance = 4.5f;
     private float jumpHeight;
     private float verticalSpeed;
+    private float landingTime;
     private float animationTime;
     private int state = IDLE;
 
@@ -144,43 +146,62 @@ final class PlayerController {
             if (jumpHeight <= 0.0f) {
                 jumpHeight = 0.0f;
                 verticalSpeed = 0.0f;
+                landingTime = 0.22f;
             }
+        } else if (landingTime > 0.0f) {
+            landingTime -= elapsed;
+            if (landingTime < 0.0f) landingTime = 0.0f;
         }
 
         if (jumpHeight > 0.0f) {
             state = JUMP;
+        } else if (landingTime > 0.0f) {
+            state = LAND;
         } else if (moving) {
             state = WALK;
         } else {
             state = IDLE;
         }
-        animationTime += elapsed * (state == WALK ? 11.0f : 2.5f);
+        animationTime += elapsed * (state == WALK ? 10.5f : (state == IDLE ? 1.8f : 5.0f));
         rig.animate(state, animationTime);
         updateTransforms();
     }
 
     private void updateTransforms() {
-        actor.setTranslation(x, 1.0f + jumpHeight, z);
-        actor.setOrientation(yaw + MODEL_FORWARD_OFFSET, 0.0f, 1.0f, 0.0f);
-
-        float bob;
-        float lean;
         float scaleY;
         if (state == WALK) {
             float step = (float) Math.sin(animationTime);
             float bounce = (float) Math.abs(step);
-            bob = bounce * 0.11f;
-            lean = step * 9.0f;
-            scaleY = 1.0f + bounce * 0.06f;
+            scaleY = 1.0f + bounce * 0.025f;
+        } else if (state == JUMP) {
+            scaleY = verticalSpeed > 0.0f ? 1.04f : 0.96f;
+        } else if (state == LAND) {
+            float recovery = landingTime / 0.22f;
+            scaleY = 0.92f + recovery * 0.08f;
+        } else {
+            float breath = (float) Math.sin(animationTime);
+            scaleY = 1.0f + breath * 0.012f;
+        }
+        actor.setTranslation(x, 1.0f + jumpHeight + (1.0f - scaleY) * 0.45f, z);
+        actor.setOrientation(yaw + MODEL_FORWARD_OFFSET, 0.0f, 1.0f, 0.0f);
+
+        float bob;
+        float lean;
+        if (state == WALK) {
+            float step = (float) Math.sin(animationTime);
+            float bounce = (float) Math.abs(step);
+            bob = bounce * 0.045f;
+            lean = step * 4.0f;
         } else if (state == JUMP) {
             bob = 0.0f;
             lean = -10.0f;
-            scaleY = verticalSpeed > 0.0f ? 1.08f : 0.94f;
+        } else if (state == LAND) {
+            bob = 0.0f;
+            lean = 2.0f;
         } else {
             float breath = (float) Math.sin(animationTime);
-            bob = breath * 0.025f;
-            lean = (float) Math.sin(animationTime * 0.5f) * 1.5f;
-            scaleY = 1.0f + breath * 0.025f;
+            bob = breath * 0.012f;
+            lean = (float) Math.sin(animationTime * 0.5f) * 0.7f;
         }
         model.setTranslation(0.0f, bob, 0.0f);
         model.setOrientation(lean, 0.0f, 0.0f, 1.0f);
@@ -196,6 +217,7 @@ final class PlayerController {
     String getStateName() {
         if (state == WALK) return "WALK";
         if (state == JUMP) return "JUMP";
+        if (state == LAND) return "LAND";
         return "IDLE";
     }
 

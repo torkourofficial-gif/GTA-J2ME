@@ -15,6 +15,7 @@ public final class ClaudeModel {
     public static final int IDLE = 0;
     public static final int WALK = 1;
     public static final int JUMP = 2;
+    public static final int LAND = 3;
     private static final int VERTEX_COUNT = 719;
     private static final float POSITION_SCALE = 3.67573e-05f;
     private static final float BIAS_X = -0.00545f;
@@ -70,14 +71,15 @@ public final class ClaudeModel {
 
         public void animate(int pose, float phase) {
             float cycle = (float) Math.sin(phase);
-            float leftLeg = pose == WALK ? cycle * 0.48f : (pose == JUMP ? 0.22f : 0.0f);
+            float idleSway = (float) Math.sin(phase * 0.55f);
+            float leftLeg = pose == WALK ? cycle * 0.40f : (pose == JUMP ? 0.18f : (pose == LAND ? 0.03f : idleSway * 0.015f));
             float rightLeg = -leftLeg;
-            float leftArm = pose == WALK ? -cycle * 0.34f : (pose == JUMP ? 0.0f : cycle * 0.04f);
+            float leftArm = pose == WALK ? -cycle * 0.27f : (pose == JUMP ? 0.0f : (pose == LAND ? 0.08f : idleSway * 0.035f));
             float rightArm = -leftArm;
-            float leftKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 1.0f)) * 0.42f : (pose == JUMP ? 0.55f : 0.0f);
-            float rightKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 4.14f)) * 0.42f : (pose == JUMP ? 0.55f : 0.0f);
-            float leftLift = pose == JUMP ? -1.3f : 0.0f;
-            float rightLift = pose == JUMP ? 1.3f : 0.0f;
+            float leftKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 0.9f)) * 0.38f : (pose == JUMP ? 0.42f : (pose == LAND ? 0.48f : 0.0f));
+            float rightKnee = pose == WALK ? Math.max(0.0f, (float) Math.sin(phase + 4.04f)) * 0.38f : (pose == JUMP ? 0.30f : (pose == LAND ? 0.48f : 0.0f));
+            float leftLift = pose == JUMP ? -1.15f : 0.0f;
+            float rightLift = pose == JUMP ? 1.15f : 0.0f;
             float sl = (float) Math.sin(leftLeg), cl = (float) Math.cos(leftLeg);
             float sr = (float) Math.sin(rightLeg), cr = (float) Math.cos(rightLeg);
             float sal = (float) Math.sin(leftArm), cal = (float) Math.cos(leftArm);
