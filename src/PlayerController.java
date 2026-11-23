@@ -41,6 +41,8 @@ final class PlayerController {
     private boolean left;
     private boolean right;
     private boolean sprint;
+    private boolean lastSprinting;
+    private boolean sprintStopPending;
     private boolean cameraUp;
     private boolean cameraDown;
     private boolean cameraLeft;
@@ -158,6 +160,13 @@ final class PlayerController {
         }
 
         boolean sprinting = sprint && hasInput && stamina > 0.0f;
+        if (lastSprinting && !hasInput) {
+            sprintStopPending = true;
+        }
+        if (hasInput) {
+            sprintStopPending = false;
+        }
+        lastSprinting = sprinting;
         if (sprinting) {
             stamina -= STAMINA_DRAIN * elapsed;
             if (stamina < 0.0f) stamina = 0.0f;
@@ -265,11 +274,12 @@ final class PlayerController {
             if (hasInput && lastHorizontalSpeed < 0.18f && horizontalSpeed > 0.12f) {
                 animationTransition = ClaudeModel.START_WALK;
                 transitionTime = 0.0f;
-            } else if (!hasInput && lastHorizontalSpeed > 1.2f && horizontalSpeed > 0.12f) {
+            } else if (!hasInput && sprintStopPending && horizontalSpeed < 0.4f) {
                 int stopClip = (((int) (animationTime / 3.1415926f)) & 1) == 0
                         ? ClaudeModel.RUN_STOP_LEFT : ClaudeModel.RUN_STOP_RIGHT;
                 animationTransition = stopClip;
                 transitionTime = 0.0f;
+                sprintStopPending = false;
             } else if (hasInput && (animationTransition == ClaudeModel.RUN_STOP_LEFT
                     || animationTransition == ClaudeModel.RUN_STOP_RIGHT)) {
                 animationTransition = 0;
@@ -404,6 +414,8 @@ final class PlayerController {
 
     void clearInput() {
         up = down = left = right = sprint = jumpRequested = false;
+        lastSprinting = false;
+        sprintStopPending = false;
         cameraUp = cameraDown = cameraLeft = cameraRight = false;
     }
 }
