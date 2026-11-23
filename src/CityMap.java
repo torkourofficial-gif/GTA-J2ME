@@ -137,13 +137,19 @@ final class CityMap {
                 color, (int) (x * 67.0f + z * 43.0f + height * 19.0f));
         addTexturedBox(world, x, height / 2.0f, z, width, height, depth, color, facade, 0.85f);
         float faceZ = z < 0 ? z + depth / 2.0f + 0.035f : z - depth / 2.0f - 0.035f;
-        float[] levels = {1.5f, 3.2f, 4.9f};
-        for (int i = 0; i < levels.length; i++) {
-            if (levels[i] < height - 0.5f) {
-                addTexturedBox(world, x - width * 0.25f, levels[i], faceZ, 0.72f, 0.78f, 0.06f, GLASS, glassTexture, 0.7f);
-                addTexturedBox(world, x + width * 0.25f, levels[i], faceZ, 0.72f, 0.78f, 0.06f, GLASS, glassTexture, 0.7f);
-                addBox(world, x - width * 0.25f, levels[i] - 0.46f, faceZ + (z < 0 ? 0.025f : -0.025f), 0.78f, 0.06f, 0.10f, 0x5b5145);
-                addBox(world, x + width * 0.25f, levels[i] - 0.46f, faceZ + (z < 0 ? 0.025f : -0.025f), 0.78f, 0.06f, 0.10f, 0x5b5145);
+        int floors = (int) (height / 1.7f);
+        for (int floor = 0; floor < floors; floor++) {
+            float level = 1.25f + floor * 1.7f;
+            if (level < height - 0.35f) {
+                float windowWidth = width > 7.5f ? 0.88f : 0.72f;
+                addTexturedBox(world, x - width * 0.25f, level, faceZ,
+                        windowWidth, 0.88f, 0.06f, GLASS, glassTexture, 0.7f);
+                addTexturedBox(world, x + width * 0.25f, level, faceZ,
+                        windowWidth, 0.88f, 0.06f, GLASS, glassTexture, 0.7f);
+                addBox(world, x - width * 0.25f, level - 0.49f,
+                        faceZ + (z < 0 ? 0.025f : -0.025f), windowWidth + 0.06f, 0.06f, 0.10f, 0x5b5145);
+                addBox(world, x + width * 0.25f, level - 0.49f,
+                        faceZ + (z < 0 ? 0.025f : -0.025f), windowWidth + 0.06f, 0.06f, 0.10f, 0x5b5145);
             }
         }
         addTexturedBox(world, x, 0.85f, faceZ, 0.8f, 1.65f, 0.08f, 0x493d32,
@@ -180,7 +186,7 @@ final class CityMap {
     private static void addLeafCluster(World world, float x, float y, float z,
                                        float sx, float sy, float sz, int color) {
         Material material = new Material();
-        material.setColor(Material.EMISSIVE, 0xFFFFFFFF);
+        material.setColor(Material.EMISSIVE, 0xFF000000 | color);
         Appearance appearance = new Appearance();
         appearance.setMaterial(material);
         appearance.setTexture(0, leavesTexture);
