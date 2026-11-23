@@ -14,6 +14,8 @@ final class PlayerController {
     private static final int JUMP = 2;
     private static final float WALK_SPEED = 2.3f;
     private static final float GRAVITY = 10.5f;
+    // This OBJ faces opposite the controller's forward direction (+Z).
+    private static final float MODEL_FORWARD_OFFSET = 180.0f;
 
     private final Group actor = new Group();
     private final ClaudeModel.Rig rig;
@@ -159,7 +161,7 @@ final class PlayerController {
 
     private void updateTransforms() {
         actor.setTranslation(x, 1.0f + jumpHeight, z);
-        actor.setOrientation(yaw, 0.0f, 1.0f, 0.0f);
+        actor.setOrientation(yaw + MODEL_FORWARD_OFFSET, 0.0f, 1.0f, 0.0f);
 
         float bob;
         float lean;

@@ -143,7 +143,9 @@ def generate(obj_path, java_path):
         "                float kneeBase = clamp((-y - 0.47f) / 0.20f) * center;",
         "                float lkw = kneeBase * (1.0f - split);",
         "                float rkw = kneeBase * split;",
-        "                float armBand = clamp((absX - 0.10f) / 0.16f) * clamp((0.78f - y) / 0.20f) * clamp((y + 0.48f) / 0.30f);",
+        # Arm islands end around the hips in this OBJ. Stop their weights above
+        # the thigh and foot regions so arm swings cannot drag those vertices.
+        "                float armBand = clamp((absX - 0.13f) / 0.12f) * clamp((0.78f - y) / 0.20f) * clamp((y + 0.18f) / 0.12f);",
         "                float law = armBand * (x < 0.0f ? 1.0f : 0.0f);",
         "                float raw = armBand * (x > 0.0f ? 1.0f : 0.0f);",
         "                point[0] = x; point[1] = y; point[2] = z;",
